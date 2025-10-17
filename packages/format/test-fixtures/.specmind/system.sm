@@ -1,0 +1,92 @@
+# SpecMind System Architecture
+
+## Overview
+SpecMind is a developer tool for spec-driven development, automatically generating
+and evolving architecture designs as features are built. The system consists of
+a TypeScript monorepo with clear package boundaries, supporting multiple interfaces
+including CLI, VS Code extension, and AI assistant integration.
+
+## Requirements
+- Tree-sitter based multi-language code analysis
+- .sm file format for architecture specifications
+- AI assistant integration via slash commands
+- VS Code extension for visual diagram rendering
+- CLI tool for standalone usage
+- Monorepo architecture with independent packages
+
+## Architecture
+
+```mermaid
+graph TD
+    subgraph "User Interfaces"
+        CLI[CLI Tool]
+        VSCode[VS Code Extension]
+        AI[AI Assistants]
+    end
+
+    subgraph "Core Packages"
+        Format[@specmind/format]
+        Core[@specmind/core]
+    end
+
+    subgraph "External Dependencies"
+        TreeSitter[Tree-sitter]
+        Zod[Zod Validation]
+        Mermaid[Mermaid.js]
+    end
+
+    subgraph "File System"
+        SmFiles[.sm Files]
+        CodeFiles[Source Code]
+    end
+
+    CLI --> Core
+    CLI --> Format
+    VSCode --> Format
+    AI --> Core
+    AI --> Format
+
+    Core --> Format
+    Core --> TreeSitter
+    Format --> Zod
+    Format --> Mermaid
+
+    Core --> CodeFiles
+    Format --> SmFiles
+
+    SmFiles -.->|reads/writes| Format
+    CodeFiles -.->|analyzes| Core
+```
+
+## Design Decisions
+
+### Monorepo Structure
+- **Single repository** for all packages ensures version synchronization
+- **pnpm workspaces** for efficient dependency management
+- **Clear package boundaries** prevent circular dependencies
+- **Shared TypeScript configuration** for consistency
+
+### TypeScript-First Architecture
+- **Full TypeScript stack** eliminates language switching overhead
+- **Strict type checking** catches errors at compile time
+- **ES Modules** for modern JavaScript compatibility
+- **Zod schemas** provide runtime validation + compile-time types
+
+### Tree-sitter for Code Analysis
+- **Multi-language support** (50+ languages) out of the box
+- **Incremental parsing** for performance with large codebases
+- **AST-based analysis** for reliable code understanding
+- **Battle-tested** - same parser VS Code uses
+
+## Integration Points
+- **@specmind/format**: Foundation package for .sm file handling
+- **@specmind/core**: Analysis engine using tree-sitter
+- **CLI package**: Command-line interface for automation
+- **VS Code extension**: Visual rendering and syntax highlighting
+- **AI assistants**: Slash command integration (Cursor, Windsurf, Claude Code)
+
+## Notes
+🎯 **Phase 1**: Focus on format and core packages
+📦 **Dependencies**: format → (no deps), core → format, cli → core + format
+🔧 **Development**: Use strict TypeScript, comprehensive testing
+📝 **Documentation**: Keep README.md synced with CONSTITUTION.md changes

@@ -1,0 +1,82 @@
+# User Authentication
+
+## Overview
+Implement secure user authentication with JWT tokens, supporting email/password
+and OAuth providers (Google, GitHub). The system will provide stateless authentication
+suitable for horizontal scaling and microservices architecture.
+
+## Requirements
+- Secure password hashing (bcrypt)
+- JWT token generation and validation
+- OAuth 2.0 integration (Google, GitHub)
+- Session management with refresh tokens
+- Password reset flow via email
+- Multi-factor authentication (TOTP)
+- Rate limiting for login attempts
+- Account lockout after failed attempts
+
+## Architecture
+
+```mermaid
+graph TD
+    Client[Client App] -->|POST /auth/login| AuthAPI[Auth API]
+    Client -->|GET /auth/oauth/google| OAuthAPI[OAuth API]
+
+    AuthAPI --> AuthService[Auth Service]
+    OAuthAPI --> AuthService
+
+    AuthService --> UserDB[(User Database)]
+    AuthService --> TokenService[JWT Token Service]
+    AuthService --> OAuthService[OAuth Service]
+    AuthService --> EmailService[Email Service]
+
+    TokenService --> Redis[(Redis Cache)]
+    OAuthService -->|OAuth Flow| GoogleAuth[Google OAuth]
+    OAuthService -->|OAuth Flow| GitHubAuth[GitHub OAuth]
+
+    EmailService --> SMTP[SMTP Server]
+
+    subgraph "Security Layer"
+        RateLimit[Rate Limiter]
+        MFA[MFA Service]
+        Encryption[Encryption Service]
+    end
+
+    AuthService --> RateLimit
+    AuthService --> MFA
+    AuthService --> Encryption
+```
+
+## Design Decisions
+
+### Why JWT over sessions?
+- **Stateless authentication** for horizontal scaling
+- **Better for microservices** - no shared session store needed
+- **Mobile app support** - easier token management
+- **API-first approach** - works well with SPAs and mobile clients
+
+### Why Redis for token blacklist?
+- **Fast lookup** for revoked tokens (O(1) operations)
+- **Automatic expiration** (TTL) matches JWT expiry
+- **Scalable** for high traffic scenarios
+- **Persistence options** for reliability
+
+### OAuth Integration Strategy
+- **Authorization Code flow** for web applications
+- **PKCE** for mobile and SPA security
+- **Scope-based permissions** for fine-grained access
+- **Token refresh** for long-lived sessions
+
+## Integration Points
+- **User Service**: Validates user credentials and manages user profiles
+- **Email Service**: Sends password reset emails and verification codes
+- **Logging Service**: Audit trail for authentication events and security incidents
+- **Admin Service**: User management and security policy configuration
+- **Notification Service**: Real-time alerts for security events
+
+## Notes
+⚠️ **Security**: Ensure HTTPS in production and secure cookie settings
+💡 **Optimization**: Consider refresh token rotation for enhanced security
+🔧 **Monitoring**: Implement metrics for login success/failure rates
+📱 **Mobile**: JWT tokens work seamlessly with mobile applications
+🏗️ **Scalability**: Stateless design supports auto-scaling and load balancing
