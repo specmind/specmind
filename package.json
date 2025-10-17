@@ -1,0 +1,25 @@
+{
+  "name": "specmind-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Architecture that evolves with your code",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/specmind.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
