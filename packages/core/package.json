@@ -1,0 +1,50 @@
+{
+  "name": "@specmind/core",
+  "version": "0.1.0",
+  "description": "Core code analysis and architecture generation for SpecMind using tree-sitter",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "validate-diagrams": "node scripts/validate-diagrams.mjs"
+  },
+  "keywords": [
+    "specmind",
+    "architecture",
+    "code-analysis",
+    "tree-sitter",
+    "ast",
+    "typescript",
+    "javascript"
+  ],
+  "author": "SpecMind",
+  "license": "MIT",
+  "dependencies": {
+    "@specmind/format": "workspace:*",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-javascript": "^0.21.4",
+    "tree-sitter-typescript": "^0.21.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
+  }
+}

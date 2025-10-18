@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "SpecMind Root",
+      "path": "."
+    },
+    {
+      "name": "VS Code Extension",
+      "path": "./packages/vscode"
+    }
+  ],
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next"
+    ]
+  },
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto"
+  }
+}

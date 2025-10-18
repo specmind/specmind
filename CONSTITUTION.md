@@ -2,10 +2,11 @@
 
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
-**Last Updated:** 2025-10-16
-**Version:** 1.3.0
+**Last Updated:** 2025-10-18
+**Version:** 1.4.0
 
 ## Changelog
+- **v1.4.0** (2025-10-18): Standardized testing structure - all packages use `src/__tests__/` for test files, vitest v3.2.4+, 80%+ coverage requirement. Added comprehensive testing guidelines in Section 6.4.
 - **v1.3.0** (2025-10-16): Added README sync rule - all user-facing changes in CONSTITUTION.md must be reflected in README.md. Created comprehensive README aligned with constitution.
 - **v1.2.0** (2025-10-16): Defined file naming convention - `system.sm` for root, kebab-case slugified names for features. No timestamps in filenames, git history for versioning.
 - **v1.1.0** (2025-10-16): Updated .sm file format to include both markdown documentation and architecture diagrams (not just diagrams). Added file organization structure and one-file-per-feature principle.
@@ -353,10 +354,44 @@ graph TD
 
 ### 6.4 Testing
 
-- Unit tests for core logic (vitest)
-- Integration tests with example projects
-- Snapshot tests for .sm format output
-- E2E tests for CLI commands
+**Testing Framework:** Vitest (v3.2.4+) for all packages
+
+**Test Organization:**
+- **Location:** `src/__tests__/` directory for all test files
+- **Naming:** `*.test.ts` for unit tests
+- **Coverage:** Minimum 80% code coverage required
+- **Fixtures:** `test-fixtures/` directory for realistic test data
+
+**Test Structure:**
+```
+packages/{package}/
+├── src/
+│   ├── __tests__/           # All test files here
+│   │   ├── parser.test.ts
+│   │   ├── utils.test.ts
+│   │   └── fixtures/        # Optional test fixtures
+│   ├── parser.ts            # Source code
+│   └── utils.ts
+├── test-fixtures/           # End-to-end test fixtures
+└── scripts/
+    └── validate-*.mjs       # Validation scripts
+```
+
+**Test Types:**
+- **Unit tests** (`src/__tests__/*.test.ts`) - Fast, isolated tests for individual functions
+- **Integration tests** (`src/__tests__/*.test.ts`) - Test module interactions
+- **Fixture validation** (`scripts/validate-*.mjs`) - Real-world scenario tests with actual files
+
+**Coverage Requirements:**
+- Lines: 80%+
+- Functions: 80%+
+- Branches: 80%+
+- Statements: 80%+
+
+**Configuration:**
+- `vitest.config.ts` in each package
+- Exclude `__tests__/`, `test-fixtures/`, and type definitions from coverage
+- Use `v8` coverage provider for accuracy
 
 ---
 

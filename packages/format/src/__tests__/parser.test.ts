@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseSmFile } from './parser.js'
+import { parseSmFile } from '../parser.js'
 
 describe('parseSmFile', () => {
   it('parses complete .sm file content', () => {

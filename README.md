@@ -208,10 +208,10 @@ SpecMind is built as a TypeScript monorepo with clear package boundaries:
 ```
 specmind/
 ├── packages/
-│   ├── core/       # @specmind/core - Analysis engine (tree-sitter)
-│   ├── format/     # @specmind/format - .sm file parser/writer
-│   ├── cli/        # specmind - CLI tool
-│   └── vscode/     # VS Code extension (viewer + syntax)
+│   ├── core/       # @specmind/core - Analysis engine (✅ Implemented)
+│   ├── format/     # @specmind/format - .sm file parser (✅ Implemented)
+│   ├── cli/        # specmind - CLI tool (🚧 Planned)
+│   └── vscode/     # VS Code extension (✅ Published)
 ```
 
 ### Technology Stack
@@ -230,10 +230,11 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 
 ### Phase 1: Core Foundation (Current)
 - [x] Project structure and constitution
-- [ ] Tree-sitter integration
-- [ ] .sm file format parser
+- [x] Tree-sitter integration (@specmind/core)
+- [x] .sm file format parser (@specmind/format)
+- [x] VS Code extension (syntax highlighting + preview)
 - [ ] Basic CLI commands (`init`, `design`)
-- [ ] VS Code syntax highlighting
+- [ ] Architecture diagram generation
 
 ### Phase 2: AI Integration
 - [ ] Slash commands for AI assistants

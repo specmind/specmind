@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { writeSmFile, writeSmFileWithMetadata, validateSmFileForWriting } from './writer.js'
-import { SmFile } from './schemas.js'
+import { writeSmFile, writeSmFileWithMetadata, validateSmFileForWriting } from '../writer.js'
+import { SmFile } from '../schemas.js'
 
 describe('writeSmFile', () => {
   it('writes complete .sm file content', () => {

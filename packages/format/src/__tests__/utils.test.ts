@@ -6,7 +6,7 @@ import {
   extractSlugFromFilename,
   getFeatureFilePath,
   getSystemFilePath
-} from './utils.js'
+} from '../utils.js'
 
 describe('slugify', () => {
   it('converts simple names to kebab-case', () => {
