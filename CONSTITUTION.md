@@ -50,7 +50,7 @@ This document defines the core architectural decisions, principles, and constrai
 
 **Stack:**
 - TypeScript 5.x+
-- Node.js 18+ runtime
+- Node.js 20+ runtime
 - ES Modules (ESM)
 
 ### 2.3 Code Analysis & Parsing
@@ -182,30 +182,54 @@ Primary interface for AI coding assistants (Cursor, Windsurf, GitHub Copilot, Cl
 - **Mermaid.js diagrams** - Architecture visualization (extended with custom annotations)
 
 **Structure:**
-```markdown
-# Feature Name
+
+Each .sm file contains the following sections:
+
+1. **Feature Name** (H1 heading: `# Feature Name`) - The name of the feature or system
+2. **Overview** (H2 heading: `## Overview`) - High-level description of what it does (markdown)
+3. **Requirements** (H2 heading: `## Requirements`) - Bullet list of functional/technical requirements
+4. **Architecture** (H2 heading: `## Architecture`) - Mermaid diagram showing system structure
+5. **Design Decisions** (H2 heading: `## Design Decisions`) - Rationale and reasoning behind choices (markdown)
+6. **Integration Points** (H2 heading: `## Integration Points`) - Bullet list of connections to other parts
+7. **Notes** (H2 heading: `## Notes`) - Additional context, warnings, optimizations (markdown)
+
+**Example:**
+````markdown
+# User Authentication
 
 ## Overview
-[Markdown description of the feature]
+Secure user authentication with JWT tokens, supporting email/password and OAuth providers.
 
 ## Requirements
-- [Requirement 1]
-- [Requirement 2]
+- Secure password hashing (bcrypt)
+- JWT token generation and validation
+- OAuth 2.0 integration
+- Session management
 
 ## Architecture
-
 ```mermaid
 graph TD
-    A[Component A] --> B[Component B]
-    B --> C[Component C]
+    Client[Client App] --> AuthAPI[Auth API]
+    AuthAPI --> AuthService[Auth Service]
+    AuthService --> UserDB[(User Database)]
+    AuthService --> TokenService[JWT Token Service]
 ```
 
 ## Design Decisions
-[Rationale and architectural choices]
+### Why JWT over sessions?
+- Stateless authentication for horizontal scaling
+- Better for microservices architecture
+- Mobile app support
+
+## Integration Points
+- **User Service**: Validates user credentials
+- **Email Service**: Sends password reset emails
+- **Logging Service**: Audit trail for auth events
 
 ## Notes
-[Warnings, optimization tips, duplication alerts]
-```
+⚠️ **Security**: Ensure HTTPS in production
+💡 **Optimization**: Consider refresh token rotation
+````
 
 **Storage Location:** `.specmind/` folder in repository root
 

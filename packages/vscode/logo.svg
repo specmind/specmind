@@ -1,0 +1,7 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background square -->
+  <rect width="256" height="256" fill="#000000"/>
+
+  <!-- ## symbols with monospace terminal font -->
+  <text x="128" y="175" font-family="Menlo, Monaco, 'Courier New', monospace" font-size="120" font-weight="bold" fill="white" text-anchor="middle">##</text>
+</svg>

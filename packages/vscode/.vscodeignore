@@ -1,0 +1,25 @@
+# Source files (only include compiled dist/)
+src/**
+tsconfig.json
+
+# Build outputs to exclude
+*.map
+
+# Development files
+.vscode/**
+.vscode-test/**
+node_modules/**/.bin/**
+
+# Documentation for development
+PUBLISHING.md
+
+# Git files
+.gitignore
+
+# Test files
+test/**
+*.test.ts
+
+# Misc
+.DS_Store
+*.log

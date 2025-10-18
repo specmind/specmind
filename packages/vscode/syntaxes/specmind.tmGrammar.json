@@ -1,0 +1,227 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "SpecMind",
+  "scopeName": "source.specmind",
+  "patterns": [
+    {
+      "include": "#heading"
+    },
+    {
+      "include": "#mermaid-block"
+    },
+    {
+      "include": "#list"
+    },
+    {
+      "include": "#emphasis"
+    },
+    {
+      "include": "#link"
+    },
+    {
+      "include": "#inline-code"
+    },
+    {
+      "include": "#emoji"
+    }
+  ],
+  "repository": {
+    "heading": {
+      "patterns": [
+        {
+          "name": "markup.heading.1.specmind",
+          "match": "^(#{1})\\s+(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.heading.specmind"
+            },
+            "2": {
+              "name": "entity.name.section.specmind"
+            }
+          }
+        },
+        {
+          "name": "markup.heading.2.specmind",
+          "match": "^(#{2})\\s+(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.heading.specmind"
+            },
+            "2": {
+              "name": "entity.name.section.specmind"
+            }
+          }
+        },
+        {
+          "name": "markup.heading.3.specmind",
+          "match": "^(#{3})\\s+(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.heading.specmind"
+            },
+            "2": {
+              "name": "entity.name.section.specmind"
+            }
+          }
+        }
+      ]
+    },
+    "mermaid-block": {
+      "name": "markup.code.specmind",
+      "begin": "^```mermaid$",
+      "end": "^```$",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.markdown.codeFence.begin.specmind"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.markdown.codeFence.end.specmind"
+        }
+      },
+      "contentName": "source.mermaid.specmind",
+      "patterns": [
+        {
+          "include": "#mermaid-syntax"
+        }
+      ]
+    },
+    "mermaid-syntax": {
+      "patterns": [
+        {
+          "name": "keyword.control.mermaid.specmind",
+          "match": "\\b(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitgraph|requirement|TD|TB|BT|RL|LR)\\b"
+        },
+        {
+          "name": "keyword.operator.mermaid.specmind",
+          "match": "(-->|->|<-->|<->|==|==>|<==|<=>|-.->|<-.-|--)"
+        },
+        {
+          "name": "entity.name.function.mermaid.specmind",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "string.quoted.double.mermaid.specmind",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.mermaid.specmind",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.mermaid.specmind",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.mermaid.specmind",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "entity.name.tag.mermaid.specmind",
+          "match": "\\[([^\\]]+)\\]",
+          "captures": {
+            "1": {
+              "name": "string.unquoted.mermaid.specmind"
+            }
+          }
+        },
+        {
+          "name": "support.function.mermaid.specmind",
+          "match": "\\b(subgraph|end)\\b"
+        }
+      ]
+    },
+    "list": {
+      "patterns": [
+        {
+          "name": "markup.list.unnumbered.specmind",
+          "match": "^\\s*([*+-])\\s+(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.list.begin.specmind"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emphasis"
+                },
+                {
+                  "include": "#link"
+                },
+                {
+                  "include": "#inline-code"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "emphasis": {
+      "patterns": [
+        {
+          "name": "markup.bold.specmind",
+          "match": "(\\*\\*|__)([^*_]+)(\\*\\*|__)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.begin.specmind"
+            },
+            "2": {
+              "name": "markup.bold.content.specmind"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.end.specmind"
+            }
+          }
+        },
+        {
+          "name": "markup.italic.specmind",
+          "match": "(\\*|_)([^*_]+)(\\*|_)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.begin.specmind"
+            },
+            "2": {
+              "name": "markup.italic.content.specmind"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.end.specmind"
+            }
+          }
+        }
+      ]
+    },
+    "link": {
+      "name": "markup.underline.link.specmind",
+      "match": "\\[([^\\]]+)\\]\\(([^)]+)\\)",
+      "captures": {
+        "1": {
+          "name": "string.other.link.title.specmind"
+        },
+        "2": {
+          "name": "markup.underline.link.specmind"
+        }
+      }
+    },
+    "inline-code": {
+      "name": "markup.inline.raw.specmind",
+      "match": "`([^`]+)`",
+      "captures": {
+        "1": {
+          "name": "markup.inline.raw.content.specmind"
+        }
+      }
+    },
+    "emoji": {
+      "name": "constant.other.emoji.specmind",
+      "match": "[⚠️💡🔧📱🏗️📊🎯✅❌🔍🛠️🚀📋🔄📝]"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "name": "specmind-vscode",
+  "displayName": "SpecMind",
+  "description": "Visual preview and syntax highlighting for SpecMind .sm architecture specification files",
+  "version": "0.1.1",
+  "publisher": "SpecMind",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/specmind/specmind/issues"
+  },
+  "homepage": "https://github.com/specmind/specmind/tree/main/packages/vscode#readme",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Visualization"
+  ],
+  "keywords": [
+    "specmind",
+    "architecture",
+    "documentation",
+    "mermaid",
+    "diagrams",
+    "markdown",
+    "specification",
+    "design"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "specmind",
+        "aliases": ["SpecMind", "specmind"],
+        "extensions": [".sm"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "specmind",
+        "scopeName": "source.specmind",
+        "path": "./syntaxes/specmind.tmGrammar.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "specmind.openPreview",
+        "title": "Open Preview",
+        "category": "SpecMind",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "specmind.openPreviewToSide",
+        "title": "Open Preview to the Side",
+        "category": "SpecMind",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "specmind.openPreview",
+          "when": "resourceExtname == .sm",
+          "group": "navigation"
+        },
+        {
+          "command": "specmind.openPreviewToSide",
+          "when": "resourceExtname == .sm",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "specmind.openPreview",
+          "when": "resourceExtname == .sm",
+          "group": "1_open"
+        },
+        {
+          "command": "specmind.openPreviewToSide",
+          "when": "resourceExtname == .sm",
+          "group": "1_open"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "specmind.openPreview",
+          "when": "resourceExtname == .sm",
+          "group": "navigation@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "specmind.openPreview",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "resourceExtname == .sm"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onLanguage:specmind"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
+    "vscode:prepublish": "pnpm build"
+  },
+  "dependencies": {
+    "@specmind/format": "workspace:*",
+    "mermaid": "^10.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.6.3"
+  }
+}

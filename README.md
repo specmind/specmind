@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/Node-18+-green.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node-20+-green.svg)](https://nodejs.org/)
 
 ---
 
@@ -42,10 +42,12 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 ```
 
 Each feature gets a `.sm` file containing:
-- Feature overview and requirements (markdown)
-- Architecture diagram (Mermaid.js)
-- Design decisions and rationale
-- Integration points with existing system
+- **Overview** - High-level description (markdown)
+- **Requirements** - Bullet list of functional/technical requirements
+- **Architecture** - Mermaid diagram showing system structure
+- **Design Decisions** - Rationale and reasoning behind choices
+- **Integration Points** - Bullet list of connections to other parts
+- **Notes** - Additional context, warnings, optimizations
 
 ---
 
@@ -116,10 +118,11 @@ The AI will analyze your codebase and create `.specmind/system.sm` with your arc
 ```
 
 Creates `.specmind/features/real-time-notifications.sm` with:
-- Feature requirements
-- Proposed architecture
+- Overview and requirements
+- Proposed architecture diagram
+- Design decisions and rationale
 - Integration points
-- Design decisions
+- Notes section for additional context
 
 ```
 /implement "Real-time Notifications"
@@ -131,7 +134,7 @@ The AI uses the `.sm` file as context to implement code that aligns with your ar
 
 ## Example .sm File
 
-```markdown
+````markdown
 # User Authentication
 
 ## Overview
@@ -146,7 +149,6 @@ and OAuth providers (Google, GitHub).
 - Password reset flow
 
 ## Architecture
-
 ```mermaid
 graph TD
     Client[Client App] -->|POST /auth/login| AuthAPI[Auth API]
@@ -179,6 +181,7 @@ graph TD
 ## Notes
 ⚠️ **Security**: Ensure HTTPS in production
 💡 **Optimization**: Consider refresh token rotation
+````
 
 ---
 
@@ -213,7 +216,7 @@ specmind/
 
 ### Technology Stack
 - **Language**: TypeScript 5.x
-- **Runtime**: Node.js 18+
+- **Runtime**: Node.js 20+
 - **Parser**: Tree-sitter (multi-language AST)
 - **Diagrams**: Mermaid.js
 - **Monorepo**: pnpm workspaces
