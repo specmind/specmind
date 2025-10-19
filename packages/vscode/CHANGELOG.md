@@ -2,6 +2,17 @@
 
 All notable changes to the SpecMind VS Code extension will be documented in this file.
 
+## [0.1.2] - 2025-10-18
+
+### Fixed
+- Fixed "Cannot find module '@specmind/format'" error by bundling dependencies with esbuild
+- Updated to use new `tryParseSmFile` API from @specmind/format package
+
+### Changed
+- Switched from TypeScript compilation to esbuild for proper dependency bundling
+- Extension now extracts title from H1 heading instead of metadata
+- Simplified file type detection based on filename (system.sm vs features/*.sm)
+
 ## [0.1.1] - 2025-10-18
 
 ### Added

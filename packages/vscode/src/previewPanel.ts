@@ -92,16 +92,22 @@ export class SpecMindPreviewPanel {
       const content = readFileSync(uri.fsPath, 'utf8')
       const fileName = uri.fsPath.split('/').pop() || 'Unknown'
 
-      // Try to parse for validation and title extraction
-      const { parseSmFile } = await import('@specmind/format')
-      const parseResult = parseSmFile(content)
+      // Try to parse for validation
+      const { tryParseSmFile } = await import('@specmind/format')
+      const parseResult = tryParseSmFile(content)
 
       let title = 'SpecMind Preview'
       let type: 'system' | 'feature' = 'feature'
 
-      if (parseResult.success && parseResult.data) {
-        title = parseResult.data.name
-        type = parseResult.data.type
+      // Extract title from first H1 heading in content
+      const h1Match = content.match(/^#\s+(.+)$/m)
+      if (h1Match && h1Match[1]) {
+        title = h1Match[1].trim()
+      }
+
+      // Determine type based on file path (system.sm vs features/*.sm)
+      if (fileName === 'system.sm') {
+        type = 'system'
       }
 
       // Generate HTML content from raw markdown

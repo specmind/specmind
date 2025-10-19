@@ -1,198 +1,115 @@
-import { SmFile, SmFileSchema, RawSmFile, RawSmFileSchema } from './schemas.js'
+import { SmFile, SmFileSchema } from './schemas.js'
 
 /**
- * Parses a .sm file content from markdown format
+ * Extracts all Mermaid diagrams from markdown content
  *
- * Expected format (CONSTITUTION.md Section 4.2):
- * ```markdown
- * # Feature Name
- *
- * ## Overview
- * [Markdown description]
- *
- * ## Requirements
- * - [Requirement 1]
- * - [Requirement 2]
- *
- * ## Architecture
- * ```mermaid
- * [Mermaid diagram]
- * ```
- *
- * ## Design Decisions
- * [Rationale]
- *
- * ## Integration Points
- * - [Integration 1]
- * - [Integration 2]
- *
- * ## Notes
- * [Warnings, optimizations]
- * ```
+ * @param markdown Markdown content
+ * @returns Array of Mermaid diagram strings (without the ``` markers)
  */
+export function extractMermaidDiagrams(markdown: string): string[] {
+  const diagrams: string[] = []
+  const lines = markdown.split('\n')
 
-export interface ParseResult {
-  success: boolean
-  data?: SmFile
-  error?: string
+  let inMermaidBlock = false
+  let currentDiagram: string[] = []
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (trimmed === '```mermaid') {
+      inMermaidBlock = true
+      currentDiagram = []
+      continue
+    }
+
+    if (trimmed === '```' && inMermaidBlock) {
+      inMermaidBlock = false
+      if (currentDiagram.length > 0) {
+        diagrams.push(currentDiagram.join('\n').trim())
+      }
+      currentDiagram = []
+      continue
+    }
+
+    if (inMermaidBlock) {
+      currentDiagram.push(line)
+    }
+  }
+
+  return diagrams
 }
 
-export function parseSmFile(content: string, type: 'system' | 'feature' = 'feature'): ParseResult {
-  try {
-    const sections = extractSections(content)
-
-    if (!sections.name) {
-      return {
-        success: false,
-        error: 'Missing feature name (# heading)'
-      }
-    }
-
-    const rawData: RawSmFile = {
-      name: sections.name,
-      overview: sections.overview,
-      requirements: sections.requirements,
-      architecture: sections.architecture,
-      designDecisions: sections.designDecisions,
-      integrationPoints: sections.integrationPoints,
-      notes: sections.notes,
-      type
-    }
-
-    // Validate raw data first
-    const validatedRaw = RawSmFileSchema.parse(rawData)
-
-    // Convert to full SmFile with defaults
-    const smFile: SmFile = {
-      name: validatedRaw.name,
-      overview: validatedRaw.overview || '',
-      requirements: validatedRaw.requirements || [],
-      architecture: validatedRaw.architecture || '',
-      designDecisions: validatedRaw.designDecisions || '',
-      integrationPoints: validatedRaw.integrationPoints || [],
-      notes: validatedRaw.notes || '',
-      type: validatedRaw.type || type,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-
-    const validatedData = SmFileSchema.parse(smFile)
-
+/**
+ * Validates that content is a valid .sm file
+ *
+ * Requirements:
+ * - Non-empty content
+ * - At least one Mermaid diagram
+ *
+ * @param content Markdown content
+ * @returns Validation result
+ */
+export function validateSmFile(content: string): { valid: boolean; error?: string } {
+  if (!content || content.trim().length === 0) {
     return {
-      success: true,
-      data: validatedData
+      valid: false,
+      error: 'Content cannot be empty'
     }
+  }
+
+  const diagrams = extractMermaidDiagrams(content)
+
+  if (diagrams.length === 0) {
+    return {
+      valid: false,
+      error: 'Must have at least one Mermaid diagram'
+    }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Parses a .sm file content
+ *
+ * @param content Markdown content
+ * @returns Parsed SmFile object
+ * @throws Error if validation fails
+ */
+export function parseSmFile(content: string): SmFile {
+  const validation = validateSmFile(content)
+
+  if (!validation.valid) {
+    throw new Error(validation.error)
+  }
+
+  const diagrams = extractMermaidDiagrams(content)
+
+  const smFile: SmFile = {
+    content,
+    diagrams
+  }
+
+  return SmFileSchema.parse(smFile)
+}
+
+/**
+ * Safe version of parseSmFile that returns a result object
+ *
+ * @param content Markdown content
+ * @returns Parse result with success flag
+ */
+export function tryParseSmFile(content: string):
+  | { success: true; data: SmFile }
+  | { success: false; error: string }
+{
+  try {
+    const data = parseSmFile(content)
+    return { success: true, data }
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown parsing error'
     }
   }
-}
-
-interface ExtractedSections {
-  name?: string
-  overview?: string
-  requirements?: string[]
-  architecture?: string
-  designDecisions?: string
-  integrationPoints?: string[]
-  notes?: string
-}
-
-function extractSections(content: string): ExtractedSections {
-  const lines = content.split('\n')
-  const sections: ExtractedSections = {}
-
-  let currentSection = ''
-  let currentContent: string[] = []
-  let inCodeBlock = false
-  let codeBlockType = ''
-
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-
-    // Handle code blocks
-    if (trimmedLine.startsWith('```')) {
-      if (!inCodeBlock) {
-        inCodeBlock = true
-        codeBlockType = trimmedLine.slice(3).trim()
-        if (currentSection === 'architecture' && codeBlockType === 'mermaid') {
-          // Start of mermaid block - don't include the ``` line
-          continue
-        }
-      } else {
-        inCodeBlock = false
-        if (currentSection === 'architecture' && codeBlockType === 'mermaid') {
-          // End of mermaid block - process the content
-          sections.architecture = currentContent.join('\n').trim()
-          currentContent = []
-          currentSection = ''
-          continue
-        }
-        codeBlockType = ''
-      }
-    }
-
-    // Extract main heading (feature name)
-    if (trimmedLine.startsWith('# ') && !inCodeBlock) {
-      sections.name = trimmedLine.slice(2).trim()
-      continue
-    }
-
-    // Extract section headings
-    if (trimmedLine.startsWith('## ') && !inCodeBlock) {
-      // Process previous section
-      if (currentSection && currentContent.length > 0) {
-        processSectionContent(sections, currentSection, currentContent)
-      }
-
-      currentSection = trimmedLine.slice(3).trim().toLowerCase()
-      currentContent = []
-      continue
-    }
-
-    // Collect content for current section
-    if (currentSection && trimmedLine !== '') {
-      currentContent.push(line)
-    }
-  }
-
-  // Process final section
-  if (currentSection && currentContent.length > 0) {
-    processSectionContent(sections, currentSection, currentContent)
-  }
-
-  return sections
-}
-
-function processSectionContent(sections: ExtractedSections, sectionName: string, content: string[]) {
-  const textContent = content.join('\n').trim()
-
-  switch (sectionName) {
-    case 'overview':
-      sections.overview = textContent
-      break
-    case 'requirements':
-      sections.requirements = extractListItems(textContent)
-      break
-    case 'design decisions':
-      sections.designDecisions = textContent
-      break
-    case 'integration points':
-      sections.integrationPoints = extractListItems(textContent)
-      break
-    case 'notes':
-      sections.notes = textContent
-      break
-  }
-}
-
-function extractListItems(content: string): string[] {
-  return content
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.startsWith('- '))
-    .map(line => line.slice(2).trim())
-    .filter(item => item.length > 0)
 }

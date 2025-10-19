@@ -5,7 +5,7 @@
   "description": "Architecture that evolves with your code",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/specmind.git"
+    "url": "https://github.com/specmind/specmind.git"
   },
   "license": "MIT",
   "engines": {

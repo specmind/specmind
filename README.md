@@ -32,7 +32,7 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 
 ```bash
 # 1. Initialize - Analyze existing codebase
-/init
+/analyze
 
 # 2. Design - Plan new feature architecture
 /design "User Authentication"
@@ -42,19 +42,17 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 ```
 
 Each feature gets a `.sm` file containing:
-- **Overview** - High-level description (markdown)
-- **Requirements** - Bullet list of functional/technical requirements
-- **Architecture** - Mermaid diagram showing system structure
-- **Design Decisions** - Rationale and reasoning behind choices
-- **Integration Points** - Bullet list of connections to other parts
-- **Notes** - Additional context, warnings, optimizations
+- **Markdown documentation** - Any structure you want (customize as needed)
+- **Mermaid diagram(s)** - Visual architecture representation
+
+The default prompts suggest sections like Overview, Requirements, Architecture, Design Decisions, Integration Points, and Notes - but you can customize these to fit your workflow.
 
 ---
 
 ## Features
 
 ### 🎯 Spec-Driven Development
-- `/init` - Analyzes your codebase and generates initial architecture
+- `/analyze` - Analyzes your codebase and generates initial architecture
 - `/design` - Creates feature specs with diagrams before coding
 - `/implement` - Implements code aligned with architecture
 
@@ -63,15 +61,18 @@ Each feature gets a `.sm` file containing:
 - Markdown + Mermaid.js - Documentation and diagrams in one
 - Git-friendly - Version control for your architecture
 - One file per feature - Complete context in a single place
+- Flexible structure - Customize sections to fit your needs
 
-### 🔍 Multi-Language Support
-- Tree-sitter powered parsing - Supports 50+ languages
+### 🔍 Code Analysis
+- Tree-sitter powered parsing - Fast and accurate
 - Extract components, relationships, dependencies automatically
-- Works with TypeScript, Python, Go, Rust, Java, and more
+- Currently supports TypeScript and JavaScript (more languages coming soon)
 
-### 🛠️ Works Everywhere
-- **Slash Commands** - Use in Cursor, Windsurf, GitHub Copilot, Claude Code
-- **CLI** - Integrate into scripts and CI/CD pipelines
+### 🛠️ AI Assistant Integration
+- ✅ **Claude Code** - Supported
+- 🚧 **Cursor** - Coming Soon
+- 🚧 **Windsurf** - Coming Soon
+- 🚧 **GitHub Copilot** - Coming Soon
 - **VS Code Extension** - Visual diagram rendering and syntax highlighting
 
 ---
@@ -80,35 +81,36 @@ Each feature gets a `.sm` file containing:
 
 > **Note:** SpecMind is currently in active development. Star the repo to follow progress!
 
-### Installation (Coming Soon)
+> **Requirements:** Currently supports **Claude Code**. Support for Cursor, Windsurf, and GitHub Copilot coming soon.
+
+### Installation
+
+**Step 1: Setup SpecMind for your AI assistant**
 
 ```bash
-# Install CLI globally
+# Quick setup with npx (recommended)
+npx specmind setup claude-code
+
+# Or interactive mode - choose your assistant(s)
+npx specmind setup
+
+# Or install globally first
 npm install -g specmind
-
-# Or use with npx
-npx specmind init
+specmind setup claude-code
 ```
 
-### Basic Usage
+This copies the slash command files to your project (e.g., `.claude/commands/` for Claude Code).
 
-```bash
-# Initialize your project
-specmind init
+**Step 2: Install VS Code extension (optional)**
 
-# Design a new feature
-specmind design "Payment Processing"
+Search "SpecMind" in VS Code extensions marketplace for visual .sm file rendering.
 
-# Implement the feature (with AI context)
-specmind implement "Payment Processing"
-```
+### Using Slash Commands
 
-### Using with AI Assistants
-
-In Cursor, Windsurf, or GitHub Copilot:
+In Claude Code:
 
 ```
-/init
+/analyze
 ```
 
 The AI will analyze your codebase and create `.specmind/system.sm` with your architecture.
@@ -132,7 +134,24 @@ The AI uses the `.sm` file as context to implement code that aligns with your ar
 
 ---
 
+## Supported AI Assistants
+
+SpecMind uses slash commands that are specific to each AI coding assistant. Here's our current support status:
+
+| AI Assistant | Status | Implementation Method | Commands |
+|--------------|--------|----------------------|----------|
+| **Claude Code** | ✅ Supported | `.claude/commands/` invoking `npx specmind` | `/analyze`, `/design`, `/implement` |
+| **Cursor** | 🚧 Coming Soon | `.cursorrules` + bash invocation | Planned |
+| **Windsurf** | 🚧 Coming Soon | Cascade commands + bash invocation | Planned |
+| **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
+
+Each AI assistant requires its own slash command implementation, but all invoke the same `specmind` CLI wrapper which outputs JSON for the LLM to process.
+
+---
+
 ## Example .sm File
+
+Here's an example using the recommended structure (you can customize this):
 
 ````markdown
 # User Authentication
@@ -183,6 +202,8 @@ graph TD
 💡 **Optimization**: Consider refresh token rotation
 ````
 
+> **Note:** This structure is just a suggestion. You can modify the prompts in `assistants/_shared/` to use different sections or formats.
+
 ---
 
 ## Project Structure
@@ -207,10 +228,16 @@ SpecMind is built as a TypeScript monorepo with clear package boundaries:
 
 ```
 specmind/
+├── assistants/     # AI assistant integrations
+│   ├── _shared/    # Shared prompt templates (✅ Implemented)
+│   ├── claude-code/  # Claude Code integration (✅ Implemented)
+│   ├── cursor/       # Cursor integration (🚧 Planned)
+│   ├── windsurf/     # Windsurf integration (🚧 Planned)
+│   └── copilot/      # Copilot integration (🚧 Planned)
 ├── packages/
 │   ├── core/       # @specmind/core - Analysis engine (✅ Implemented)
 │   ├── format/     # @specmind/format - .sm file parser (✅ Implemented)
-│   ├── cli/        # specmind - CLI tool (🚧 Planned)
+│   ├── cli/        # specmind - CLI wrapper + setup (✅ Implemented)
 │   └── vscode/     # VS Code extension (✅ Published)
 ```
 
@@ -233,22 +260,18 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] Tree-sitter integration (@specmind/core)
 - [x] .sm file format parser (@specmind/format)
 - [x] VS Code extension (syntax highlighting + preview)
-- [ ] Basic CLI commands (`init`, `design`)
-- [ ] Architecture diagram generation
-
-### Phase 2: AI Integration
-- [ ] Slash commands for AI assistants
-- [ ] LLM-powered architecture generation
-- [ ] Intelligent diagram updates
+- [x] Slash commands for AI assistants
+- [x] Architecture diagram generation
+- [x] LLM-powered documentation generation
 - [ ] Code alignment validation
 
-### Phase 3: Advanced Features
+### Phase 2: Advanced Features
 - [ ] Multi-service architecture support
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
 
-### Phase 4: Community & Ecosystem
+### Phase 3: Community & Ecosystem
 - [ ] Plugin system
 - [ ] Custom diagram types
 - [ ] Architecture templates
@@ -270,7 +293,7 @@ We welcome contributions! SpecMind is built in the open, and we'd love your help
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/specmind.git
+git clone https://github.com/specmind/specmind.git
 cd specmind
 
 # Install dependencies
@@ -312,8 +335,8 @@ Architecture Spec → Implementation → Validated Architecture
 1. **Architecture evolves with code** - Not after, not separately
 2. **Text-based everything** - Git-friendly, searchable, composable
 3. **One feature, one file** - Complete context in a single .sm file
-4. **AI-augmented, not AI-dependent** - Works with or without AI
-5. **Multi-language from day one** - No language lock-in
+4. **AI-powered by design** - LLM generates documentation, tree-sitter analyzes code
+5. **Extensible language support** - Built on tree-sitter for future multi-language support
 
 See [CONSTITUTION.md](./CONSTITUTION.md) for our complete philosophy and principles.
 
@@ -331,15 +354,15 @@ SpecMind is **workflow-first**, not just diagramming. It:
 
 ### Do I need AI to use SpecMind?
 
-No! SpecMind CLI works standalone. AI assistants make it more powerful, but they're optional.
+Yes! SpecMind is AI-powered by design. All three slash commands (`/analyze`, `/design`, `/implement`) are LLM-powered and work by invoking the `specmind` CLI to get code analysis data (via tree-sitter), then use that data to generate documentation and diagrams.
 
 ### What languages are supported?
 
-Any language with a tree-sitter grammar (50+ languages including TypeScript, Python, Go, Rust, Java, C++, etc.)
+Currently TypeScript and JavaScript. Support for additional languages (Python, Go, Rust, Java, C++, etc.) is planned - tree-sitter supports 50+ languages.
 
 ### Can I use this with existing projects?
 
-Yes! `/init` analyzes your existing codebase and generates the initial architecture.
+Yes! `/analyze` analyzes your existing codebase and generates the initial architecture.
 
 ### Is this only for web apps?
 
@@ -364,9 +387,9 @@ Built with:
 
 ## Connect
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/specmind/issues)
-- **Discussions**: [Share ideas and get help](https://github.com/yourusername/specmind/discussions)
-- **Twitter**: Follow updates [@specmind](https://twitter.com/specmind) (coming soon)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/specmind/specmind/issues)
+- **Discussions**: [Share ideas and get help](https://github.com/specmind/specmind/discussions)
+- **Twitter**: Follow updates [@specmind](https://twitter.com/specmindai) (coming soon)
 
 ---
 

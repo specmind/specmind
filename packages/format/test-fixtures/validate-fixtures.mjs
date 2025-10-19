@@ -14,7 +14,7 @@
 import { readFileSync, existsSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { parseSmFile, writeSmFile, validateSmFileForWriting } from '../dist/index.js'
+import { tryParseSmFile, validateSmFile } from '../dist/index.js'
 
 // Get directory of this script
 const __filename = fileURLToPath(import.meta.url)
@@ -29,12 +29,17 @@ function log(color, symbol, message) {
   console.log(`${color}${symbol}${RESET} ${message}`)
 }
 
-function success(message) { log(GREEN, '✅', message) }
-function error(message) { log(RED, '❌', message) }
-function warning(message) { log(YELLOW, '⚠️', message) }
-function info(message) { console.log(`ℹ️  ${message}`) }
+function success(message) {
+  log(GREEN, '✅', message)
+}
+function error(message) {
+  log(RED, '❌', message)
+}
+function info(message) {
+  console.log(`ℹ️  ${message}`)
+}
 
-async function validateFile(filePath, type = 'feature') {
+async function validateFile(filePath) {
   const relativePath = filePath.replace(process.cwd() + '/', '')
 
   if (!existsSync(filePath)) {
@@ -47,8 +52,17 @@ async function validateFile(filePath, type = 'feature') {
     const content = readFileSync(filePath, 'utf8')
     info(`Validating ${relativePath} (${content.length} chars)`)
 
+    // Validate
+    const validation = validateSmFile(content)
+    if (!validation.valid) {
+      error(`Validation failed: ${validation.error}`)
+      return false
+    }
+
+    success(`Validation passed`)
+
     // Parse
-    const parseResult = parseSmFile(content, type)
+    const parseResult = tryParseSmFile(content)
     if (!parseResult.success) {
       error(`Parse failed: ${parseResult.error}`)
       return false
@@ -56,40 +70,10 @@ async function validateFile(filePath, type = 'feature') {
 
     const smFile = parseResult.data
     success(`Parsed successfully`)
-    console.log(`   Name: "${smFile.name}"`)
-    console.log(`   Type: ${smFile.type}`)
-    console.log(`   Requirements: ${smFile.requirements.length}`)
-    console.log(`   Integration Points: ${smFile.integrationPoints.length}`)
-    console.log(`   Architecture: ${smFile.architecture.length} chars`)
-
-    // Validate for writing
-    const validation = validateSmFileForWriting(smFile)
-    if (!validation.valid) {
-      warning(`Writing validation issues:`)
-      validation.issues.forEach(issue => console.log(`     - ${issue}`))
-    } else {
-      success(`Writing validation passed`)
-    }
-
-    // Test roundtrip
-    const writeResult = writeSmFile(smFile)
-    if (!writeResult.success) {
-      error(`Write failed: ${writeResult.error}`)
-      return false
-    }
-
-    success(`Write successful (${writeResult.content.length} chars)`)
-
-    // Compare lengths (rough roundtrip check)
-    const sizeDiff = Math.abs(content.length - writeResult.content.length)
-    if (sizeDiff > 50) { // Allow some whitespace differences
-      warning(`Size difference: ${sizeDiff} chars (original: ${content.length}, generated: ${writeResult.content.length})`)
-    } else {
-      success(`Roundtrip size check passed`)
-    }
+    console.log(`   Content: ${smFile.content.length} chars`)
+    console.log(`   Diagrams: ${smFile.diagrams.length}`)
 
     return true
-
   } catch (err) {
     error(`Validation error: ${err.message}`)
     return false
@@ -100,14 +84,14 @@ async function main() {
   console.log('🧪 SpecMind .sm File Fixture Validation\n')
 
   const files = [
-    { path: join(FIXTURES_DIR, 'features/user-authentication.sm'), type: 'feature' },
-    { path: join(FIXTURES_DIR, 'system.sm'), type: 'system' }
+    join(FIXTURES_DIR, 'features/user-authentication.sm'),
+    join(FIXTURES_DIR, 'system.sm')
   ]
 
   let allPassed = true
 
-  for (const { path, type } of files) {
-    const passed = await validateFile(resolve(path), type)
+  for (const path of files) {
+    const passed = await validateFile(resolve(path))
     allPassed = allPassed && passed
     console.log()
   }

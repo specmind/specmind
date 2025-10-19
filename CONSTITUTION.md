@@ -3,9 +3,10 @@
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
 **Last Updated:** 2025-10-18
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 ## Changelog
+- **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
 - **v1.4.0** (2025-10-18): Standardized testing structure - all packages use `src/__tests__/` for test files, vitest v3.2.4+, 80%+ coverage requirement. Added comprehensive testing guidelines in Section 6.4.
 - **v1.3.0** (2025-10-16): Added README sync rule - all user-facing changes in CONSTITUTION.md must be reflected in README.md. Created comprehensive README aligned with constitution.
 - **v1.2.0** (2025-10-16): Defined file naming convention - `system.sm` for root, kebab-case slugified names for features. No timestamps in filenames, git history for versioning.
@@ -80,11 +81,20 @@ This document defines the core architectural decisions, principles, and constrai
 
 ```
 specmind/
+├── assistants/         # AI assistant integrations
+│   ├── _shared/        # Shared prompt templates (inlined during setup)
+│   │   ├── analyze.md
+│   │   ├── design.md
+│   │   └── implement.md
+│   ├── claude-code/
+│   ├── cursor/
+│   ├── windsurf/
+│   └── copilot/
 ├── packages/
 │   ├── core/       # @specmind/core - Pure analysis logic
 │   ├── format/     # @specmind/format - .sm file format
-│   ├── cli/        # specmind - CLI tool
-│   └── vscode/     # VS Code extension
+│   ├── cli/        # specmind - CLI wrapper + setup command
+│   └── vscode/     # VS Code extension (viewer only)
 ```
 
 ### 3.2 Package Responsibilities
@@ -93,50 +103,89 @@ specmind/
 - Code analysis using tree-sitter
 - Architecture diagram generation
 - Architecture diffing
-- LLM orchestration
-- **No CLI or UI dependencies**
+- **Pure library** - no CLI interface, no dependencies on I/O
 - Exports clean, typed API
 
 **Key Modules:**
 - `analyzer/` - Tree-sitter based code analysis
 - `generator/` - Architecture diagram generation
 - `differ/` - Architecture diffing logic
-- `llm/` - LLM client and prompt management
 
 #### @specmind/format
-- .sm file parser
-- .sm file writer
-- .sm file validator
-- Mermaid.js integration for rendering
-- Zod schemas for type definitions
+- Extract Mermaid diagrams from markdown
+- Parse markdown content
+- Validate: markdown + at least one Mermaid diagram
+- Utilities for rendering
+- **No rigid schema** - flexible structure
 - **Standalone package** - can be used independently
 
 #### specmind (CLI)
-- Thin wrapper around @specmind/core
-- Command implementations (init, design, implement)
-- Terminal UI (chalk, ora, etc.)
-- Git integration
+- **Thin wrapper** around `@specmind/core`
+- **Two modes:**
+  1. **Setup mode** - `npx specmind setup <assistant>` - Copies slash commands to user's project
+  2. **Analysis mode** - `npx specmind analyze` - Invoked by AI assistants via bash, outputs JSON
+- Commands: `setup`, `analyze`
+- Example: `npx specmind analyze --format json`
+- Future commands: `diff`, `validate`
 
 #### vscode (VS Code Extension)
 - .sm file viewer with visual rendering
 - Syntax highlighting for .sm files
 - Webview panel for diagram visualization
-- Inline annotations and warnings
-- Optional CLI integration (if installed)
+- **Read-only viewer** - does not execute slash commands
 
 ### 3.3 Dependency Rules
 
 ```
-vscode → format (required)
-vscode → cli (optional, via subprocess)
+vscode → format (required for rendering)
 
 cli → core (required)
 cli → format (required)
 
-core → format (required)
+core → format (required for .sm file operations)
 
 format → (no internal dependencies)
 ```
+
+**Note:**
+- Slash commands are self-contained - `setup` inlines `_shared` prompt templates into command files
+- When executed by AI assistants, slash commands invoke the CLI via bash commands
+- The CLI outputs JSON which the LLM uses to generate documentation
+
+### 3.4 Installation & Setup
+
+**User Installation Flow:**
+
+1. **Install CLI globally** (optional, can use npx)
+   ```bash
+   npm install -g specmind
+   ```
+
+2. **Run setup for your AI assistant**
+   ```bash
+   # Interactive mode - choose assistant(s)
+   npx specmind setup
+
+   # Or specify assistant directly
+   npx specmind setup claude-code
+   npx specmind setup cursor
+
+   # Or multiple at once
+   npx specmind setup claude-code cursor
+   ```
+
+3. **Setup command copies files to project:**
+   - `claude-code`: Copies `assistants/claude-code/.claude/` → `.claude/`
+   - `cursor`: Copies `assistants/cursor/.cursorrules` → `.cursorrules`
+   - `windsurf`: Copies `assistants/windsurf/cascade/` → `.cascade/`
+   - `copilot`: Copies `assistants/copilot/instructions/` → `.github/copilot/`
+
+4. **Start using slash commands** in your AI assistant
+
+**Prompt Template Architecture:**
+- `assistants/_shared/` contains shared prompt logic (single source of truth)
+- `assistants/{name}/` contains assistant-specific wrappers that reference shared prompts
+- Each assistant folder shows how to integrate prompts into that specific tool
 
 ---
 
@@ -144,21 +193,31 @@ format → (no internal dependencies)
 
 ### 4.1 Slash Commands
 
-Primary interface for AI coding assistants (Cursor, Windsurf, GitHub Copilot, Claude Code)
+Primary interface for AI coding assistants. Each assistant requires its own slash command implementation.
+
+**Supported AI Assistants:**
+- ✅ **Claude Code** - Supported (via `.claude/commands/`)
+- 🚧 **Cursor** - Coming Soon (via `.cursorrules` + custom commands)
+- 🚧 **Windsurf** - Coming Soon (via Cascade commands)
+- 🚧 **GitHub Copilot** - Coming Soon (via `#file` references)
 
 **Core Commands:**
 
-#### `/init`
-- Analyzes connected repository using tree-sitter
-- Parses all code files to extract components and relationships
-- Generates initial architecture overview
-- Creates `.specmind/system.sm` with system architecture + documentation
+#### `/analyze`
+- Slash command that orchestrates system initialization
+- LLM executes: `npx specmind analyze --format json`
+- CLI wrapper calls `@specmind/core` to analyze codebase with tree-sitter
+- Returns JSON containing:
+  - Mermaid diagram (architecture visualization)
+  - Component metadata (files, classes, functions, relationships)
+- LLM receives JSON output and generates markdown documentation (Overview, Requirements, Design Decisions, etc.)
+- Creates `.specmind/system.sm` with diagram + documentation
 - Creates `.specmind/features/` directory for future feature specs
 
 #### `/design <feature-name>`
-- Analyzes code and user intent for new feature
+- LLM analyzes existing code and user intent for new feature
 - Slugifies feature name (e.g., "User Auth" → "user-auth")
-- Creates `.specmind/features/{slugified-name}.sm` with:
+- LLM generates feature specification with:
   - Feature overview and requirements (markdown)
   - Proposed architecture diagram (Mermaid)
   - Design decisions and rationale
@@ -168,31 +227,39 @@ Primary interface for AI coding assistants (Cursor, Windsurf, GitHub Copilot, Cl
 
 #### `/implement <feature-name>`
 - Reads `.specmind/features/{slugified-name}.sm` for context
-- Implements code aligned with documented architecture
+- LLM implements code aligned with documented architecture
 - Ensures structural and intent alignment
-- Updates the feature .sm file if implementation diverges from design
-- Adds notes/warnings to .sm file based on implementation learnings
+- LLM updates the feature .sm file if implementation diverges from design
+- LLM adds notes/warnings to .sm file based on implementation learnings
 - Updates system.sm if system-level changes were made
 
 ### 4.2 .sm File Format
 
-**Decision:** Feature specification files with .sm extension containing both markdown documentation and architecture diagrams
+**Decision:** Feature specification files with .sm extension containing markdown documentation and architecture diagrams
 
-**Format:** Hybrid format combining:
-- **Markdown sections** - Feature description, requirements, design decisions, notes
-- **Mermaid.js diagrams** - Architecture visualization (extended with custom annotations)
+**Format:** Flexible markdown files with embedded Mermaid diagrams
 
-**Structure:**
+**Core Requirements:**
+1. **Markdown** - Any structure, any sections (developers can customize)
+2. **At least one Mermaid diagram** - Architecture visualization
 
-Each .sm file contains the following sections:
+**Recommended Structure (not enforced):**
 
-1. **Feature Name** (H1 heading: `# Feature Name`) - The name of the feature or system
-2. **Overview** (H2 heading: `## Overview`) - High-level description of what it does (markdown)
-3. **Requirements** (H2 heading: `## Requirements`) - Bullet list of functional/technical requirements
-4. **Architecture** (H2 heading: `## Architecture`) - Mermaid diagram showing system structure
-5. **Design Decisions** (H2 heading: `## Design Decisions`) - Rationale and reasoning behind choices (markdown)
-6. **Integration Points** (H2 heading: `## Integration Points`) - Bullet list of connections to other parts
-7. **Notes** (H2 heading: `## Notes`) - Additional context, warnings, optimizations (markdown)
+The shared prompts suggest this structure as a best practice, but developers can modify:
+
+1. **Feature Name** (H1 heading: `# Feature Name`)
+2. **Overview** - High-level description
+3. **Requirements** - Functional/technical requirements
+4. **Architecture** - Mermaid diagram(s) showing system structure
+5. **Design Decisions** - Rationale and reasoning behind choices
+6. **Integration Points** - Connections to other parts
+7. **Notes** - Additional context, warnings, optimizations
+
+**Flexibility:**
+- Developers can modify prompts to use different sections
+- Add custom sections as needed
+- Multiple Mermaid diagrams are supported
+- No schema validation on section structure
 
 **Example:**
 ````markdown
@@ -237,7 +304,7 @@ graph TD
 **File Organization:**
 ```
 .specmind/
-├── system.sm               # Root system architecture (generated by /init)
+├── system.sm               # Root system architecture (generated by /analyze)
 ├── features/
 │   ├── user-auth.sm       # Feature: User Authentication
 │   ├── payment-flow.sm    # Feature: Payment Processing
@@ -250,7 +317,7 @@ graph TD
 **Naming Convention:**
 
 **Root File:**
-- **`system.sm`** - Generated by `/init` command
+- **`system.sm`** - Generated by `/analyze` command
 - Contains system-level architecture overview
 - Single file per repository
 
@@ -270,7 +337,7 @@ graph TD
 5. No timestamps in filename (use git history for versioning)
 
 **File Lifecycle:**
-- `/init` creates `system.sm`
+- `/analyze` creates `system.sm`
 - `/design "Feature Name"` creates `features/feature-name.sm`
 - Subsequent `/design "Feature Name"` updates the same file
 - Git history tracks all changes and evolution
@@ -296,20 +363,15 @@ graph TD
 
 ## 5. User Interfaces
 
-### 5.1 Primary Interface: Slash Commands
-- Works across multiple AI assistants
-- Natural integration with existing AI workflows
-- Guides AI to use @specmind/core APIs
+### 5.1 Slash Commands
+- Each AI assistant has its own slash command implementation
+- Commands invoke `@specmind/core` APIs
+- `/analyze`, `/design`, `/implement` commands
+- See Section 4.1 for supported assistants
 
-### 5.2 Secondary Interface: CLI
-- Standalone tool for scripts and CI/CD
-- `specmind init`, `specmind design`, `specmind implement`
-- Rich terminal output
-
-### 5.3 Tertiary Interface: VS Code Extension
+### 5.2 VS Code Extension
 - Visual feedback and diagram rendering
 - Syntax highlighting for .sm files
-- Inline annotations in code
 - Webview panel for interactive diagrams
 
 ---

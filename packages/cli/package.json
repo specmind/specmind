@@ -1,0 +1,35 @@
+{
+  "name": "specmind",
+  "version": "0.1.0",
+  "description": "CLI for SpecMind - AI-powered architecture documentation",
+  "type": "module",
+  "bin": {
+    "specmind": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "specmind",
+    "architecture",
+    "documentation",
+    "mermaid",
+    "cli"
+  ],
+  "author": "SpecMind",
+  "license": "MIT",
+  "dependencies": {
+    "@specmind/core": "workspace:*",
+    "@specmind/format": "workspace:*",
+    "commander": "^12.1.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  }
+}

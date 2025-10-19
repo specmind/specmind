@@ -2,7 +2,8 @@
   "name": "specmind-vscode",
   "displayName": "SpecMind",
   "description": "Visual preview and syntax highlighting for SpecMind .sm architecture specification files",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "type": "commonjs",
   "publisher": "SpecMind",
   "license": "MIT",
   "icon": "icon.png",
@@ -38,8 +39,13 @@
     "languages": [
       {
         "id": "specmind",
-        "aliases": ["SpecMind", "specmind"],
-        "extensions": [".sm"],
+        "aliases": [
+          "SpecMind",
+          "specmind"
+        ],
+        "extensions": [
+          ".sm"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -110,13 +116,13 @@
     "onLanguage:specmind"
   ],
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -watch",
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies",
-    "vscode:prepublish": "pnpm build"
+    "vscode:prepublish": "pnpm build --production"
   },
   "dependencies": {
     "@specmind/format": "workspace:*",
@@ -126,6 +132,7 @@
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.25.11",
     "typescript": "^5.6.3"
   }
 }

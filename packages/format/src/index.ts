@@ -1,38 +1,29 @@
 /**
  * @specmind/format
  *
- * .sm file format parser and writer for SpecMind
+ * Simplified .sm file format utilities for SpecMind
  *
  * This package provides:
- * - Zod schemas for .sm file validation
- * - Parser for reading .sm files from markdown
- * - Writer for generating .sm files to markdown
+ * - Mermaid diagram extraction from markdown
+ * - Simple validation (markdown + at least one diagram)
  * - Utilities for feature naming and file paths
+ *
+ * Based on CONSTITUTION.md Section 4.2:
+ * - .sm files are flexible markdown with any structure
+ * - Must contain at least one Mermaid diagram
+ * - No rigid section requirements
  */
 
 // Schemas
-export {
-  SmFileSchema,
-  RawSmFileSchema,
-  FeatureNameSchema,
-  type SmFile,
-  type RawSmFile,
-  type FeatureName
-} from './schemas.js'
+export { SmFileSchema, FeatureNameSchema, type SmFile, type FeatureName } from './schemas.js'
 
 // Parser
 export {
+  extractMermaidDiagrams,
+  validateSmFile,
   parseSmFile,
-  type ParseResult
+  tryParseSmFile
 } from './parser.js'
-
-// Writer
-export {
-  writeSmFile,
-  writeSmFileWithMetadata,
-  validateSmFileForWriting,
-  type WriteResult
-} from './writer.js'
 
 // Utilities
 export {
