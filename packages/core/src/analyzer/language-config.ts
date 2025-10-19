@@ -106,6 +106,39 @@ export const JAVASCRIPT_CONFIG: LanguageConfig = {
 }
 
 /**
+ * Python language configuration
+ */
+export const PYTHON_CONFIG: LanguageConfig = {
+  name: 'python',
+  fileExtensions: ['.py', '.pyi'],
+
+  functionNodeTypes: ['function_definition'],
+
+  classNodeTypes: ['class_definition'],
+
+  importNodeTypes: ['import_statement', 'import_from_statement'],
+
+  exportNodeTypes: [], // Python doesn't have explicit export statements
+
+  callNodeTypes: ['call'],
+
+  functionQuery: `
+    (function_definition) @function
+  `,
+
+  classQuery: `
+    (class_definition) @class
+  `,
+
+  importQuery: `
+    (import_statement) @import
+    (import_from_statement) @import
+  `,
+
+  exportQuery: '',
+}
+
+/**
  * Get language configuration by language name
  */
 export function getLanguageConfig(language: SupportedLanguage): LanguageConfig {
@@ -114,6 +147,8 @@ export function getLanguageConfig(language: SupportedLanguage): LanguageConfig {
       return TYPESCRIPT_CONFIG
     case 'javascript':
       return JAVASCRIPT_CONFIG
+    case 'python':
+      return PYTHON_CONFIG
     default:
       throw new Error(`Unsupported language: ${language}`)
   }
@@ -131,6 +166,10 @@ export function detectLanguage(filePath: string): SupportedLanguage | null {
 
   if (JAVASCRIPT_CONFIG.fileExtensions.includes(ext)) {
     return 'javascript'
+  }
+
+  if (PYTHON_CONFIG.fileExtensions.includes(ext)) {
+    return 'python'
   }
 
   return null

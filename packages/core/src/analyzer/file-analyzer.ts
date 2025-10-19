@@ -1,11 +1,25 @@
 import { readFile } from 'fs/promises'
-import type { FileAnalysis, SupportedLanguage } from '../types/index.js'
+import type { FileAnalysis, SupportedLanguage, ExportStatement } from '../types/index.js'
 import { detectLanguage } from './language-config.js'
 import { parseFile } from './parser.js'
-import { extractFunctions } from './extractors/functions.js'
-import { extractClasses } from './extractors/classes.js'
-import { extractImports, extractExports } from './extractors/imports.js'
 import { extractCalls, buildFunctionContext } from './extractors/calls.js'
+import {
+  extractTypeScriptFunctions,
+  extractTypeScriptClasses,
+  extractTypeScriptImports,
+  extractTypeScriptExports,
+} from './extractors/languages/typescript.js'
+import {
+  extractJavaScriptFunctions,
+  extractJavaScriptClasses,
+  extractJavaScriptImports,
+  extractJavaScriptExports,
+} from './extractors/languages/javascript.js'
+import {
+  extractPythonFunctions,
+  extractPythonClasses,
+  extractPythonImports,
+} from './extractors/languages/python.js'
 
 /**
  * Analyze a single file and extract all code elements
@@ -24,11 +38,31 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
     // Parse the file
     const tree = parseFile(filePath, content, language)
 
-    // Extract all elements
-    const functions = extractFunctions(tree, filePath, language)
-    const classes = extractClasses(tree, filePath, language)
-    const imports = extractImports(tree, filePath, language)
-    const exports = extractExports(tree, filePath, language)
+    // Extract all elements using language-specific extractors
+    let functions, classes, imports, exports: ExportStatement[]
+
+    switch (language) {
+      case 'typescript':
+        functions = extractTypeScriptFunctions(tree, filePath)
+        classes = extractTypeScriptClasses(tree, filePath)
+        imports = extractTypeScriptImports(tree, filePath)
+        exports = extractTypeScriptExports(tree, filePath)
+        break
+      case 'javascript':
+        functions = extractJavaScriptFunctions(tree, filePath)
+        classes = extractJavaScriptClasses(tree, filePath)
+        imports = extractJavaScriptImports(tree, filePath)
+        exports = extractJavaScriptExports(tree, filePath)
+        break
+      case 'python':
+        functions = extractPythonFunctions(tree, filePath)
+        classes = extractPythonClasses(tree, filePath)
+        imports = extractPythonImports(tree, filePath)
+        exports = [] // Python doesn't have explicit exports
+        break
+      default:
+        throw new Error(`Unsupported language: ${language}`)
+    }
 
     // Build function context and extract calls
     const functionContext = buildFunctionContext(functions, classes)
@@ -63,11 +97,31 @@ export function analyzeFileContent(
   // Parse the content
   const tree = parseFile(filePath, content, language)
 
-  // Extract all elements
-  const functions = extractFunctions(tree, filePath, language)
-  const classes = extractClasses(tree, filePath, language)
-  const imports = extractImports(tree, filePath, language)
-  const exports = extractExports(tree, filePath, language)
+  // Extract all elements using language-specific extractors
+  let functions, classes, imports, exports: ExportStatement[]
+
+  switch (language) {
+    case 'typescript':
+      functions = extractTypeScriptFunctions(tree, filePath)
+      classes = extractTypeScriptClasses(tree, filePath)
+      imports = extractTypeScriptImports(tree, filePath)
+      exports = extractTypeScriptExports(tree, filePath)
+      break
+    case 'javascript':
+      functions = extractJavaScriptFunctions(tree, filePath)
+      classes = extractJavaScriptClasses(tree, filePath)
+      imports = extractJavaScriptImports(tree, filePath)
+      exports = extractJavaScriptExports(tree, filePath)
+      break
+    case 'python':
+      functions = extractPythonFunctions(tree, filePath)
+      classes = extractPythonClasses(tree, filePath)
+      imports = extractPythonImports(tree, filePath)
+      exports = [] // Python doesn't have explicit exports
+      break
+    default:
+      throw new Error(`Unsupported language: ${language}`)
+  }
 
   // Build function context and extract calls
   const functionContext = buildFunctionContext(functions, classes)

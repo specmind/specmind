@@ -48,8 +48,18 @@ describe('Language Config', () => {
       expect(config.functionNodeTypes.length).toBeGreaterThan(0)
     })
 
+    it('should get Python config', () => {
+      const config = getLanguageConfig('python')
+
+      expect(config).toBeDefined()
+      expect(config.name).toBe('python')
+      expect(config.fileExtensions).toContain('.py')
+      expect(config.fileExtensions).toContain('.pyi')
+      expect(config.functionNodeTypes.length).toBeGreaterThan(0)
+    })
+
     it('should throw for unsupported language', () => {
-      expect(() => getLanguageConfig('python' as any)).toThrow('Unsupported language')
+      expect(() => getLanguageConfig('ruby' as any)).toThrow('Unsupported language')
     })
 
     it('should have custom queries for TypeScript', () => {

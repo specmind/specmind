@@ -136,7 +136,7 @@ export type CallExpression = z.infer<typeof CallExpressionSchema>
  */
 export const FileAnalysisSchema = z.object({
   filePath: z.string(),
-  language: z.enum(['typescript', 'javascript']),
+  language: z.enum(['typescript', 'javascript', 'python']),
   functions: z.array(FunctionDefinitionSchema).default([]),
   classes: z.array(ClassDefinitionSchema).default([]),
   imports: z.array(ImportStatementSchema).default([]),
@@ -172,7 +172,7 @@ export type CodebaseAnalysis = z.infer<typeof CodebaseAnalysisSchema>
 /**
  * Supported languages
  */
-export type SupportedLanguage = 'typescript' | 'javascript'
+export type SupportedLanguage = 'typescript' | 'javascript' | 'python'
 
 /**
  * Analysis options

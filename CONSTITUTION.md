@@ -3,9 +3,10 @@
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
 **Last Updated:** 2025-10-19
-**Version:** 1.6.0
+**Version:** 1.7.0
 
 ## Changelog
+- **v1.7.0** (2025-10-19): Implemented Python language support with language-specific extractor architecture. Added tree-sitter-python integration. Refactored extractors from generic (with conditionals) to language-specific implementations (typescript.ts, javascript.ts, python.ts) following "duplication is cheaper than wrong abstraction" principle. Python now fully supported for .py and .pyi files.
 - **v1.6.0** (2025-10-19): Enhanced `/design` and `/implement` workflow with color-coded architectural changes. Feature .sm files now show system-wide diagrams with green (added), yellow (modified), red (removed) components. Added system.changelog file to track architectural evolution. Implemented function/method call tracking for accurate sequence diagrams. Standardized two-diagram requirement across all .sm files.
 - **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
 - **v1.4.0** (2025-10-18): Standardized testing structure - all packages use `src/__tests__/` for test files, vitest v3.2.4+, 80%+ coverage requirement. Added comprehensive testing guidelines in Section 6.4.
@@ -74,7 +75,8 @@ This document defines the core architectural decisions, principles, and constrai
 - Extract all files, classes, modules, functions
 - Identify relationships and dependencies between components
 - Build component graphs
-- Support for TypeScript, Python, Go, Rust, Java, and more
+- Support for TypeScript/JavaScript (implemented) and Python (implemented)
+- Extensible to Go, Rust, Java, C#, and 50+ other languages
 
 ---
 
@@ -307,12 +309,38 @@ Secure user authentication with JWT tokens, supporting email/password and OAuth 
 - Session management
 
 ## Architecture
+
+### Component Diagram
 ```mermaid
 graph TD
     Client[Client App] --> AuthAPI[Auth API]
     AuthAPI --> AuthService[Auth Service]
     AuthService --> UserDB[(User Database)]
     AuthService --> TokenService[JWT Token Service]
+    AuthService --> OAuthService[OAuth Service]
+    OAuthService --> GoogleAuth[Google OAuth]
+    OAuthService --> GitHubAuth[GitHub OAuth]
+    TokenService --> Redis[(Redis Cache)]
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthAPI
+    participant AuthService
+    participant TokenService
+    participant UserDB
+
+    Client->>AuthAPI: POST /auth/login
+    AuthAPI->>AuthService: validateCredentials(email, password)
+    AuthService->>UserDB: findUser(email)
+    UserDB-->>AuthService: user
+    AuthService->>AuthService: verifyPassword(password, hash)
+    AuthService->>TokenService: generateToken(userId)
+    TokenService-->>AuthService: JWT token
+    AuthService-->>AuthAPI: token
+    AuthAPI-->>Client: { token, user }
 ```
 
 ## Design Decisions
@@ -419,11 +447,16 @@ graph TD
 - Build relationship graphs between components
 
 **Multi-language Support:**
-- TypeScript/JavaScript (via tree-sitter-typescript)
-- Python (via tree-sitter-python)
+
+Currently Supported:
+- TypeScript/JavaScript (via tree-sitter-typescript) ✅
+- Python (via tree-sitter-python) ✅
+
+Planned:
 - Go (via tree-sitter-go)
 - Rust (via tree-sitter-rust)
-- Extensible to 50+ languages
+- C#, Java, C++
+- Extensible to 50+ languages via tree-sitter
 
 ### 6.2 LLM Integration
 

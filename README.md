@@ -158,7 +158,8 @@ SpecMind uses tree-sitter for code analysis, enabling support for multiple progr
 |----------|--------|-------|
 | **TypeScript** | ✅ Supported | Full support for TS/TSX files |
 | **JavaScript** | ✅ Supported | Full support for JS/JSX files |
-| **Python** | 🚧 Planned | Next priority |
+| **Python** | ✅ Supported | Full support for .py/.pyi files |
+| **C#** | 🚧 Planned | Coming soon |
 | **Go** | 🚧 Planned | Coming soon |
 | **Rust** | 🚧 Planned | Coming soon |
 | **Java** | 🚧 Planned | Coming soon |
@@ -187,6 +188,8 @@ and OAuth providers (Google, GitHub).
 - Password reset flow
 
 ## Architecture
+
+### Component Diagram
 ```mermaid
 graph TD
     Client[Client App] -->|POST /auth/login| AuthAPI[Auth API]
@@ -197,6 +200,26 @@ graph TD
     OAuthService -->|OAuth Flow| GoogleAuth[Google OAuth]
     OAuthService -->|OAuth Flow| GitHubAuth[GitHub OAuth]
     TokenService --> Redis[(Redis Cache)]
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthAPI
+    participant AuthService
+    participant TokenService
+    participant UserDB
+
+    Client->>AuthAPI: POST /auth/login
+    AuthAPI->>AuthService: validateCredentials(email, password)
+    AuthService->>UserDB: findUser(email)
+    UserDB-->>AuthService: user
+    AuthService->>AuthService: verifyPassword(password, hash)
+    AuthService->>TokenService: generateToken(userId)
+    TokenService-->>AuthService: JWT token
+    AuthService-->>AuthAPI: token
+    AuthAPI-->>Client: { token, user }
 ```
 
 ## Design Decisions

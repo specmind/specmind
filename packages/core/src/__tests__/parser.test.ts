@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import Parser from 'tree-sitter'
 import { getParser, parseCode } from '../analyzer/parser.js'
 
 describe('Parser', () => {
@@ -21,8 +22,15 @@ describe('Parser', () => {
       expect(parser1).toBe(parser2)
     })
 
+    it('should create Python parser', () => {
+      const parser = getParser('python')
+
+      expect(parser).toBeDefined()
+      expect(parser).toBeInstanceOf(Parser)
+    })
+
     it('should throw error for unsupported language', () => {
-      expect(() => getParser('python' as any)).toThrow('Unsupported language')
+      expect(() => getParser('ruby' as any)).toThrow('Unsupported language')
     })
   })
 
