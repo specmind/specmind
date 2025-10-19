@@ -15,6 +15,8 @@ export default defineConfig({
         '**/__tests__/**',
         'vitest.config.ts',
         'src/types/index.ts', // Type definitions don't need test coverage
+        'test-fixtures/**', // Test fixture files are not production code
+        'scripts/**', // Build scripts are not production code
       ],
       thresholds: {
         lines: 80,

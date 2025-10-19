@@ -116,6 +116,22 @@ export const ExportStatementSchema = z.object({
 export type ExportStatement = z.infer<typeof ExportStatementSchema>
 
 /**
+ * Function or method call
+ */
+export const CallExpressionSchema = z.object({
+  callerName: z.string(), // Name of the function/method that makes the call
+  callerQualifiedName: z.string(), // Fully qualified name (e.g., "ClassName.methodName")
+  calleeName: z.string(), // Name of the function/method being called
+  calleeQualifiedName: z.string().optional(), // Fully qualified name if available
+  arguments: z.array(z.string()).default([]), // Argument expressions as strings
+  location: SourceLocationSchema,
+  isMethodCall: z.boolean().default(false), // true if calling on an object (obj.method())
+  receiver: z.string().optional(), // For method calls, the object/class being called on
+})
+
+export type CallExpression = z.infer<typeof CallExpressionSchema>
+
+/**
  * File analysis result
  */
 export const FileAnalysisSchema = z.object({
@@ -125,6 +141,7 @@ export const FileAnalysisSchema = z.object({
   classes: z.array(ClassDefinitionSchema).default([]),
   imports: z.array(ImportStatementSchema).default([]),
   exports: z.array(ExportStatementSchema).default([]),
+  calls: z.array(CallExpressionSchema).default([]),
 })
 
 export type FileAnalysis = z.infer<typeof FileAnalysisSchema>

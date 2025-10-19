@@ -5,6 +5,7 @@ import { parseFile } from './parser.js'
 import { extractFunctions } from './extractors/functions.js'
 import { extractClasses } from './extractors/classes.js'
 import { extractImports, extractExports } from './extractors/imports.js'
+import { extractCalls, buildFunctionContext } from './extractors/calls.js'
 
 /**
  * Analyze a single file and extract all code elements
@@ -29,6 +30,10 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
     const imports = extractImports(tree, filePath, language)
     const exports = extractExports(tree, filePath, language)
 
+    // Build function context and extract calls
+    const functionContext = buildFunctionContext(functions, classes)
+    const calls = extractCalls(tree, filePath, language, functionContext)
+
     return {
       filePath,
       language,
@@ -36,6 +41,7 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
       classes,
       imports,
       exports,
+      calls,
     }
   } catch (error) {
     throw new Error(
@@ -63,6 +69,10 @@ export function analyzeFileContent(
   const imports = extractImports(tree, filePath, language)
   const exports = extractExports(tree, filePath, language)
 
+  // Build function context and extract calls
+  const functionContext = buildFunctionContext(functions, classes)
+  const calls = extractCalls(tree, filePath, language, functionContext)
+
   return {
     filePath,
     language,
@@ -70,5 +80,6 @@ export function analyzeFileContent(
     classes,
     imports,
     exports,
+    calls,
   }
 }

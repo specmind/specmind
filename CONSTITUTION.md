@@ -2,10 +2,11 @@
 
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
-**Last Updated:** 2025-10-18
-**Version:** 1.5.0
+**Last Updated:** 2025-10-19
+**Version:** 1.6.0
 
 ## Changelog
+- **v1.6.0** (2025-10-19): Enhanced `/design` and `/implement` workflow with color-coded architectural changes. Feature .sm files now show system-wide diagrams with green (added), yellow (modified), red (removed) components. Added system.changelog file to track architectural evolution. Implemented function/method call tracking for accurate sequence diagrams. Standardized two-diagram requirement across all .sm files.
 - **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
 - **v1.4.0** (2025-10-18): Standardized testing structure - all packages use `src/__tests__/` for test files, vitest v3.2.4+, 80%+ coverage requirement. Added comprehensive testing guidelines in Section 6.4.
 - **v1.3.0** (2025-10-16): Added README sync rule - all user-facing changes in CONSTITUTION.md must be reflected in README.md. Created comprehensive README aligned with constitution.
@@ -20,6 +21,8 @@ This document defines the core architectural decisions, principles, and constrai
 **Mission:** Create a developer experience where architecture evolves with code, not after it — turning every feature into a visual, validated, and optimized design.
 
 **Core Workflow:** Spec-driven vibe coding where architecture and implementation stay in sync from the very first commit.
+
+**Problem Statement:** AI-assisted coding enables rapid development but introduces new challenges: team members can easily generate conflicting architectures, code reviews of AI-generated output are difficult, and architectural inconsistencies compound quickly. Traditional documentation-after-code approaches fail in this environment. SpecMind solves this by making architecture review happen *before* implementation, maintaining consistency across teams through shared, validated .sm specifications.
 
 ---
 
@@ -108,7 +111,13 @@ specmind/
 
 **Key Modules:**
 - `analyzer/` - Tree-sitter based code analysis
+  - Extracts functions, classes, imports, exports
+  - **Call tracking** - Extracts function/method call expressions for sequence diagrams
+  - Builds function context maps to track caller-callee relationships
 - `generator/` - Architecture diagram generation
+  - Component/dependency diagrams
+  - **Sequence diagrams** - Uses call data to show actual execution flow
+  - Class diagrams
 - `differ/` - Architecture diffing logic
 
 #### @specmind/format
@@ -210,28 +219,49 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 - Returns JSON containing:
   - Mermaid diagram (architecture visualization)
   - Component metadata (files, classes, functions, relationships)
+  - **Call expressions** - Function/method calls for sequence diagram generation
 - LLM receives JSON output and generates markdown documentation (Overview, Requirements, Design Decisions, etc.)
-- Creates `.specmind/system.sm` with diagram + documentation
+- Creates `.specmind/system.sm` with **two diagrams**:
+  1. Component/dependency graph (structural view)
+  2. Sequence diagram (behavioral/flow view using call data)
 - Creates `.specmind/features/` directory for future feature specs
 
 #### `/design <feature-name>`
 - LLM analyzes existing code and user intent for new feature
+- Extracts feature name from user input (handles both simple names and long-form descriptions)
 - Slugifies feature name (e.g., "User Auth" → "user-auth")
 - LLM generates feature specification with:
   - Feature overview and requirements (markdown)
-  - Proposed architecture diagram (Mermaid)
+  - **Two Mermaid diagrams showing SYSTEM with feature integrated:**
+    1. System Component/Dependency graph with color-coded changes
+    2. System Sequence diagram showing feature flow through system
+  - **Color coding in diagrams:**
+    - 🟢 Green: New components/interactions (fill:#90EE90)
+    - 🔴 Red: Components/interactions to remove (fill:#FFB6C1)
+    - 🟡 Yellow: Components/interactions to modify (fill:#FFEB99)
+  - **Architectural Impact sections** (one per diagram):
+    - Lists what will be Added/Modified/Removed
+    - Documents new dependencies created
   - Design decisions and rationale
   - Integration points with existing system
-- Proposes architectural diff showing changes to system.sm
-- Updates existing feature .sm file if already exists
+- Creates/updates `.specmind/features/{slugified-name}.sm`
+- **Does NOT update system.sm** (only proposes changes via color-coded diagrams)
 
 #### `/implement <feature-name>`
 - Reads `.specmind/features/{slugified-name}.sm` for context
+- Reviews Architectural Impact sections to understand changes to make
 - LLM implements code aligned with documented architecture
 - Ensures structural and intent alignment
 - LLM updates the feature .sm file if implementation diverges from design
 - LLM adds notes/warnings to .sm file based on implementation learnings
-- Updates system.sm if system-level changes were made
+- **Updates `.specmind/system.sm`** with actual implemented changes:
+  - Updates both diagrams (Component/Dependency + Sequence)
+  - Removes color coding (system.sm shows current state, not proposed changes)
+  - Applies changes: add new components, modify existing, remove deprecated
+- **Appends to `.specmind/system.changelog`**:
+  - Dated entry documenting what changed
+  - Format: Added/Modified/Removed sections + Notes
+  - Keeps system.sm clean while preserving change history
 
 ### 4.2 .sm File Format
 
@@ -241,7 +271,9 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 
 **Core Requirements:**
 1. **Markdown** - Any structure, any sections (developers can customize)
-2. **At least one Mermaid diagram** - Architecture visualization
+2. **Two Mermaid diagrams** - Architecture visualization:
+   - Component/Dependency graph (structural view)
+   - Sequence diagram (behavioral/flow view)
 
 **Recommended Structure (not enforced):**
 

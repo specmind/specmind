@@ -4,6 +4,7 @@
 
 **SpecMind** is an open-source developer tool for spec-driven vibe coding — a workflow where architecture and implementation stay in sync from the very first commit.
 
+[![Tests](https://github.com/specmind/specmind/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/specmind/specmind/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-20+-green.svg)](https://nodejs.org/)
@@ -12,15 +13,17 @@
 
 ## The Problem
 
-Most development workflows look like this:
-1. Write code
-2. Ship features
-3. (Maybe) update documentation
-4. Architecture drifts from reality
-5. Onboarding becomes painful
-6. Refactoring becomes risky
+**Vibe coding is becoming the default.** AI assistants help developers ship features faster than ever. But this creates new challenges:
 
-**What if architecture evolved *with* your code instead?**
+- **Conflicting architectures:** Each team member can generate code with different patterns
+- **Design in isolation:** Developers create their own solutions without alignment
+- **Review difficulty:** Hard to review AI-generated code directly
+- **Rapid inconsistency:** Architectural drift compounds with every AI-generated feature
+- **No shared vision:** Without specs, codebases become patchworks of individual decisions
+
+**The real solution:** Review architecture/design *first* (before implementation), then ensure the code follows it.
+
+**SpecMind enables this:** Spec-driven vibe coding where architecture evolves *with* your code, maintaining consistency across your team.
 
 ---
 
@@ -43,7 +46,9 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 
 Each feature gets a `.sm` file containing:
 - **Markdown documentation** - Any structure you want (customize as needed)
-- **Mermaid diagram(s)** - Visual architecture representation
+- **Two Mermaid diagrams** - Architecture visualization:
+  1. Component/Dependency graph (structural view)
+  2. Sequence diagram (behavioral/flow view)
 
 The default prompts suggest sections like Overview, Requirements, Architecture, Design Decisions, Integration Points, and Notes - but you can customize these to fit your workflow.
 
@@ -67,13 +72,6 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 - Tree-sitter powered parsing - Fast and accurate
 - Extract components, relationships, dependencies automatically
 - Currently supports TypeScript and JavaScript (more languages coming soon)
-
-### 🛠️ AI Assistant Integration
-- ✅ **Claude Code** - Supported
-- 🚧 **Cursor** - Coming Soon
-- 🚧 **Windsurf** - Coming Soon
-- 🚧 **GitHub Copilot** - Coming Soon
-- **VS Code Extension** - Visual diagram rendering and syntax highlighting
 
 ---
 
@@ -121,7 +119,10 @@ The AI will analyze your codebase and create `.specmind/system.sm` with your arc
 
 Creates `.specmind/features/real-time-notifications.sm` with:
 - Overview and requirements
-- Proposed architecture diagram
+- **Two architecture diagrams** showing system with feature integrated:
+  - Component/Dependency graph (with color-coded changes)
+  - Sequence diagram (showing feature flow through system)
+- Architectural impact analysis (what's added/modified/removed)
 - Design decisions and rationale
 - Integration points
 - Notes section for additional context
@@ -146,6 +147,24 @@ SpecMind uses slash commands that are specific to each AI coding assistant. Here
 | **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
 
 Each AI assistant requires its own slash command implementation, but all invoke the same `specmind` CLI wrapper which outputs JSON for the LLM to process.
+
+---
+
+## Language Support
+
+SpecMind uses tree-sitter for code analysis, enabling support for multiple programming languages:
+
+| Language | Status | Notes |
+|----------|--------|-------|
+| **TypeScript** | ✅ Supported | Full support for TS/TSX files |
+| **JavaScript** | ✅ Supported | Full support for JS/JSX files |
+| **Python** | 🚧 Planned | Next priority |
+| **Go** | 🚧 Planned | Coming soon |
+| **Rust** | 🚧 Planned | Coming soon |
+| **Java** | 🚧 Planned | Coming soon |
+| **C++** | 🚧 Planned | Coming soon |
+
+Tree-sitter supports 50+ languages, so additional language support can be added based on community demand.
 
 ---
 
@@ -289,7 +308,7 @@ We welcome contributions! SpecMind is built in the open, and we'd love your help
 2. **Check open issues** - Find something to work on
 3. **Join discussions** - Share ideas and feedback
 
-### Development Setup (Coming Soon)
+### Development Setup
 
 ```bash
 # Clone the repo
@@ -304,6 +323,10 @@ pnpm build
 
 # Run tests
 pnpm test
+
+# Link CLI globally for local development
+cd packages/cli
+pnpm link --global
 ```
 
 ### Contribution Guidelines
@@ -355,10 +378,6 @@ SpecMind is **workflow-first**, not just diagramming. It:
 ### Do I need AI to use SpecMind?
 
 Yes! SpecMind is AI-powered by design. All three slash commands (`/analyze`, `/design`, `/implement`) are LLM-powered and work by invoking the `specmind` CLI to get code analysis data (via tree-sitter), then use that data to generate documentation and diagrams.
-
-### What languages are supported?
-
-Currently TypeScript and JavaScript. Support for additional languages (Python, Go, Rust, Java, C++, etc.) is planned - tree-sitter supports 50+ languages.
 
 ### Can I use this with existing projects?
 

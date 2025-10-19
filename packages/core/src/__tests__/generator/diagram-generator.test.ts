@@ -110,7 +110,8 @@ describe('Diagram Generator', () => {
       const diagram = generateClassDiagram(analysis, { includePrivate: false })
 
       expect(diagram).toMatch(/\+.*string/) // Public property included
-      expect(diagram).not.toContain('-') // No private members
+      expect(diagram).not.toMatch(/-\w+\s+\w+/) // No private members (- followed by name and type)
+      expect(diagram).not.toContain('password') // Private property excluded
     })
 
     it('should include private members when option is true', () => {
@@ -258,9 +259,12 @@ describe('Diagram Generator', () => {
       const diagram = generateSequenceDiagram(analysis)
 
       expect(diagram).toContain('sequenceDiagram')
-      expect(diagram).toContain('participant Client')
-      expect(diagram).toContain('getUser()')
-      expect(diagram).toContain('(async)')
+      // New implementation shows actual call flow
+      expect(diagram).toContain('participant getUser')
+      expect(diagram).toContain('Entry point')
+      // Should show the db call participant and the call itself
+      expect(diagram).toContain('participant d______')
+      expect(diagram).toContain('getUser->>d______')
     })
 
     it('should handle files with no exported functions', () => {
@@ -272,7 +276,8 @@ describe('Diagram Generator', () => {
       const diagram = generateSequenceDiagram(analysis)
 
       expect(diagram).toContain('sequenceDiagram')
-      expect(diagram).toContain('No exported functions found')
+      // Updated message includes "or calls"
+      expect(diagram).toContain('No exported functions or calls found')
     })
 
     it('should distinguish async from sync functions', () => {

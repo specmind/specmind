@@ -3,6 +3,7 @@ import type {
   ClassDefinition,
   FunctionDefinition,
   MethodDefinition,
+  CallExpression,
 } from '../types/index.js'
 
 /**
@@ -245,30 +246,140 @@ function findAnalysisByImport(
 
 /**
  * Generate a Mermaid sequence diagram for function calls
- * (Basic implementation - can be enhanced to trace actual calls)
+ * Shows actual call flow based on extracted call expressions
  */
 export function generateSequenceDiagram(analysis: FileAnalysis): string {
   const lines: string[] = ['sequenceDiagram']
 
-  // For now, just show exported functions as potential entry points
+  // If no calls are found, show a basic diagram with exported functions
+  if (!analysis.calls || analysis.calls.length === 0) {
+    const exportedFunctions = analysis.functions.filter((f) => f.isExported)
+
+    if (exportedFunctions.length > 0) {
+      lines.push(`  participant Client`)
+      lines.push(`  participant ${getFileName(analysis.filePath)}`)
+
+      for (const func of exportedFunctions) {
+        const asyncIndicator = func.isAsync ? ' (async)' : ''
+        lines.push(`  Client->>+${getFileName(analysis.filePath)}: ${func.name}()${asyncIndicator}`)
+
+        if (func.isAsync) {
+          const returnType = func.returnType || 'result'
+          lines.push(`  ${getFileName(analysis.filePath)}-->>-Client: ${returnType}`)
+        }
+      }
+    } else {
+      lines.push(`  Note over Client: No exported functions or calls found`)
+    }
+
+    return lines.join('\n')
+  }
+
+  // Group calls by caller to trace execution flow
+  const callsByFunction = groupCallsByCaller(analysis.calls)
+
+  // Collect all participants (unique functions/methods involved)
+  const participants = collectParticipants(analysis.calls)
+
+  // Add participants
+  for (const participant of participants) {
+    lines.push(`  participant ${sanitizeParticipantName(participant)}`)
+  }
+
+  // Generate sequence based on call order
+  // Start with exported functions as entry points
   const exportedFunctions = analysis.functions.filter((f) => f.isExported)
+  const exportedMethods = analysis.classes.flatMap((c) =>
+    c.methods.filter((m) => m.isExported).map((m) => m.qualifiedName)
+  )
 
-  if (exportedFunctions.length > 0) {
-    lines.push(`  participant Client`)
+  const entryPoints = new Set([
+    ...exportedFunctions.map((f) => f.qualifiedName),
+    ...exportedMethods,
+  ])
 
-    for (const func of exportedFunctions) {
-      const asyncIndicator = func.isAsync ? ' (async)' : ''
-      lines.push(`  Client->>+${analysis.filePath}: ${func.name}()${asyncIndicator}`)
+  // Track which calls we've processed to avoid duplicates
+  const processedCalls = new Set<string>()
 
-      // If it's async, show the response
-      if (func.isAsync) {
-        const returnType = func.returnType || 'result'
-        lines.push(`  ${analysis.filePath}-->>-Client: ${returnType}`)
+  // Process calls from entry points
+  for (const entryPoint of entryPoints) {
+    const calls = callsByFunction.get(entryPoint)
+    if (calls && calls.length > 0) {
+      lines.push(`  Note over ${sanitizeParticipantName(entryPoint)}: Entry point`)
+
+      for (const call of calls) {
+        const callKey = `${call.callerQualifiedName}->${call.calleeQualifiedName}-${call.location.startLine}`
+        if (processedCalls.has(callKey)) continue
+        processedCalls.add(callKey)
+
+        const caller = sanitizeParticipantName(call.callerQualifiedName)
+        const callee = sanitizeParticipantName(call.calleeQualifiedName || call.calleeName)
+        const args = call.arguments.slice(0, 2).join(', ') // Show first 2 args
+        const argsSuffix = call.arguments.length > 2 ? ', ...' : ''
+
+        lines.push(`  ${caller}->>${callee}: ${call.calleeName}(${args}${argsSuffix})`)
       }
     }
-  } else {
-    lines.push(`  Note over Client: No exported functions found`)
+  }
+
+  // If no entry points found, show all calls in order
+  if (entryPoints.size === 0) {
+    for (const call of analysis.calls) {
+      const callKey = `${call.callerQualifiedName}->${call.calleeQualifiedName}-${call.location.startLine}`
+      if (processedCalls.has(callKey)) continue
+      processedCalls.add(callKey)
+
+      const caller = sanitizeParticipantName(call.callerQualifiedName)
+      const callee = sanitizeParticipantName(call.calleeQualifiedName || call.calleeName)
+      const args = call.arguments.slice(0, 2).join(', ')
+      const argsSuffix = call.arguments.length > 2 ? ', ...' : ''
+
+      lines.push(`  ${caller}->>${callee}: ${call.calleeName}(${args}${argsSuffix})`)
+    }
   }
 
   return lines.join('\n')
+}
+
+/**
+ * Group calls by their caller function/method
+ */
+function groupCallsByCaller(calls: CallExpression[]): Map<string, CallExpression[]> {
+  const grouped = new Map<string, CallExpression[]>()
+
+  for (const call of calls) {
+    const caller = call.callerQualifiedName
+    if (!grouped.has(caller)) {
+      grouped.set(caller, [])
+    }
+    grouped.get(caller)!.push(call)
+  }
+
+  return grouped
+}
+
+/**
+ * Collect all unique participants from calls
+ */
+function collectParticipants(calls: CallExpression[]): Set<string> {
+  const participants = new Set<string>()
+
+  for (const call of calls) {
+    participants.add(call.callerQualifiedName)
+    if (call.calleeQualifiedName) {
+      participants.add(call.calleeQualifiedName)
+    } else {
+      participants.add(call.calleeName)
+    }
+  }
+
+  return participants
+}
+
+/**
+ * Sanitize participant name for Mermaid
+ */
+function sanitizeParticipantName(name: string): string {
+  // Replace special characters with underscores
+  return name.replace(/[^a-zA-Z0-9_]/g, '_')
 }
