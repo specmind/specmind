@@ -9,7 +9,7 @@ const program = new Command()
 program
   .name('specmind')
   .description('AI-powered architecture documentation tool')
-  .version('0.1.0')
+  .version('0.1.2')
 
 // Analyze command
 program

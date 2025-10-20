@@ -1,6 +1,6 @@
 {
   "name": "@specmind/core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Core code analysis and architecture generation for SpecMind using tree-sitter",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,12 +30,18 @@
     "tree-sitter",
     "ast",
     "typescript",
-    "javascript"
+    "javascript",
+    "python"
   ],
   "author": "SpecMind",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/core"
+  },
   "dependencies": {
-    "@specmind/format": "workspace:*",
+    "@specmind/format": "^0.1.2",
     "tree-sitter": "^0.21.1",
     "tree-sitter-javascript": "^0.21.4",
     "tree-sitter-python": "^0.21.0",
@@ -47,5 +53,8 @@
     "@vitest/coverage-v8": "^3.2.4",
     "typescript": "^5.6.3",
     "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

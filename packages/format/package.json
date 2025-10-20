@@ -1,6 +1,6 @@
 {
   "name": "@specmind/format",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": ".sm file format parser and writer",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,6 +21,21 @@
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
     "validate-fixtures": "node test-fixtures/validate-fixtures.mjs"
+  },
+  "keywords": [
+    "specmind",
+    "architecture",
+    "documentation",
+    "mermaid",
+    "sm-format",
+    "parser"
+  ],
+  "author": "SpecMind",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/format"
   },
   "dependencies": {
     "zod": "^3.22.4"

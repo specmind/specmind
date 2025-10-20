@@ -1,6 +1,6 @@
 {
   "name": "specmind",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "CLI for SpecMind - AI-powered architecture documentation",
   "type": "module",
   "bin": {
@@ -16,13 +16,23 @@
     "architecture",
     "documentation",
     "mermaid",
-    "cli"
+    "cli",
+    "code-analysis",
+    "tree-sitter",
+    "typescript",
+    "javascript",
+    "python"
   ],
   "author": "SpecMind",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/cli"
+  },
   "dependencies": {
-    "@specmind/core": "workspace:*",
-    "@specmind/format": "workspace:*",
+    "@specmind/core": "^0.1.2",
+    "@specmind/format": "^0.1.2",
     "commander": "^12.1.0",
     "chalk": "^5.4.1",
     "ora": "^8.1.1"
@@ -31,5 +41,8 @@
     "@types/node": "^20.17.10",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
