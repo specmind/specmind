@@ -30,10 +30,16 @@
     "tree-sitter",
     "ast",
     "typescript",
-    "javascript"
+    "javascript",
+    "python"
   ],
   "author": "SpecMind",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/core"
+  },
   "dependencies": {
     "@specmind/format": "workspace:*",
     "tree-sitter": "^0.21.1",
