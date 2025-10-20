@@ -16,10 +16,20 @@
     "architecture",
     "documentation",
     "mermaid",
-    "cli"
+    "cli",
+    "code-analysis",
+    "tree-sitter",
+    "typescript",
+    "javascript",
+    "python"
   ],
   "author": "SpecMind",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/cli"
+  },
   "dependencies": {
     "@specmind/core": "workspace:*",
     "@specmind/format": "workspace:*",
@@ -31,5 +41,8 @@
     "@types/node": "^20.17.10",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
