@@ -252,6 +252,50 @@ sequenceDiagram
 
 > **Note:** This structure is just a suggestion. You can modify the prompts in `assistants/_shared/` to use different sections or formats.
 
+### Rendered Diagrams
+
+Here's how the diagrams above render visually:
+
+#### Component Diagram
+```mermaid
+graph TD
+    Client[Client App] -->|POST /auth/login| AuthAPI[Auth API]
+    AuthAPI --> AuthService[Auth Service]
+    AuthService --> UserDB[(User Database)]
+    AuthService --> TokenService[JWT Token Service]
+    AuthService --> OAuthService[OAuth Service]
+    OAuthService -->|OAuth Flow| GoogleAuth[Google OAuth]
+    OAuthService -->|OAuth Flow| GitHubAuth[GitHub OAuth]
+    TokenService --> Redis[(Redis Cache)]
+```
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthAPI
+    participant AuthService
+    participant TokenService
+    participant UserDB
+
+    Client->>AuthAPI: POST /auth/login
+    AuthAPI->>AuthService: validateCredentials(email, password)
+    AuthService->>UserDB: findUser(email)
+    UserDB-->>AuthService: user
+    AuthService->>AuthService: verifyPassword(password, hash)
+    AuthService->>TokenService: generateToken(userId)
+    TokenService-->>AuthService: JWT token
+    AuthService-->>AuthAPI: token
+    AuthAPI-->>Client: { token, user }
+```
+
+> **💡 Tip:** To view `.sm` files with rendered diagrams in VS Code, install the **SpecMind** extension:
+> 1. Open VS Code
+> 2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
+> 3. Search for "SpecMind"
+> 4. Click Install
+> 5. Open any `.sm` file and click the preview icon or press `Ctrl+K V` (Cmd+K V on Mac)
+
 ---
 
 ## Project Structure
