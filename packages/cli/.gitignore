@@ -1,0 +1,5 @@
+# Package-specific ignores
+# (Common patterns like dist/, node_modules/, etc. are in root .gitignore)
+
+# Copied during build from monorepo root
+assistants/

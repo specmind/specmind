@@ -1,6 +1,6 @@
 {
   "name": "@specmind/format",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": ".sm file format parser and writer",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,7 +20,8 @@
     "test": "vitest",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "validate-fixtures": "node test-fixtures/validate-fixtures.mjs"
+    "validate-fixtures": "node test-fixtures/validate-fixtures.mjs",
+    "prepublishOnly": "pnpm build"
   },
   "keywords": [
     "specmind",
