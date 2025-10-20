@@ -38,10 +38,10 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 /analyze
 
 # 2. Design - Plan new feature architecture
-/design "User Authentication"
+/design User Authentication
 
 # 3. Implement - Build with architectural context
-/implement "User Authentication"
+/implement User Authentication
 ```
 
 Each feature gets a `.sm` file containing:
@@ -71,7 +71,7 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 ### 🔍 Code Analysis
 - Tree-sitter powered parsing - Fast and accurate
 - Extract components, relationships, dependencies automatically
-- Currently supports TypeScript and JavaScript (more languages coming soon)
+- Supports TypeScript, JavaScript, and Python (see Language Support section below for details)
 
 ---
 
@@ -114,8 +114,14 @@ In Claude Code:
 The AI will analyze your codebase and create `.specmind/system.sm` with your architecture.
 
 ```
-/design "Real-time Notifications"
+/design Real-time Notifications
 ```
+
+You can provide either:
+- A short name: `/design Real-time Notifications`
+- Or a detailed description: `/design Real-time notification system using WebSockets for live updates and push events`
+
+The AI will extract the feature name and create a slugified filename.
 
 Creates `.specmind/features/real-time-notifications.sm` with:
 - Overview and requirements
@@ -128,7 +134,7 @@ Creates `.specmind/features/real-time-notifications.sm` with:
 - Notes section for additional context
 
 ```
-/implement "Real-time Notifications"
+/implement Real-time Notifications
 ```
 
 The AI uses the `.sm` file as context to implement code that aligns with your architecture.
