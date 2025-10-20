@@ -207,6 +207,25 @@ describe('Diagram Generator', () => {
 
       expect(diagram).toContain('$ create() User')
     })
+
+    it('should generate diagram for Python classes', () => {
+      const code = `
+class Calculator:
+    def add(self, a: int, b: int) -> int:
+        return a + b
+
+    def subtract(self, a: int, b: int) -> int:
+        return a - b
+      `
+
+      const analysis = analyzeFileContent('calc.py', code, 'python')
+      const diagram = generateClassDiagram(analysis)
+
+      expect(diagram).toContain('classDiagram')
+      expect(diagram).toContain('class Calculator')
+      expect(diagram).toContain('add')
+      expect(diagram).toContain('subtract')
+    })
   })
 
   describe('generateComponentDiagram', () => {

@@ -28,6 +28,23 @@ function extractParameters(parametersNode: SyntaxNode): Parameter[] {
         })
       }
     }
+    // Handle typed default parameters like "greeting: str = "Hello""
+    else if (child.type === 'typed_default_parameter') {
+      // Find identifier (first child)
+      const nameNode = child.children.find(c => c.type === 'identifier')
+      const typeNode = child.childForFieldName('type')
+      // Find default value (after '=')
+      const valueNode = child.children.find(c => c.previousSibling?.type === '=')
+
+      if (nameNode) {
+        params.push({
+          name: nameNode.text,
+          type: typeNode?.text,
+          optional: true,
+          defaultValue: valueNode?.text,
+        })
+      }
+    }
     // Handle regular identifiers like "self" or "db_connection"
     else if (child.type === 'identifier') {
       params.push({

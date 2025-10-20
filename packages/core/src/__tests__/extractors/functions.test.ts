@@ -104,4 +104,13 @@ describe('Function Extractor', () => {
     expect(functions[0].location.filePath).toBe('test.ts')
     expect(functions[0].location.startLine).toBeGreaterThan(0)
   })
+
+  it('should throw error for unsupported language', () => {
+    const code = `function test() {}`
+    const tree = parseCode(code, 'typescript')
+
+    expect(() => {
+      extractFunctions(tree, 'test.cpp', 'cpp' as any)
+    }).toThrow('Unsupported language: cpp')
+  })
 })

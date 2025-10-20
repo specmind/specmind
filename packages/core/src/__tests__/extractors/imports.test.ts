@@ -102,4 +102,30 @@ describe('Export Extractor', () => {
       expect(exports[0].location.filePath).toBe('test.ts')
     }
   })
+
+  it('should return empty array for Python exports', () => {
+    const code = `def greet(): pass`
+    const tree = parseCode(code, 'python')
+    const exports = extractExports(tree, 'test.py', 'python')
+
+    expect(exports).toEqual([])
+  })
+
+  it('should throw error for unsupported language in imports', () => {
+    const code = `const x = 1`
+    const tree = parseCode(code, 'typescript')
+
+    expect(() => {
+      extractImports(tree, 'test.rs', 'rust' as any)
+    }).toThrow('Unsupported language: rust')
+  })
+
+  it('should throw error for unsupported language in exports', () => {
+    const code = `const x = 1`
+    const tree = parseCode(code, 'typescript')
+
+    expect(() => {
+      extractExports(tree, 'test.go', 'go' as any)
+    }).toThrow('Unsupported language: go')
+  })
 })
