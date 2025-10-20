@@ -31,8 +31,8 @@
     "directory": "packages/cli"
   },
   "dependencies": {
-    "@specmind/core": "workspace:*",
-    "@specmind/format": "workspace:*",
+    "@specmind/core": "^0.1.0",
+    "@specmind/format": "^0.1.0",
     "commander": "^12.1.0",
     "chalk": "^5.4.1",
     "ora": "^8.1.1"
