@@ -125,7 +125,7 @@
     "vscode:prepublish": "pnpm build --production"
   },
   "dependencies": {
-    "@specmind/format": "workspace:*",
+    "@specmind/format": "^0.1.2",
     "mermaid": "^10.6.1"
   },
   "devDependencies": {
