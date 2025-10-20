@@ -141,4 +141,13 @@ describe('Class Extractor', () => {
     expect(classes[0].location.filePath).toBe('test.ts')
     expect(classes[0].location.startLine).toBeGreaterThan(0)
   })
+
+  it('should throw error for unsupported language', () => {
+    const code = `class User {}`
+    const tree = parseCode(code, 'typescript')
+
+    expect(() => {
+      extractClasses(tree, 'test.rb', 'ruby' as any)
+    }).toThrow('Unsupported language: ruby')
+  })
 })

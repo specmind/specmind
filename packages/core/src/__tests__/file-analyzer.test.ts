@@ -50,6 +50,30 @@ describe('File Analyzer', () => {
     expect(analysis.classes).toHaveLength(1)
   })
 
+  it('should analyze Python file', () => {
+    const code = `
+from typing import List
+
+class UserService:
+    def __init__(self, db):
+        self.db = db
+
+    def get_users(self) -> List[str]:
+        return []
+
+def format_user(name: str) -> str:
+    return f"User: {name}"
+    `
+
+    const analysis = analyzeFileContent('user_service.py', code, 'python')
+
+    expect(analysis.language).toBe('python')
+    expect(analysis.classes).toHaveLength(1)
+    expect(analysis.functions.length).toBeGreaterThan(0)
+    expect(analysis.imports).toHaveLength(1)
+    expect(analysis.exports).toHaveLength(0) // Python doesn't have explicit exports
+  })
+
   it('should handle empty file', () => {
     const code = ''
     const analysis = analyzeFileContent('empty.ts', code, 'typescript')
@@ -113,5 +137,12 @@ describe('File Analyzer', () => {
 
   it('should throw error for non-existent file', async () => {
     await expect(analyzeFile('non-existent-file.ts')).rejects.toThrow('Failed to analyze file')
+  })
+
+  it('should throw error for unsupported language', () => {
+    const code = `class Test {}`
+    expect(() => {
+      analyzeFileContent('test.rb', code, 'ruby' as any)
+    }).toThrow('Unsupported language: ruby')
   })
 })

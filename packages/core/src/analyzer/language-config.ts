@@ -98,10 +98,14 @@ export const JAVASCRIPT_CONFIG: LanguageConfig = {
     (function_declaration) @function
     (method_definition) @function
     (arrow_function) @function
+    (function_expression) @function
+    (generator_function_declaration) @function
+    (generator_function) @function
   `,
 
   classQuery: `
     (class_declaration) @class
+    (class) @class
   `,
 }
 
