@@ -1,6 +1,6 @@
 {
   "name": "specmind",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for SpecMind - AI-powered architecture documentation",
   "type": "module",
   "bin": {
@@ -31,8 +31,8 @@
     "directory": "packages/cli"
   },
   "dependencies": {
-    "@specmind/core": "^0.1.0",
-    "@specmind/format": "^0.1.0",
+    "@specmind/core": "^0.1.1",
+    "@specmind/format": "^0.1.1",
     "commander": "^12.1.0",
     "chalk": "^5.4.1",
     "ora": "^8.1.1"
