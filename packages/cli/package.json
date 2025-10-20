@@ -1,15 +1,21 @@
 {
   "name": "specmind",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI for SpecMind - AI-powered architecture documentation",
   "type": "module",
   "bin": {
     "specmind": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "assistants"
+  ],
   "scripts": {
+    "prebuild": "node scripts/copy-assistants.mjs",
     "build": "tsc",
     "test": "vitest --passWithNoTests",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "pnpm build"
   },
   "keywords": [
     "specmind",
@@ -31,8 +37,8 @@
     "directory": "packages/cli"
   },
   "dependencies": {
-    "@specmind/core": "^0.1.2",
-    "@specmind/format": "^0.1.2",
+    "@specmind/core": "workspace:^",
+    "@specmind/format": "workspace:^",
     "commander": "^12.1.0",
     "chalk": "^5.4.1",
     "ora": "^8.1.1"

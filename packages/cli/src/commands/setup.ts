@@ -48,8 +48,17 @@ function getAssistantsDir(): string {
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
 
-  // Navigate to the assistants directory in the monorepo
-  // cli/dist/commands/setup.js -> ../../assistants
+  // Navigate to the assistants directory in the CLI package
+  // When published: cli/dist/commands/setup.js -> ../../assistants (copied during build)
+  // In monorepo: cli/dist/commands/setup.js -> ../../../../assistants (root)
+
+  // Try CLI package location first (for published package)
+  const packageAssistants = join(__dirname, '..', '..', 'assistants')
+  if (existsSync(packageAssistants)) {
+    return packageAssistants
+  }
+
+  // Fallback to monorepo location (for development)
   return join(__dirname, '..', '..', '..', '..', 'assistants')
 }
 
