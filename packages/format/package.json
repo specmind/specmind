@@ -22,6 +22,21 @@
     "clean": "rm -rf dist",
     "validate-fixtures": "node test-fixtures/validate-fixtures.mjs"
   },
+  "keywords": [
+    "specmind",
+    "architecture",
+    "documentation",
+    "mermaid",
+    "sm-format",
+    "parser"
+  ],
+  "author": "SpecMind",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specmind/specmind.git",
+    "directory": "packages/format"
+  },
   "dependencies": {
     "zod": "^3.22.4"
   },
