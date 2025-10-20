@@ -7,7 +7,7 @@ Core code analysis and architecture generation library for SpecMind using tree-s
 `@specmind/core` provides pure logic for analyzing codebases and extracting architectural information. It uses [tree-sitter](https://tree-sitter.github.io/) for robust, language-agnostic code parsing and analysis.
 
 **Key Features:**
-- **Multi-language support**: TypeScript, JavaScript (Python, Go, Rust planned)
+- **Multi-language support**: TypeScript, JavaScript, Python (Go, Rust planned)
 - **Tree-sitter powered**: Fast, incremental, error-tolerant parsing
 - **Pure logic**: No CLI or UI dependencies - just analysis functions
 - **Type-safe**: Full TypeScript with Zod schemas for runtime validation
@@ -178,6 +178,7 @@ import { detectLanguage } from '@specmind/core'
 
 console.log(detectLanguage('app.ts'))        // 'typescript'
 console.log(detectLanguage('utils.js'))      // 'javascript'
+console.log(detectLanguage('main.py'))       // 'python'
 console.log(detectLanguage('styles.css'))    // null
 ```
 
@@ -313,9 +314,9 @@ if (result.success) {
 
 | Language   | Status | File Extensions | Features |
 |------------|--------|-----------------|----------|
-| TypeScript | ✅ Full | `.ts`, `.tsx` | Functions, classes, interfaces, types, enums, imports, exports |
-| JavaScript | ✅ Full | `.js`, `.jsx` | Functions, classes, imports, exports |
-| Python     | 🚧 Planned | `.py` | Coming soon |
+| TypeScript | ✅ Full | `.ts`, `.tsx` | Functions, classes, interfaces, types, enums, imports, exports, generics, decorators |
+| JavaScript | ✅ Full | `.js`, `.jsx` | Functions, classes, imports, exports, generators, async/await, ES6+ |
+| Python     | ✅ Full | `.py`, `.pyi` | Functions, classes, imports, type hints, async/await, decorators |
 | Go         | 🚧 Planned | `.go` | Coming soon |
 | Rust       | 🚧 Planned | `.rs` | Coming soon |
 
@@ -421,6 +422,45 @@ const exportedFunctions = analysis.functions.filter(f => f.isExported)
 exportedFunctions.forEach(fn => {
   console.log(`${fn.name}(${fn.parameters.map(p => `${p.name}: ${p.type}`).join(', ')}): ${fn.returnType}`)
 })
+```
+
+### Example 4: Analyze Python Code
+
+```typescript
+import { analyzeFileContent } from '@specmind/core'
+
+const pythonCode = `
+from typing import List, Optional
+
+class UserService:
+    def __init__(self, db_connection: str):
+        self.db = db_connection
+
+    async def get_users(self, limit: int = 10) -> List[dict]:
+        return await self.db.query("SELECT * FROM users LIMIT ?", [limit])
+
+    def _validate_user(self, user: dict) -> bool:
+        return "id" in user and "name" in user
+`
+
+const analysis = analyzeFileContent('user_service.py', pythonCode, 'python')
+
+console.log('Classes:', analysis.classes.map(c => c.name))
+// ['UserService']
+
+console.log('Methods:', analysis.classes[0].methods.map(m => ({
+  name: m.name,
+  visibility: m.visibility,
+  isAsync: m.isAsync
+})))
+// [
+//   { name: '__init__', visibility: 'public', isAsync: false },
+//   { name: 'get_users', visibility: 'public', isAsync: true },
+//   { name: '_validate_user', visibility: 'private', isAsync: false }
+// ]
+
+console.log('Imports:', analysis.imports)
+// [{ source: 'typing', imports: [{ name: 'List' }, { name: 'Optional' }] }]
 ```
 
 ---
