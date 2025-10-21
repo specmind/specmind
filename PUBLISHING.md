@@ -1,35 +1,77 @@
 # Publishing Guide
 
-This guide explains how to publish SpecMind packages to npm.
+This guide explains how to publish SpecMind packages to npm and extension marketplaces.
 
-## Prerequisites
+## npm Publishing
 
-1. You must be logged into npm:
-   ```bash
-   npm login
-   ```
+### Prerequisites
 
-2. Verify you have publish access to the `@specmind` scope and `specmind` package
+1. **npm Account**: Create account at https://www.npmjs.com/
+2. **npm Token**: Generate automation token and add as `NPM_TOKEN` GitHub secret
+3. **Publish Access**: Verify you have publish access to the `@specmind` scope
+
+### Version Management
+
+**IMPORTANT**: You must manually update package versions before publishing.
+
+#### Easy Way - Using the Version Bump Script:
+
+```bash
+# Bump all packages to the same version
+./scripts/bump-version.sh 0.1.4
+```
+
+This automatically updates version in all package.json files.
+
+#### Manual Way:
+
+Update `version` field in these files:
+- `packages/format/package.json`
+- `packages/core/package.json`
+- `packages/cli/package.json`
+- `packages/vscode/package.json`
 
 ## Publishing Process
 
-### Automatic Build on Publish
+### Automated Publishing (Recommended)
 
-All packages have `prepublishOnly` scripts that automatically build before publishing, so you **don't need to manually run `pnpm build`** before publishing.
-
-### Publish All Packages
-
-To publish all packages at once (recommended for synchronized releases):
+The repository includes GitHub Actions workflow for automated publishing:
 
 ```bash
-# From repository root
-pnpm -r publish
+# 1. Bump version in all packages
+./scripts/bump-version.sh 0.1.4
+
+# 2. Review and commit changes
+git diff
+git add .
+git commit -m "Bump version to 0.1.4"
+
+# 3. Create and push tag
+git tag v0.1.4
+git push && git push --tags
+```
+
+GitHub Actions will automatically:
+- Run tests
+- Build all packages
+- Publish to npm (requires `NPM_TOKEN` secret)
+
+### Manual Publishing
+
+If you need to publish manually:
+
+```bash
+# Build all packages first
+pnpm install
+pnpm build
+
+# Publish all packages at once
+pnpm -r publish --access public
 ```
 
 This will:
-1. Automatically run `prepublishOnly` (which runs `pnpm build`) for each package
-2. Convert `workspace:^` dependencies to actual version numbers
-3. Publish packages in the correct order (dependencies first)
+1. Convert `workspace:^` dependencies to actual version numbers
+2. Publish packages in the correct order (dependencies first)
 
 ### Publish Individual Packages
 
