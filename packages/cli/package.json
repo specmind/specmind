@@ -1,6 +1,6 @@
 {
   "name": "specmind",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "CLI for SpecMind - AI-powered architecture documentation",
   "type": "module",
   "bin": {
@@ -15,7 +15,7 @@
     "build": "tsc",
     "test": "vitest --passWithNoTests",
     "lint": "eslint src --ext .ts",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "node scripts/copy-assistants.mjs && pnpm build"
   },
   "keywords": [
     "specmind",
