@@ -45,7 +45,7 @@ jobs:
         working-directory: packages/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish --no-dependencies --no-git-checks -p $VSCE_PAT
+        run: npx @vscode/vsce publish --no-dependencies -p $VSCE_PAT
         continue-on-error: true
 
       - name: Publish to Open VSX
