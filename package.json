@@ -17,7 +17,8 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "validate-fixtures": "pnpm --filter=@specmind/format validate-fixtures"
+    "validate-fixtures": "pnpm --filter=@specmind/format validate-fixtures",
+    "version": "pnpm -r exec npm version --no-git-tag-version"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

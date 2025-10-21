@@ -1,6 +1,6 @@
 {
   "name": "specmind",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "CLI for SpecMind - AI-powered architecture documentation",
   "type": "module",
   "bin": {

@@ -37,10 +37,21 @@ Visual editor and preview for SpecMind .sm files.
 
 ## Installation
 
-### From Marketplace (Coming Soon)
+### From VS Code Marketplace
 ```
-ext install specmind.specmind-vscode
+ext install SpecMind.specmind-vscode
 ```
+
+Or install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=SpecMind.specmind-vscode).
+
+### From Open VSX Registry (Windsurf, VSCodium, etc.)
+```
+ext install SpecMind.specmind-vscode
+```
+
+Or install from [Open VSX](https://open-vsx.org/extension/SpecMind/specmind-vscode).
+
+**Windsurf users**: Search for "SpecMind" in the Extensions panel.
 
 ### Development Installation
 1. Clone the SpecMind repository
