@@ -79,47 +79,66 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 
 > **Note:** SpecMind is currently in active development. Star the repo to follow progress!
 
-> **Requirements:** Currently supports **Claude Code**. Support for Cursor, Windsurf, and GitHub Copilot coming soon.
+> **Requirements:** Currently supports **Claude Code** and **Windsurf**. Support for Cursor and GitHub Copilot coming soon.
 
 ### Installation
 
 **Step 1: Setup SpecMind for your AI assistant**
 
 ```bash
-# Quick setup with npx (recommended)
+# For Claude Code
 npx specmind setup claude-code
+
+# For Windsurf
+npx specmind setup windsurf
 
 # Or interactive mode - choose your assistant(s)
 npx specmind setup
 
 # Or install globally first
 npm install -g specmind
-specmind setup claude-code
+specmind setup claude-code  # or windsurf
 ```
 
-This copies the slash command files to your project (e.g., `.claude/commands/` for Claude Code).
+This copies the assistant files to your project:
+- Claude Code: `.claude/commands/` (slash commands)
+- Windsurf: `.windsurf/rules/` (Cascade rules)
 
 **Step 2: Install VS Code extension (optional)**
 
 Search "SpecMind" in VS Code extensions marketplace for visual .sm file rendering.
 
-### Using Slash Commands
+### Using Commands
 
-In Claude Code:
+**In Claude Code** (slash commands):
 
 ```
 /analyze
 ```
 
+**In Windsurf** (@mention rules):
+
+```
+@specmind-analyze
+```
+
 The AI will analyze your codebase and create `.specmind/system.sm` with your architecture.
 
+**Design a feature:**
+
+Claude Code:
 ```
 /design Real-time Notifications
 ```
 
+Windsurf:
+```
+@specmind-design Real-time Notifications
+```
+
 You can provide either:
-- A short name: `/design Real-time Notifications`
-- Or a detailed description: `/design Real-time notification system using WebSockets for live updates and push events`
+- A short name: `Real-time Notifications`
+- Or a detailed description: `Real-time notification system using WebSockets for live updates and push events`
 
 The AI will extract the feature name and create a slugified filename.
 
@@ -133,8 +152,16 @@ Creates `.specmind/features/real-time-notifications.sm` with:
 - Integration points
 - Notes section for additional context
 
+**Implement the feature:**
+
+Claude Code:
 ```
 /implement Real-time Notifications
+```
+
+Windsurf:
+```
+@specmind-implement Real-time Notifications
 ```
 
 The AI uses the `.sm` file as context to implement code that aligns with your architecture.
@@ -148,11 +175,11 @@ SpecMind uses slash commands that are specific to each AI coding assistant. Here
 | AI Assistant | Status | Implementation Method | Commands |
 |--------------|--------|----------------------|----------|
 | **Claude Code** | ✅ Supported | `.claude/commands/` invoking `npx specmind` | `/analyze`, `/design`, `/implement` |
+| **Windsurf** | ✅ Supported | `.windsurf/rules/` Cascade rules with shared prompts | `@specmind-analyze`, `@specmind-design`, `@specmind-implement` |
 | **Cursor** | 🚧 Coming Soon | `.cursorrules` + bash invocation | Planned |
-| **Windsurf** | 🚧 Coming Soon | Cascade commands + bash invocation | Planned |
 | **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
 
-Each AI assistant requires its own slash command implementation, but all invoke the same `specmind` CLI wrapper which outputs JSON for the LLM to process.
+Each AI assistant requires its own implementation method, but all use the same shared prompt templates for consistency.
 
 ---
 
