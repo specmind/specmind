@@ -122,7 +122,7 @@
     "clean": "rm -rf dist",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies --no-git-checks",
-    "publish:ovsx": "ovsx publish --no-dependencies --no-git-checks",
+    "publish:ovsx": "ovsx publish --no-dependencies",
     "publish:all": "pnpm publish && pnpm publish:ovsx",
     "vscode:prepublish": "pnpm build --production"
   },
