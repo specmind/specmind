@@ -1,6 +1,6 @@
 # Publishing SpecMind VS Code Extension
 
-This guide explains how to publish the SpecMind VS Code extension to the Visual Studio Code Marketplace.
+This guide explains how to publish the SpecMind VS Code extension to both the Visual Studio Code Marketplace and Open VSX Registry (for Windsurf, VSCodium, and other editors).
 
 ## Prerequisites
 
@@ -174,8 +174,75 @@ vsce package
 unzip -l specmind-vscode-0.1.0.vsix
 ```
 
+---
+
+## Publishing to Open VSX Registry
+
+Open VSX is used by Windsurf, VSCodium, and other VS Code alternatives.
+
+### Prerequisites for Open VSX
+
+1. **Create eclipse.org account**: https://accounts.eclipse.org/
+   - Use same GitHub account as open-vsx.org
+   - Fill in GitHub Username field
+2. **Sign Publisher Agreement**: https://www.eclipse.org/legal/open-vsx-registry-faq/
+3. **Create namespace** (one-time):
+   ```bash
+   npx ovsx create-namespace SpecMind -p YOUR_OVSX_TOKEN
+   ```
+4. **Generate access token**: https://open-vsx.org/user-settings/tokens
+   - Click avatar → Settings → Access Tokens → Generate New Token
+
+### Publishing to Open VSX
+
+```bash
+# Build the extension first
+pnpm build
+
+# Option 1: Publish directly
+npx ovsx publish -p YOUR_OVSX_TOKEN
+
+# Option 2: Publish existing .vsix file
+npx ovsx publish specmind-vscode-0.1.0.vsix -p YOUR_OVSX_TOKEN
+
+# Option 3: Use npm script
+pnpm publish:ovsx  # requires OVSX_PAT env var
+```
+
+### Publishing to Both Marketplaces
+
+```bash
+# Build once
+pnpm build
+
+# Publish to both
+pnpm publish:all  # requires both VSCE_PAT and OVSX_PAT env vars
+```
+
+### Automated Publishing with GitHub Actions
+
+The repository includes a workflow (`.github/workflows/publish-extension.yml`) that automatically publishes to both marketplaces when you push a tag:
+
+```bash
+# Tag the release
+git tag vscode-v0.1.4
+git push origin vscode-v0.1.4
+```
+
+**Required GitHub Secrets:**
+- `VSCE_PAT` - VS Code Marketplace token
+- `OVSX_PAT` - Open VSX token
+
+---
+
 ## Resources
 
+### VS Code Marketplace
 - [VS Code Extension Publishing Docs](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 - [Marketplace Management Portal](https://marketplace.visualstudio.com/manage/publishers/SpecMind)
 - [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+
+### Open VSX
+- [Open VSX Publishing Guide](https://github.com/eclipse/openvsx/wiki/Publishing-Extensions)
+- [Open VSX Registry](https://open-vsx.org/)
+- [Publisher Agreement FAQ](https://www.eclipse.org/legal/open-vsx-registry-faq/)
