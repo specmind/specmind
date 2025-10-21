@@ -45,7 +45,7 @@ jobs:
         working-directory: packages/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish --no-dependencies --no-git-checks -p $VSCE_PAT
+        run: npx @vscode/vsce publish --no-dependencies --no-git-checks -p $VSCE_PAT
         continue-on-error: true
 
       - name: Publish to Open VSX
@@ -53,7 +53,7 @@ jobs:
         working-directory: packages/vscode
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: ovsx publish --no-dependencies -p $OVSX_PAT
+        run: npx ovsx publish --no-dependencies -p $OVSX_PAT
         continue-on-error: true
 
       - name: Upload VSIX artifact
