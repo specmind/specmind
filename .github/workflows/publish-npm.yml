@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - '!vscode-v*'  # Exclude vscode tags
   workflow_dispatch:
     inputs:
       version:
