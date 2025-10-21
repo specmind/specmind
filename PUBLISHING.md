@@ -1,6 +1,10 @@
 # Publishing Guide
 
-This guide explains how to publish SpecMind packages to npm and extension marketplaces.
+This guide explains how to publish SpecMind packages to npm.
+
+**For VS Code Extension Publishing**: See [packages/vscode/PUBLISHING.md](packages/vscode/PUBLISHING.md) for detailed instructions on publishing to VS Code Marketplace and Open VSX Registry (Windsurf).
+
+---
 
 ## npm Publishing
 
