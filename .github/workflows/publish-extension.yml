@@ -44,14 +44,16 @@ jobs:
         if: success()
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: pnpm --filter=specmind-vscode publish
+        working-directory: packages/vscode
+        run: vsce publish --no-dependencies --no-git-checks -p $VSCE_PAT
         continue-on-error: true
 
       - name: Publish to Open VSX
         if: success()
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: pnpm --filter=specmind-vscode publish:ovsx
+        working-directory: packages/vscode
+        run: ovsx publish --no-dependencies --no-git-checks -p $OVSX_PAT
         continue-on-error: true
 
       - name: Upload VSIX artifact
