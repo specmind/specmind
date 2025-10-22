@@ -6,7 +6,7 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
 1. **Run the analysis tool:**
    ```bash
-   specmind analyze --format json
+   npx specmind analyze --format json
    ```
 
 2. **Parse the JSON output** which contains:
