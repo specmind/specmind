@@ -1,6 +1,6 @@
 {
   "name": "@specmind/format",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": ".sm file format parser and writer",
   "type": "module",
   "main": "./dist/index.js",
