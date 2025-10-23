@@ -72,6 +72,8 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 - Tree-sitter powered parsing - Fast and accurate
 - Extract components, relationships, dependencies automatically
 - Supports TypeScript, JavaScript, and Python (see Language Support section below for details)
+- Respects `.gitignore` - Automatically excludes ignored files and directories
+- `.specmindignore` support - Tool-specific exclusions for files you want in git but not in analysis
 
 ---
 
@@ -199,6 +201,50 @@ SpecMind uses tree-sitter for code analysis, enabling support for multiple progr
 | **C++** | 🚧 Planned | Coming soon |
 
 Tree-sitter supports 50+ languages, so additional language support can be added based on community demand.
+
+---
+
+## File Exclusions
+
+SpecMind respects your project's `.gitignore` file to automatically exclude files and directories from analysis.
+
+### `.gitignore` Support
+
+When running `/analyze`, SpecMind automatically:
+- Loads all `.gitignore` files from the analysis directory up to the repository root
+- Excludes files and directories matching gitignore patterns
+- Supports all gitignore syntax (wildcards, negation, directory patterns, etc.)
+
+This means build outputs (`dist/`, `node_modules/`), environment files (`.env`), and other ignored files are automatically excluded from analysis.
+
+### `.specmindignore`
+
+For files you want in git but not in architecture analysis, create a `.specmindignore` file in your project root:
+
+```gitignore
+# Exclude test fixtures
+fixtures/
+__mocks__/
+
+# Exclude example code
+examples/
+*.example.ts
+
+# Exclude generated documentation
+docs/api/
+
+# Exclude specific files
+scripts/legacy-migration.ts
+```
+
+**Use cases for `.specmindignore`:**
+- Test fixtures and mock data that should be in git but not analyzed
+- Example code that demonstrates usage but isn't part of the architecture
+- Generated documentation or API specs
+- Legacy migration scripts
+- Temporary experimental code
+
+Both `.gitignore` and `.specmindignore` patterns are combined, so you get precise control over what's analyzed.
 
 ---
 
