@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs'
 import { join, relative } from 'path'
 import ignore from 'ignore'
 import {
@@ -22,6 +22,7 @@ import type { FileAnalysis } from '@specmind/core'
 export interface AnalyzeOptions {
   path?: string
   format?: 'json' | 'pretty'
+  output?: string // File path to save output
 }
 
 /**
@@ -173,7 +174,8 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
       languages: [...new Set(analyses.map(a => a.language))]
     }
 
-    // Output based on format
+    // Prepare output content
+    let outputContent: string
     if (format === 'json') {
       // JSON output for LLM consumption
       const output = {
@@ -182,15 +184,25 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
         relationships,
         metadata
       }
-      console.log(JSON.stringify(output, null, 2))
+      outputContent = JSON.stringify(output, null, 2)
     } else {
       // Pretty output for humans
-      console.log('=== Codebase Analysis ===\n')
-      console.log(`Files analyzed: ${metadata.filesAnalyzed}`)
-      console.log(`Functions: ${metadata.totalFunctions}`)
-      console.log(`Classes: ${metadata.totalClasses}`)
-      console.log(`Languages: ${metadata.languages.join(', ')}`)
-      console.log(`\nDiagram:\n${diagram}`)
+      outputContent = `=== Codebase Analysis ===\n
+Files analyzed: ${metadata.filesAnalyzed}
+Functions: ${metadata.totalFunctions}
+Classes: ${metadata.totalClasses}
+Languages: ${metadata.languages.join(', ')}
+
+Diagram:
+${diagram}`
+    }
+
+    // Write to file or console
+    if (options.output) {
+      writeFileSync(options.output, outputContent, 'utf8')
+      console.log(`Analysis saved to: ${options.output}`)
+    } else {
+      console.log(outputContent)
     }
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)

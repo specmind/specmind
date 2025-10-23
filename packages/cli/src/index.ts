@@ -17,6 +17,7 @@ program
   .description('Analyze codebase and generate architecture diagram')
   .option('-p, --path <path>', 'Path to analyze', process.cwd())
   .option('-f, --format <format>', 'Output format (json|pretty)', 'json')
+  .option('-o, --output <file>', 'Save output to file')
   .action(async (options) => {
     await analyzeCommand(options)
   })
