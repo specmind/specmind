@@ -6,7 +6,6 @@ import ignore from 'ignore'
 import {
   analyzeFile,
   buildDependencyGraph,
-  generateComponentDiagram,
   detectLanguage,
 } from '@specmind/core'
 import type { FileAnalysis } from '@specmind/core'
@@ -146,55 +145,56 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
     }
 
     // Build dependency graph
-    const graph = buildDependencyGraph(analyses)
+    const dependencies = buildDependencyGraph(analyses)
 
-    // Generate diagram
-    const diagram = generateComponentDiagram(analyses)
-
-    // Prepare output
-    const components = analyses.map(a => ({
-      file: relative(targetPath, a.filePath),
-      language: a.language,
-      functions: a.functions.length,
-      classes: a.classes.length,
-      imports: a.imports.length,
-      exports: a.exports.length
+    // Convert file paths to relative paths for cleaner output
+    const filesAnalysis = analyses.map(a => ({
+      ...a,
+      filePath: relative(targetPath, a.filePath)
     }))
-
-    const relationships = graph.map(dep => ({
-      source: relative(targetPath, dep.source),
-      target: relative(targetPath, dep.target),
-      importedNames: dep.importedNames
-    }))
-
-    const metadata = {
-      filesAnalyzed: files.length,
-      totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
-      totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
-      languages: [...new Set(analyses.map(a => a.language))]
-    }
 
     // Prepare output content
     let outputContent: string
     if (format === 'json') {
-      // JSON output for LLM consumption
+      // JSON output for LLM consumption - full detailed analysis
       const output = {
-        diagram,
-        components,
-        relationships,
-        metadata
+        files: filesAnalysis,
+        dependencies: dependencies.map(dep => ({
+          source: relative(targetPath, dep.source),
+          target: relative(targetPath, dep.target),
+          importedNames: dep.importedNames
+        })),
+        metadata: {
+          filesAnalyzed: files.length,
+          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
+          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
+          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
+          languages: [...new Set(analyses.map(a => a.language))]
+        }
       }
       outputContent = JSON.stringify(output, null, 2)
     } else {
-      // Pretty output for humans
-      outputContent = `=== Codebase Analysis ===\n
-Files analyzed: ${metadata.filesAnalyzed}
-Functions: ${metadata.totalFunctions}
-Classes: ${metadata.totalClasses}
-Languages: ${metadata.languages.join(', ')}
+      // Pretty output for humans - full detailed analysis
+      const output = {
+        files: filesAnalysis,
+        dependencies: dependencies.map(dep => ({
+          source: relative(targetPath, dep.source),
+          target: relative(targetPath, dep.target),
+          importedNames: dep.importedNames
+        })),
+        metadata: {
+          filesAnalyzed: files.length,
+          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
+          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
+          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
+          languages: [...new Set(analyses.map(a => a.language))]
+        }
+      }
 
-Diagram:
-${diagram}`
+      // Format as readable text with indentation
+      outputContent = `=== Codebase Analysis ===
+
+${JSON.stringify(output, null, 2)}`
     }
 
     // Write to file or console
