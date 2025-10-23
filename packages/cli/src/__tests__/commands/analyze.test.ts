@@ -19,7 +19,8 @@ vi.mock('@specmind/core', () => ({
     calls: []
   }),
   buildDependencyGraph: vi.fn().mockReturnValue([]),
-  generateComponentDiagram: vi.fn().mockReturnValue('graph TD\n  A[Component A]')
+  generateComponentDiagram: vi.fn().mockReturnValue('graph TD\n  A[Component A]'),
+  detectLanguage: vi.fn().mockReturnValue('typescript') // Mock detectLanguage to return typescript
 }))
 
 // Mock fs
