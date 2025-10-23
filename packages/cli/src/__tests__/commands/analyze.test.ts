@@ -28,7 +28,17 @@ vi.mock('fs', () => ({
   statSync: vi.fn().mockReturnValue({
     isDirectory: () => false,
     isFile: () => true
-  })
+  }),
+  existsSync: vi.fn().mockReturnValue(false), // No .gitignore by default
+  readFileSync: vi.fn().mockReturnValue('')
+}))
+
+// Mock ignore library
+vi.mock('ignore', () => ({
+  default: vi.fn(() => ({
+    add: vi.fn(),
+    ignores: vi.fn().mockReturnValue(false) // Don't ignore anything by default
+  }))
 }))
 
 // Mock console to suppress output during tests
