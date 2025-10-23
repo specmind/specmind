@@ -3,7 +3,12 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join, relative } from 'path'
 import ignore from 'ignore'
-import { analyzeFile, buildDependencyGraph, generateComponentDiagram } from '@specmind/core'
+import {
+  analyzeFile,
+  buildDependencyGraph,
+  generateComponentDiagram,
+  detectLanguage,
+} from '@specmind/core'
 import type { FileAnalysis } from '@specmind/core'
 
 /**
@@ -74,7 +79,7 @@ function loadIgnorePatterns(baseDir: string): { ig: ReturnType<typeof ignore>; r
   return { ig, rootDir }
 }
 
-function getAllFiles(dir: string, extensions = ['.ts', '.tsx', '.js', '.jsx']): string[] {
+function getAllFiles(dir: string): string[] {
   const files: string[] = []
   const { ig, rootDir } = loadIgnorePatterns(dir)
 
@@ -98,7 +103,8 @@ function getAllFiles(dir: string, extensions = ['.ts', '.tsx', '.js', '.jsx']): 
         if (stat.isDirectory()) {
           traverse(fullPath)
         } else if (stat.isFile()) {
-          if (extensions.some(ext => fullPath.endsWith(ext))) {
+          // Use detectLanguage to check if file is supported
+          if (detectLanguage(fullPath)) {
             files.push(fullPath)
           }
         }
