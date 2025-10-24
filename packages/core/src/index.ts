@@ -20,7 +20,7 @@ export type {
   ModuleDependency,
   CodebaseAnalysis,
   AnalysisOptions,
-  // Split analysis types (v0.2.0)
+  // Split analysis types
   Layer,
   LayerDetectionResult,
   CrossLayerDependency,
@@ -80,7 +80,7 @@ export {
   type DiagramOptions,
 } from './generator/index.js'
 
-// Export split analysis functions (v0.2.0)
+// Export split analysis functions
 export { performSplitAnalysis } from './analyzer/split-analyzer.js'
 export { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './analyzer/layer-detector.js'
 export { detectServices, type Service } from './analyzer/service-detector.js'

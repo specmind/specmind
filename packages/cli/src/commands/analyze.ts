@@ -153,11 +153,11 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
     // Build dependency graph
     const dependencies = buildDependencyGraph(analyses)
 
-    // Use split analysis by default (v0.2.0)
+    // Perform split analysis
     const outputDir = options.outputDir || join(targetPath, '.specmind/analysis')
     await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
 
-    // If custom output file is specified, also write the legacy format there
+    // If custom output file is specified, also write it there
     if (options.output) {
       // Convert file paths to relative paths for cleaner output
       const filesAnalysis = analyses.map(a => ({
@@ -210,7 +210,7 @@ ${JSON.stringify(output, null, 2)}`
       }
 
       writeFileSync(options.output, outputContent, 'utf8')
-      console.log(`Legacy format also saved to: ${options.output}`)
+      console.log(`Analysis also saved to: ${options.output}`)
     }
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)

@@ -483,7 +483,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] Message queue detection (RabbitMQ, Kafka, SQS, etc.)
 - [x] Output to `.specmind/analysis/` directory structure
 - [x] Comprehensive unit tests (51 new tests, all passing)
-- [x] Split analysis is now the default behavior (no flag required)
+- [x] CLI integration
 
 ### Phase 3: Advanced Features
 - [ ] GitHub PR integration

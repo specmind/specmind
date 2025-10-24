@@ -30,7 +30,7 @@ vi.mock('@specmind/core', () => ({
   }),
   buildDependencyGraph: vi.fn().mockReturnValue([]),
   detectLanguage: vi.fn().mockReturnValue('typescript'), // Mock detectLanguage to return typescript
-  performSplitAnalysis: vi.fn().mockResolvedValue(undefined) // Mock split analysis (v0.2.0 - now default)
+  performSplitAnalysis: vi.fn().mockResolvedValue(undefined) // Mock split analysis
 }))
 
 // Mock fs
@@ -131,7 +131,7 @@ describe('analyzeCommand', () => {
     expect(mockConsoleError).toHaveBeenCalledWith('No source files found')
   })
 
-  it('should use split analysis by default (v0.2.0)', async () => {
+  it('should perform split analysis', async () => {
     const { performSplitAnalysis } = await import('@specmind/core')
 
     const options: AnalyzeOptions = {
@@ -145,7 +145,7 @@ describe('analyzeCommand', () => {
     expect(performSplitAnalysis).toHaveBeenCalled()
   })
 
-  it('should write legacy format when --output is specified', async () => {
+  it('should write to custom output file when --output is specified', async () => {
     const { writeFileSync } = await import('fs')
 
     const options: AnalyzeOptions = {
@@ -156,7 +156,7 @@ describe('analyzeCommand', () => {
 
     await analyzeCommand(options)
 
-    // Verify legacy format was written
+    // Verify output was written to the specified file
     expect(writeFileSync).toHaveBeenCalled()
     const writeCall = vi.mocked(writeFileSync).mock.calls[0]
     expect(writeCall[0]).toBe('/tmp/output.json')
