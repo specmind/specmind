@@ -16,7 +16,7 @@ program
   .command('analyze')
   .description('Analyze codebase and generate architecture diagram')
   .option('-p, --path <path>', 'Path to analyze', process.cwd())
-  .option('-o, --output <dir>', 'Output directory for analysis (default: .specmind/analysis)')
+  .option('-o, --output <dir>', 'Output directory for analysis (default: .specmind/system)')
   .action(async (options) => {
     await analyzeCommand(options)
   })

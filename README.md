@@ -376,7 +376,7 @@ sequenceDiagram
 
 ### Current Structure
 
-For large codebases, SpecMind automatically splits analysis into services and layers:
+For large codebases, SpecMind automatically splits analysis into services and layers with chunking:
 
 ```
 .specmind/
@@ -384,31 +384,35 @@ For large codebases, SpecMind automatically splits analysis into services and la
 ├── features/                    # Feature specifications
 │   ├── user-auth.sm
 │   └── payment-flow.sm
-└── analysis/                    # Split analysis output
-    ├── metadata.json            # Overall summary
-    ├── services/                # Per-service layer analysis
-    │   ├── api-gateway/
-    │   │   ├── metadata.json
-    │   │   ├── data-layer.json
-    │   │   ├── api-layer.json
-    │   │   ├── service-layer.json
-    │   │   └── external-layer.json
-    │   └── worker-service/
-    │       ├── metadata.json
-    │       └── ...
-    └── layers/                  # Cross-service layer view
-        ├── data-layer.json      # All database interactions
-        ├── api-layer.json       # All API endpoints
-        ├── service-layer.json   # All business logic
-        └── external-layer.json  # All external integrations
+└── system/                      # Split analysis output (chunked)
+    ├── metadata.json            # Root metadata with cross-service dependencies
+    └── services/                # Per-service layer analysis
+        ├── api-gateway/
+        │   ├── metadata.json    # Service metadata with cross-layer dependencies
+        │   ├── data-layer/
+        │   │   ├── summary.json # Layer summary (pretty-printed, <50KB)
+        │   │   ├── chunk-0.json # File analysis (minified, ≤256KB)
+        │   │   └── chunk-1.json # Additional chunks as needed
+        │   ├── api-layer/
+        │   │   ├── summary.json
+        │   │   └── chunk-0.json
+        │   ├── service-layer/
+        │   │   └── ...
+        │   └── external-layer/
+        │       └── ...
+        └── worker-service/
+            ├── metadata.json
+            └── ...
 ```
 
 **Benefits:**
-- Each JSON file is small enough for LLM context windows (target: <50KB)
+- Chunked files (≤256KB) fit in LLM context windows for optimal analysis
+- Summary files provide quick layer overview without loading full data
 - Organized by architectural concerns (data/api/service/external)
 - Supports both monorepo (multiple services) and monolith (single service)
-- Cross-layer dependency tracking for architecture validation
+- Three-level dependency hierarchy (cross-service, cross-layer, same-layer)
 - Detects 180+ frameworks, ORMs, databases, and SDKs
+- Minified chunks maximize data density while keeping summaries readable
 
 See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for the complete specification.
 

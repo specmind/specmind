@@ -17,14 +17,79 @@ import { detectServices } from './service-detector.js';
 import { loadPatterns } from './pattern-loader.js';
 
 /**
+ * Maximum chunk size in bytes (256KB minified)
+ */
+const MAX_CHUNK_SIZE = 256 * 1024;
+
+/**
+ * Chunk file analyses into smaller files
+ */
+function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency[]): {
+  chunks: { files: FileAnalysis[], dependencies: ModuleDependency[] }[];
+  manifest: { chunkIndex: number; fileCount: number; files: string[] }[];
+} {
+  const chunks: { files: FileAnalysis[], dependencies: ModuleDependency[] }[] = [];
+  const manifest: { chunkIndex: number; fileCount: number; files: string[] }[] = [];
+
+  let currentChunk: FileAnalysis[] = [];
+  let currentSize = 0;
+
+  for (const file of files) {
+    // Estimate size by serializing (minified = no spaces)
+    const fileJson = JSON.stringify(file);
+    const fileSize = Buffer.from(fileJson).length;
+
+    // If adding this file would exceed limit, start new chunk
+    if (currentChunk.length > 0 && currentSize + fileSize > MAX_CHUNK_SIZE) {
+      // Finalize current chunk
+      const chunkDeps = dependencies.filter(dep =>
+        currentChunk.some(f => f.filePath === dep.source) &&
+        currentChunk.some(f => f.filePath === dep.target)
+      );
+
+      chunks.push({ files: currentChunk, dependencies: chunkDeps });
+      manifest.push({
+        chunkIndex: chunks.length - 1,
+        fileCount: currentChunk.length,
+        files: currentChunk.map(f => f.filePath),
+      });
+
+      // Start new chunk
+      currentChunk = [];
+      currentSize = 0;
+    }
+
+    currentChunk.push(file);
+    currentSize += fileSize;
+  }
+
+  // Add final chunk if not empty
+  if (currentChunk.length > 0) {
+    const chunkDeps = dependencies.filter(dep =>
+      currentChunk.some(f => f.filePath === dep.source) &&
+      currentChunk.some(f => f.filePath === dep.target)
+    );
+
+    chunks.push({ files: currentChunk, dependencies: chunkDeps });
+    manifest.push({
+      chunkIndex: chunks.length - 1,
+      fileCount: currentChunk.length,
+      files: currentChunk.map(f => f.filePath),
+    });
+  }
+
+  return { chunks, manifest };
+}
+
+/**
  * Perform split analysis on a codebase
- * Automatically detects services and splits by layers
+ * Automatically detects services and splits by layers with chunking
  */
 export async function performSplitAnalysis(
   rootPath: string,
   analyses: FileAnalysis[],
   dependencies: ModuleDependency[],
-  outputDir: string = '.specmind/analysis'
+  outputDir: string = '.specmind/system'
 ): Promise<void> {
   const patterns = loadPatterns();
 
@@ -45,6 +110,7 @@ export async function performSplitAnalysis(
 
   // 3. Process each service
   const serviceMetadata: ServiceMetadata[] = [];
+  const allCrossLayerDeps: CrossLayerDependency[] = [];
 
   for (const service of services) {
     console.log(`\nProcessing service: ${service.name}`);
@@ -57,18 +123,62 @@ export async function performSplitAnalysis(
     // Split service by layers
     const layers = splitByLayers(serviceAnalyses, serviceDeps, fileLayerMap, patterns);
 
-    // Write service layer files
+    // Collect cross-layer dependencies
+    for (const layer of Object.values(layers)) {
+      allCrossLayerDeps.push(...layer.crossLayerDependencies);
+    }
+
+    // Write service layer files (chunked)
     const serviceDir = join(outputDir, 'services', service.name);
     mkdirSync(serviceDir, { recursive: true });
 
-    // Write each layer file
+    // Write each layer directory with chunks
     for (const [layerName, layerData] of Object.entries(layers)) {
-      const filePath = join(serviceDir, `${layerName}-layer.json`);
-      writeFileSync(filePath, JSON.stringify(layerData, null, 2), 'utf-8');
-      console.log(`  ✓ ${layerName}-layer.json (${layerData.files.length} files)`);
+      const layerDir = join(serviceDir, `${layerName}-layer`);
+      mkdirSync(layerDir, { recursive: true });
+
+      // Chunk the files
+      const { chunks, manifest } = chunkFileAnalyses(layerData.files, layerData.dependencies);
+
+      // Write chunk files (minified)
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkPath = join(layerDir, `chunk-${i}.json`);
+        writeFileSync(chunkPath, JSON.stringify(chunks[i]), 'utf-8'); // No spaces = minified
+      }
+
+      // Write summary file (pretty-printed)
+      const summary = {
+        layer: layerData.layer,
+        totalFiles: layerData.files.length,
+        totalChunks: chunks.length,
+        chunkManifest: manifest,
+        summary: layerData.summary,
+        crossLayerDependencies: layerData.crossLayerDependencies,
+        // Layer-specific data
+        ...(layerName === 'data' && (layerData as DataLayerAnalysis).databases
+          ? { databases: (layerData as DataLayerAnalysis).databases }
+          : {}),
+        ...(layerName === 'api' && (layerData as APILayerAnalysis).endpoints
+          ? { endpoints: (layerData as APILayerAnalysis).endpoints }
+          : {}),
+        ...(layerName === 'external' && (layerData as ExternalLayerAnalysis).externalServices
+          ? {
+              externalServices: (layerData as ExternalLayerAnalysis).externalServices,
+              messageSystems: (layerData as ExternalLayerAnalysis).messageSystems,
+            }
+          : {}),
+      };
+
+      const summaryPath = join(layerDir, 'summary.json');
+      writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf-8');
+
+      console.log(`  ✓ ${layerName}-layer/ (${layerData.files.length} files, ${chunks.length} chunks)`);
     }
 
-    // Write service metadata
+    // Collect cross-layer dependencies for this service
+    const serviceCrossLayerDeps = Object.values(layers).flatMap(layer => layer.crossLayerDependencies);
+
+    // Write service metadata with cross-layer dependencies
     const metadata: ServiceMetadata = {
       name: service.name,
       rootPath: service.rootPath,
@@ -80,32 +190,44 @@ export async function performSplitAnalysis(
       layers: Object.keys(layers) as Layer[],
     };
 
+    // Add cross-layer dependencies summary to service metadata
+    const serviceCrossLayerSummary: Record<string, number> = {};
+    for (const dep of serviceCrossLayerDeps) {
+      serviceCrossLayerSummary[dep.direction] = (serviceCrossLayerSummary[dep.direction] || 0) + 1;
+    }
+
     writeFileSync(
       join(serviceDir, 'metadata.json'),
-      JSON.stringify(metadata, null, 2),
+      JSON.stringify({
+        ...metadata,
+        crossLayerDependencies: serviceCrossLayerSummary,
+      }, null, 2),
       'utf-8'
     );
 
     serviceMetadata.push(metadata);
   }
 
-  // 4. Create cross-service layer view (global layers)
-  console.log('\nCreating cross-service layer view...');
-  const globalLayers = splitByLayers(analyses, dependencies, fileLayerMap, patterns);
+  // 4. Calculate cross-service dependencies (files from different services)
+  const crossServiceDeps = dependencies.filter(dep => {
+    const sourceService = services.find(s => s.files.includes(dep.source));
+    const targetService = services.find(s => s.files.includes(dep.target));
+    return sourceService && targetService && sourceService.name !== targetService.name;
+  });
 
-  const layersDir = join(outputDir, 'layers');
-  mkdirSync(layersDir, { recursive: true });
-
-  for (const [layerName, layerData] of Object.entries(globalLayers)) {
-    const filePath = join(layersDir, `${layerName}-layer.json`);
-    writeFileSync(filePath, JSON.stringify(layerData, null, 2), 'utf-8');
-    console.log(`  ✓ ${layerName}-layer.json (${layerData.files.length} files)`);
+  const crossServiceSummary: Record<string, number> = {};
+  for (const dep of crossServiceDeps) {
+    const sourceService = services.find(s => s.files.includes(dep.source))?.name || 'unknown';
+    const targetService = services.find(s => s.files.includes(dep.target))?.name || 'unknown';
+    const key = `${sourceService} -> ${targetService}`;
+    crossServiceSummary[key] = (crossServiceSummary[key] || 0) + 1;
   }
 
   // 5. Generate cross-layer dependency summary and detect violations
-  const { summary, violations } = analyzeCrossLayerDependencies(globalLayers);
+  const globalLayers = splitByLayers(analyses, dependencies, fileLayerMap, patterns);
+  const { summary: crossLayerSummary, violations } = analyzeCrossLayerDependencies(globalLayers);
 
-  // 6. Write root metadata
+  // 6. Write root metadata with cross-service dependencies
   const metadata: SplitAnalysisMetadata = {
     analyzedAt: new Date().toISOString(),
     rootPath,
@@ -141,14 +263,17 @@ export async function performSplitAnalysis(
       totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
       languages: [...new Set(analyses.map(a => a.language))],
     },
-    crossLayerDependencies: summary,
+    crossLayerDependencies: crossLayerSummary,
     violations: violations.length > 0 ? violations : undefined,
   };
 
   mkdirSync(outputDir, { recursive: true });
   writeFileSync(
     join(outputDir, 'metadata.json'),
-    JSON.stringify(metadata, null, 2),
+    JSON.stringify({
+      ...metadata,
+      crossServiceDependencies: crossServiceSummary,
+    }, null, 2),
     'utf-8'
   );
 
