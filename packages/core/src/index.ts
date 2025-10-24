@@ -20,6 +20,20 @@ export type {
   ModuleDependency,
   CodebaseAnalysis,
   AnalysisOptions,
+  // Split analysis types (v0.2.0)
+  Layer,
+  LayerDetectionResult,
+  CrossLayerDependency,
+  DatabaseDetection,
+  APIEndpoint,
+  ExternalService,
+  MessageSystem,
+  LayerAnalysis,
+  DataLayerAnalysis,
+  APILayerAnalysis,
+  ExternalLayerAnalysis,
+  ServiceMetadata,
+  SplitAnalysisMetadata,
 } from './types/index.js'
 
 // Export schemas for runtime validation
@@ -65,3 +79,9 @@ export {
   generateSequenceDiagram,
   type DiagramOptions,
 } from './generator/index.js'
+
+// Export split analysis functions (v0.2.0)
+export { performSplitAnalysis } from './analyzer/split-analyzer.js'
+export { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './analyzer/layer-detector.js'
+export { detectServices, type Service } from './analyzer/service-detector.js'
+export { loadPatterns, loadPatternsWithOverrides, type PatternConfig } from './analyzer/pattern-loader.js'

@@ -7,6 +7,7 @@ import {
   analyzeFile,
   buildDependencyGraph,
   detectLanguage,
+  performSplitAnalysis,
 } from '@specmind/core'
 import type { FileAnalysis } from '@specmind/core'
 
@@ -22,6 +23,8 @@ export interface AnalyzeOptions {
   path?: string
   format?: 'json' | 'pretty'
   output?: string // File path to save output
+  split?: boolean // Enable split analysis (v0.2.0)
+  outputDir?: string // Output directory for split analysis (default: .specmind/analysis)
 }
 
 /**
@@ -122,6 +125,7 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
   try {
     const targetPath = options.path || process.cwd()
     const format = options.format || 'json'
+    const useSplitAnalysis = options.split || false
 
     // Find all source files
     const files = getAllFiles(targetPath)
@@ -130,6 +134,8 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
       console.error('No source files found')
       process.exit(1)
     }
+
+    console.log(`Analyzing ${files.length} files...`)
 
     // Analyze each file
     const analyses: FileAnalysis[] = []
@@ -144,8 +150,17 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
       }
     }
 
+    console.log(`Successfully analyzed ${analyses.length} files`)
+
     // Build dependency graph
     const dependencies = buildDependencyGraph(analyses)
+
+    // If split analysis is enabled, use the new split output
+    if (useSplitAnalysis) {
+      const outputDir = options.outputDir || join(targetPath, '.specmind/analysis')
+      await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
+      return
+    }
 
     // Convert file paths to relative paths for cleaner output
     const filesAnalysis = analyses.map(a => ({
