@@ -15,7 +15,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && pnpm copy-patterns",
+    "copy-patterns": "mkdir -p dist/analyzer/patterns && cp src/analyzer/patterns/*.json dist/analyzer/patterns/",
     "watch": "tsc --watch",
     "test": "vitest",
     "test:run": "vitest run",

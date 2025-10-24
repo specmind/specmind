@@ -23,7 +23,6 @@ export interface AnalyzeOptions {
   path?: string
   format?: 'json' | 'pretty'
   output?: string // File path to save output
-  split?: boolean // Enable split analysis (v0.2.0)
   outputDir?: string // Output directory for split analysis (default: .specmind/analysis)
 }
 
@@ -125,7 +124,6 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
   try {
     const targetPath = options.path || process.cwd()
     const format = options.format || 'json'
-    const useSplitAnalysis = options.split || false
 
     // Find all source files
     const files = getAllFiles(targetPath)
@@ -155,69 +153,64 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
     // Build dependency graph
     const dependencies = buildDependencyGraph(analyses)
 
-    // If split analysis is enabled, use the new split output
-    if (useSplitAnalysis) {
-      const outputDir = options.outputDir || join(targetPath, '.specmind/analysis')
-      await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
-      return
-    }
+    // Use split analysis by default (v0.2.0)
+    const outputDir = options.outputDir || join(targetPath, '.specmind/analysis')
+    await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
 
-    // Convert file paths to relative paths for cleaner output
-    const filesAnalysis = analyses.map(a => ({
-      ...a,
-      filePath: relative(targetPath, a.filePath)
-    }))
+    // If custom output file is specified, also write the legacy format there
+    if (options.output) {
+      // Convert file paths to relative paths for cleaner output
+      const filesAnalysis = analyses.map(a => ({
+        ...a,
+        filePath: relative(targetPath, a.filePath)
+      }))
 
-    // Prepare output content
-    let outputContent: string
-    if (format === 'json') {
-      // JSON output for LLM consumption - full detailed analysis
-      const output = {
-        files: filesAnalysis,
-        dependencies: dependencies.map(dep => ({
-          source: relative(targetPath, dep.source),
-          target: relative(targetPath, dep.target),
-          importedNames: dep.importedNames
-        })),
-        metadata: {
-          filesAnalyzed: files.length,
-          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
-          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
-          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
-          languages: [...new Set(analyses.map(a => a.language))]
+      // Prepare output content
+      let outputContent: string
+      if (format === 'json') {
+        // JSON output for LLM consumption - full detailed analysis
+        const output = {
+          files: filesAnalysis,
+          dependencies: dependencies.map(dep => ({
+            source: relative(targetPath, dep.source),
+            target: relative(targetPath, dep.target),
+            importedNames: dep.importedNames
+          })),
+          metadata: {
+            filesAnalyzed: files.length,
+            totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
+            totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
+            totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
+            languages: [...new Set(analyses.map(a => a.language))]
+          }
         }
-      }
-      outputContent = JSON.stringify(output, null, 2)
-    } else {
-      // Pretty output for humans - full detailed analysis
-      const output = {
-        files: filesAnalysis,
-        dependencies: dependencies.map(dep => ({
-          source: relative(targetPath, dep.source),
-          target: relative(targetPath, dep.target),
-          importedNames: dep.importedNames
-        })),
-        metadata: {
-          filesAnalyzed: files.length,
-          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
-          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
-          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
-          languages: [...new Set(analyses.map(a => a.language))]
+        outputContent = JSON.stringify(output, null, 2)
+      } else {
+        // Pretty output for humans - full detailed analysis
+        const output = {
+          files: filesAnalysis,
+          dependencies: dependencies.map(dep => ({
+            source: relative(targetPath, dep.source),
+            target: relative(targetPath, dep.target),
+            importedNames: dep.importedNames
+          })),
+          metadata: {
+            filesAnalyzed: files.length,
+            totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
+            totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
+            totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
+            languages: [...new Set(analyses.map(a => a.language))]
+          }
         }
-      }
 
-      // Format as readable text with indentation
-      outputContent = `=== Codebase Analysis ===
+        // Format as readable text with indentation
+        outputContent = `=== Codebase Analysis ===
 
 ${JSON.stringify(output, null, 2)}`
-    }
+      }
 
-    // Write to file or console
-    if (options.output) {
       writeFileSync(options.output, outputContent, 'utf8')
-      console.log(`Analysis saved to: ${options.output}`)
-    } else {
-      console.log(outputContent)
+      console.log(`Legacy format also saved to: ${options.output}`)
     }
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)

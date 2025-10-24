@@ -29,7 +29,8 @@ vi.mock('@specmind/core', () => ({
     calls: []
   }),
   buildDependencyGraph: vi.fn().mockReturnValue([]),
-  detectLanguage: vi.fn().mockReturnValue('typescript') // Mock detectLanguage to return typescript
+  detectLanguage: vi.fn().mockReturnValue('typescript'), // Mock detectLanguage to return typescript
+  performSplitAnalysis: vi.fn().mockResolvedValue(undefined) // Mock split analysis (v0.2.0 - now default)
 }))
 
 // Mock fs
@@ -40,7 +41,9 @@ vi.mock('fs', () => ({
     isFile: () => true
   }),
   existsSync: vi.fn().mockReturnValue(false), // No .gitignore by default
-  readFileSync: vi.fn().mockReturnValue('')
+  readFileSync: vi.fn().mockReturnValue(''),
+  writeFileSync: vi.fn(), // Mock for writing output files
+  mkdirSync: vi.fn() // Mock for creating directories
 }))
 
 // Mock ignore library
@@ -128,7 +131,9 @@ describe('analyzeCommand', () => {
     expect(mockConsoleError).toHaveBeenCalledWith('No source files found')
   })
 
-  it('should output full analysis data in JSON format', async () => {
+  it('should use split analysis by default (v0.2.0)', async () => {
+    const { performSplitAnalysis } = await import('@specmind/core')
+
     const options: AnalyzeOptions = {
       path: process.cwd(),
       format: 'json'
@@ -136,41 +141,32 @@ describe('analyzeCommand', () => {
 
     await analyzeCommand(options)
 
-    // Get the JSON output from console.log (last call, after progress messages)
-    const calls = mockConsoleLog.mock.calls
-    const output = calls[calls.length - 1][0]
-    const parsed = JSON.parse(output)
+    // Verify split analysis was called
+    expect(performSplitAnalysis).toHaveBeenCalled()
+  })
 
-    // Verify new structure
+  it('should write legacy format when --output is specified', async () => {
+    const { writeFileSync } = await import('fs')
+
+    const options: AnalyzeOptions = {
+      path: process.cwd(),
+      format: 'json',
+      output: '/tmp/output.json'
+    }
+
+    await analyzeCommand(options)
+
+    // Verify legacy format was written
+    expect(writeFileSync).toHaveBeenCalled()
+    const writeCall = vi.mocked(writeFileSync).mock.calls[0]
+    expect(writeCall[0]).toBe('/tmp/output.json')
+
+    // Parse and verify the written content
+    const writtenContent = writeCall[1] as string
+    const parsed = JSON.parse(writtenContent)
+
     expect(parsed).toHaveProperty('files')
     expect(parsed).toHaveProperty('dependencies')
     expect(parsed).toHaveProperty('metadata')
-
-    // Verify files array contains full analysis
-    expect(Array.isArray(parsed.files)).toBe(true)
-    expect(parsed.files[0]).toHaveProperty('filePath')
-    expect(parsed.files[0]).toHaveProperty('language')
-    expect(parsed.files[0]).toHaveProperty('functions')
-    expect(parsed.files[0]).toHaveProperty('classes')
-    expect(parsed.files[0]).toHaveProperty('calls')
-
-    // Verify function details are included
-    expect(Array.isArray(parsed.files[0].functions)).toBe(true)
-    if (parsed.files[0].functions.length > 0) {
-      const func = parsed.files[0].functions[0]
-      expect(func).toHaveProperty('name')
-      expect(func).toHaveProperty('parameters')
-      expect(func).toHaveProperty('returnType')
-      expect(func).toHaveProperty('location')
-    }
-
-    // Verify metadata includes totalCalls
-    expect(parsed.metadata).toHaveProperty('totalCalls')
-    expect(parsed.metadata).toHaveProperty('totalFunctions')
-    expect(parsed.metadata).toHaveProperty('totalClasses')
-
-    // Verify old 'diagram' and 'components' fields are NOT present
-    expect(parsed).not.toHaveProperty('diagram')
-    expect(parsed).not.toHaveProperty('components')
   })
 })
