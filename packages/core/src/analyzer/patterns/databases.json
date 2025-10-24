@@ -1,0 +1,50 @@
+{
+  "postgresql": {
+    "drivers": ["pg", "pg-promise", "postgres", "psycopg2", "psycopg", "asyncpg"],
+    "orms": ["typeorm", "prisma", "sequelize", "sqlalchemy", "knex", "kysely", "drizzle-orm"],
+    "color": "#336791",
+    "icon": "[(PostgreSQL)]"
+  },
+  "mysql": {
+    "drivers": ["mysql", "mysql2", "pymysql", "aiomysql", "mysqlclient"],
+    "orms": ["typeorm", "sequelize", "sqlalchemy", "prisma", "knex", "kysely"],
+    "color": "#4479A1",
+    "icon": "[(MySQL)]"
+  },
+  "sqlite": {
+    "drivers": ["better-sqlite3", "sqlite", "sqlite3", "aiosqlite"],
+    "orms": ["typeorm", "sequelize", "prisma", "knex"],
+    "color": "#003B57",
+    "icon": "[(SQLite)]"
+  },
+  "redis": {
+    "drivers": ["redis", "ioredis", "@redis/client", "aioredis"],
+    "orms": [],
+    "color": "#DC382D",
+    "icon": "[(Redis)]"
+  },
+  "mongodb": {
+    "drivers": ["mongodb", "pymongo", "motor"],
+    "orms": ["mongoose", "mongoengine", "typegoose", "@typegoose/typegoose", "odmantic"],
+    "color": "#47A248",
+    "icon": "[(MongoDB)]"
+  },
+  "cassandra": {
+    "drivers": ["cassandra-driver", "cassandra"],
+    "orms": [],
+    "color": "#1287B1",
+    "icon": "[(Cassandra)]"
+  },
+  "elasticsearch": {
+    "drivers": ["@elastic/elasticsearch", "elasticsearch"],
+    "orms": [],
+    "color": "#005571",
+    "icon": "[(Elasticsearch)]"
+  },
+  "neo4j": {
+    "drivers": ["neo4j-driver", "py2neo", "neo4j"],
+    "orms": [],
+    "color": "#008CC1",
+    "icon": "[(Neo4j)]"
+  }
+}

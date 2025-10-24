@@ -6,50 +6,63 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
 1. **Run the analysis tool:**
    ```bash
-   npx specmind analyze --format json
+   npx specmind analyze
    ```
 
-2. **Parse the JSON output** which contains:
-   - `diagram`: Mermaid diagram string (component/dependency graph)
-   - `components`: Array of detected components (files, classes, functions)
-   - `relationships`: Array of relationships between components
-   - `metadata`: Project metadata (language, framework, etc.)
+2. **Review the split analysis output** in `.specmind/analysis/`:
+   - `metadata.json`: Overall summary with services, architecture type, file counts
+   - `services/{service}/`: Per-service layer analysis (data, API, service, external layers)
+   - `layers/`: Cross-service layer views showing system-wide patterns
 
-3. **Generate TWO Mermaid diagrams:**
+   Each layer file contains:
+   - Files in that layer with their functions, classes, and imports
+   - Internal dependencies (within the layer)
+   - Cross-layer dependencies (to other layers)
+   - Layer-specific metadata (databases, APIs, external services, etc.)
+
+3. **Analyze the split structure** to understand:
+   - **Services**: How many services exist (monorepo vs monolith)
+   - **Layers**: Distribution of code across data/API/service/external layers
+   - **Technologies**: Databases, frameworks, external services in use
+   - **Dependencies**: Key relationships between layers and services
+
+4. **Generate TWO Mermaid diagrams:**
 
    **Diagram 1 - Component/Dependency Graph:**
-   - Use the `diagram` from JSON output as a starting point
-   - Shows the main modules, packages, or services
+   - Shows the main services (if monorepo) or main modules (if monolith)
    - Shows dependencies between components
+   - Highlight key architectural layers (data, API, service, external)
    - Use `graph TD` or `graph LR` format
-   - Keep it high-level (don't show every class/function)
+   - Keep it high-level (focus on services and major modules)
    - Use colors that work in both light and dark mode
 
    **Diagram 2 - Sequence Diagram:**
-   - Shows a typical request flow through the system
-   - Pick the most common user flow (e.g., API request, data processing pipeline)
-   - Shows how components interact over time
+   - Shows a typical request flow through the layers
+   - Example: API request → service layer → data layer → response
+   - Shows how different layers interact over time
    - Use `sequenceDiagram` format
-   - Include key steps: entry point → processing → data storage → response
+   - Include key steps through the architectural layers
    - Use colors that work in both light and dark mode
 
-4. **Generate markdown documentation:**
+5. **Generate markdown documentation:**
 
    **Recommended sections** (customize as needed):
    - **Overview**: High-level description of the system architecture
-   - **Requirements**: Technical requirements and constraints
+   - **Services**: List services (if monorepo) and their purposes
+   - **Architectural Layers**: Describe data/API/service/external layer responsibilities
+   - **Technology Stack**: Databases, frameworks, external services detected
    - **Design Decisions**: Key architectural decisions and rationale
    - **Integration Points**: How different parts of the system connect
    - **Notes**: Additional context, warnings, or optimization opportunities
 
    Feel free to add, remove, or modify sections to fit your documentation needs.
 
-5. **Create the .specmind directory structure:**
+6. **Create the .specmind directory structure:**
    ```bash
    mkdir -p .specmind/features
    ```
 
-6. **Write the system.sm file** at `.specmind/system.sm`:
+7. **Write the system.sm file** at `.specmind/system.sm`:
    - Include markdown documentation with your chosen sections
    - Embed BOTH Mermaid diagrams
    - Example structure (customize as needed):
@@ -72,7 +85,7 @@ This prompt template contains the core logic for the `/analyze` command that ana
      [Additional sections as needed]
      ```
 
-7. **Confirm completion** to the user
+8. **Confirm completion** to the user
 
 ## Expected Output
 

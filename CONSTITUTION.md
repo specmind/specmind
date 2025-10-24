@@ -2,10 +2,11 @@
 
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
-**Last Updated:** 2025-10-19
-**Version:** 1.7.0
+**Last Updated:** 2025-10-23
+**Version:** 1.8.0
 
 ## Changelog
+- **v1.8.0** (2025-10-23): Introduced split analysis architecture to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external) in `.specmind/analysis/` directory. Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
 - **v1.7.0** (2025-10-19): Implemented Python language support with language-specific extractor architecture. Added tree-sitter-python integration. Refactored extractors from generic (with conditionals) to language-specific implementations (typescript.ts, javascript.ts, python.ts) following "duplication is cheaper than wrong abstraction" principle. Python now fully supported for .py and .pyi files.
 - **v1.6.0** (2025-10-19): Enhanced `/design` and `/implement` workflow with color-coded architectural changes. Feature .sm files now show system-wide diagrams with green (added), yellow (modified), red (removed) components. Added system.changelog file to track architectural evolution. Implemented function/method call tracking for accurate sequence diagrams. Standardized two-diagram requirement across all .sm files.
 - **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
@@ -134,9 +135,9 @@ specmind/
 - **Thin wrapper** around `@specmind/core`
 - **Two modes:**
   1. **Setup mode** - `npx specmind setup <assistant>` - Copies slash commands to user's project
-  2. **Analysis mode** - `npx specmind analyze` - Invoked by AI assistants via bash, outputs JSON
+  2. **Analysis mode** - `npx specmind analyze` - Invoked by AI assistants via bash, outputs split analysis
 - Commands: `setup`, `analyze`
-- Example: `npx specmind analyze --format json`
+- Example: `npx specmind analyze` or `npx specmind analyze -o ./custom/path`
 - Future commands: `diff`, `validate`
 
 #### vscode (VS Code Extension)
@@ -215,18 +216,22 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 **Core Commands:**
 
 #### `/analyze`
-- Slash command that orchestrates system initialization
-- LLM executes: `npx specmind analyze --format json`
+- Slash command that orchestrates system initialization and codebase analysis
+- LLM executes: `npx specmind analyze`
 - CLI wrapper calls `@specmind/core` to analyze codebase with tree-sitter
-- Returns JSON containing:
-  - Mermaid diagram (architecture visualization)
-  - Component metadata (files, classes, functions, relationships)
-  - **Call expressions** - Function/method calls for sequence diagram generation
-- LLM receives JSON output and generates markdown documentation (Overview, Requirements, Design Decisions, etc.)
-- Creates `.specmind/system.sm` with **two diagrams**:
-  1. Component/dependency graph (structural view)
-  2. Sequence diagram (behavioral/flow view using call data)
-- Creates `.specmind/features/` directory for future feature specs
+
+**Analysis Output:**
+- Automatically splits large codebases into smaller, LLM-friendly chunks
+- Detects services (monorepo vs monolith) and categorizes files by architectural layer
+- Outputs to `.specmind/analysis/` directory structure:
+  - `metadata.json` - Overall analysis summary
+  - `services/{service}/` - Per-service layer analysis
+  - `layers/` - Cross-service layer view
+- Each layer file contains files, dependencies, cross-layer dependencies, and summaries
+- Four layer types: **data** (database interactions), **api** (endpoints/routes), **service** (business logic), **external** (third-party integrations)
+- Detects 180+ frameworks, ORMs, databases, SDKs, and message queues
+- Tracks cross-layer dependencies for architecture validation
+- See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for complete specification
 
 #### `/design <feature-name>`
 - LLM analyzes existing code and user intent for new feature
@@ -524,19 +529,64 @@ packages/{package}/
 
 ## 7. Future Scope
 
-### 7.1 Multi-Service Architectures
-- Service-oriented architecture analysis
+### 7.1 Split Analysis Architecture (✅ Implemented)
+
+**Status:** Fully implemented and tested.
+
+**Problem:** Large codebases (300+ files) produce analysis output too large for LLM context windows
+
+**Solution:** Automatically split analysis by services and architectural layers
+
+**Key Features:**
+- **Service Detection:** Monorepo structure detection, entry points, Docker compose, package.json
+- **Layer Categorization:** data/api/service/external with pattern-based detection
+- **Configuration-Driven:** JSON files for detection patterns (180+ packages/tools)
+- **Cross-Layer Dependencies:** Track relationships between layers, detect architecture violations
+- **Database Type Detection:** Maps ORMs/drivers to specific databases (PostgreSQL, MySQL, Redis, MongoDB)
+- **API Endpoint Extraction:** Method, path, handler, framework detection for 32 frameworks
+- **Message Queue Detection:** RabbitMQ, Kafka, SQS, Celery, Bull, and 20+ more
+- **Language Support:** TypeScript, JavaScript, Python, with Go/Java/C# planned
+
+**Output Structure:**
+```
+.specmind/analysis/
+├── metadata.json
+├── services/{service}/
+│   ├── metadata.json
+│   ├── data-layer.json
+│   ├── api-layer.json
+│   ├── service-layer.json
+│   └── external-layer.json
+└── layers/
+    ├── data-layer.json
+    ├── api-layer.json
+    ├── service-layer.json
+    └── external-layer.json
+```
+
+**Detection Coverage:**
+- 27 ORMs (Prisma, TypeORM, SQLAlchemy, Mongoose, etc.)
+- 28 database drivers
+- 32 API frameworks (Express, NestJS, FastAPI, Flask, etc.)
+- 18 HTTP clients
+- 100+ external service SDKs (AWS, Stripe, OpenAI, Twilio, etc.)
+- 25 message queue systems
+
+**Rationale:** Hardcoded pattern matching (vs LLM-based detection) for speed, cost-effectiveness, and deterministic results
+
+### 7.2 Multi-Service Architectures
+- Service-oriented architecture analysis (partially addressed by split analysis)
 - Microservice architecture diagrams
 - Service interaction optimization
 - Client/server and front-end/back-end visualization
 
-### 7.2 GitHub Integration
+### 7.3 GitHub Integration
 - Visual architecture diffs in PRs
 - Inline notes and optimization feedback
 - Architecture review bot
 - Breaking change detection
 
-### 7.3 Advanced Analysis
+### 7.4 Advanced Analysis
 - Performance bottleneck detection
 - Code duplication identification
 - Security pattern analysis

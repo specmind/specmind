@@ -29,7 +29,8 @@ vi.mock('@specmind/core', () => ({
     calls: []
   }),
   buildDependencyGraph: vi.fn().mockReturnValue([]),
-  detectLanguage: vi.fn().mockReturnValue('typescript') // Mock detectLanguage to return typescript
+  detectLanguage: vi.fn().mockReturnValue('typescript'), // Mock detectLanguage to return typescript
+  performSplitAnalysis: vi.fn().mockResolvedValue(undefined) // Mock split analysis
 }))
 
 // Mock fs
@@ -40,7 +41,8 @@ vi.mock('fs', () => ({
     isFile: () => true
   }),
   existsSync: vi.fn().mockReturnValue(false), // No .gitignore by default
-  readFileSync: vi.fn().mockReturnValue('')
+  readFileSync: vi.fn().mockReturnValue(''),
+  mkdirSync: vi.fn() // Mock for creating directories
 }))
 
 // Mock ignore library
@@ -62,8 +64,7 @@ describe('analyzeCommand', () => {
 
   it('should analyze with default options', async () => {
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await analyzeCommand(options)
@@ -73,19 +74,7 @@ describe('analyzeCommand', () => {
 
   it('should analyze with custom path', async () => {
     const options: AnalyzeOptions = {
-      path: '/custom/path',
-      format: 'json'
-    }
-
-    await analyzeCommand(options)
-
-    expect(mockConsoleLog).toHaveBeenCalled()
-  })
-
-  it('should analyze with pretty format', async () => {
-    const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'pretty'
+      path: '/custom/path'
     }
 
     await analyzeCommand(options)
@@ -100,8 +89,7 @@ describe('analyzeCommand', () => {
     })
 
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     try {
@@ -120,56 +108,23 @@ describe('analyzeCommand', () => {
     vi.mocked(readdirSync).mockReturnValueOnce([])
 
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await expect(analyzeCommand(options)).rejects.toThrow('process.exit called')
     expect(mockConsoleError).toHaveBeenCalledWith('No source files found')
   })
 
-  it('should output full analysis data in JSON format', async () => {
+  it('should perform split analysis', async () => {
+    const { performSplitAnalysis } = await import('@specmind/core')
+
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await analyzeCommand(options)
 
-    // Get the JSON output from console.log
-    const output = mockConsoleLog.mock.calls[0][0]
-    const parsed = JSON.parse(output)
-
-    // Verify new structure
-    expect(parsed).toHaveProperty('files')
-    expect(parsed).toHaveProperty('dependencies')
-    expect(parsed).toHaveProperty('metadata')
-
-    // Verify files array contains full analysis
-    expect(Array.isArray(parsed.files)).toBe(true)
-    expect(parsed.files[0]).toHaveProperty('filePath')
-    expect(parsed.files[0]).toHaveProperty('language')
-    expect(parsed.files[0]).toHaveProperty('functions')
-    expect(parsed.files[0]).toHaveProperty('classes')
-    expect(parsed.files[0]).toHaveProperty('calls')
-
-    // Verify function details are included
-    expect(Array.isArray(parsed.files[0].functions)).toBe(true)
-    if (parsed.files[0].functions.length > 0) {
-      const func = parsed.files[0].functions[0]
-      expect(func).toHaveProperty('name')
-      expect(func).toHaveProperty('parameters')
-      expect(func).toHaveProperty('returnType')
-      expect(func).toHaveProperty('location')
-    }
-
-    // Verify metadata includes totalCalls
-    expect(parsed.metadata).toHaveProperty('totalCalls')
-    expect(parsed.metadata).toHaveProperty('totalFunctions')
-    expect(parsed.metadata).toHaveProperty('totalClasses')
-
-    // Verify old 'diagram' and 'components' fields are NOT present
-    expect(parsed).not.toHaveProperty('diagram')
-    expect(parsed).not.toHaveProperty('components')
+    // Verify split analysis was called
+    expect(performSplitAnalysis).toHaveBeenCalled()
   })
 })

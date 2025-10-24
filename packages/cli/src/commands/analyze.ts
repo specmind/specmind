@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join, relative } from 'path'
 import ignore from 'ignore'
 import {
   analyzeFile,
   buildDependencyGraph,
   detectLanguage,
+  performSplitAnalysis,
 } from '@specmind/core'
 import type { FileAnalysis } from '@specmind/core'
 
@@ -14,14 +15,14 @@ import type { FileAnalysis } from '@specmind/core'
  * Analyze command - analyzes codebase and outputs architecture data
  *
  * Usage:
- *   specmind analyze --format json
+ *   specmind analyze
  *   specmind analyze --path ./src
+ *   specmind analyze -o ./custom/output
  */
 
 export interface AnalyzeOptions {
   path?: string
-  format?: 'json' | 'pretty'
-  output?: string // File path to save output
+  output?: string // Output directory for analysis (default: .specmind/analysis)
 }
 
 /**
@@ -121,7 +122,6 @@ function getAllFiles(dir: string): string[] {
 export async function analyzeCommand(options: AnalyzeOptions = {}) {
   try {
     const targetPath = options.path || process.cwd()
-    const format = options.format || 'json'
 
     // Find all source files
     const files = getAllFiles(targetPath)
@@ -130,6 +130,8 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
       console.error('No source files found')
       process.exit(1)
     }
+
+    console.log(`Analyzing ${files.length} files...`)
 
     // Analyze each file
     const analyses: FileAnalysis[] = []
@@ -144,66 +146,14 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
       }
     }
 
+    console.log(`Successfully analyzed ${analyses.length} files`)
+
     // Build dependency graph
     const dependencies = buildDependencyGraph(analyses)
 
-    // Convert file paths to relative paths for cleaner output
-    const filesAnalysis = analyses.map(a => ({
-      ...a,
-      filePath: relative(targetPath, a.filePath)
-    }))
-
-    // Prepare output content
-    let outputContent: string
-    if (format === 'json') {
-      // JSON output for LLM consumption - full detailed analysis
-      const output = {
-        files: filesAnalysis,
-        dependencies: dependencies.map(dep => ({
-          source: relative(targetPath, dep.source),
-          target: relative(targetPath, dep.target),
-          importedNames: dep.importedNames
-        })),
-        metadata: {
-          filesAnalyzed: files.length,
-          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
-          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
-          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
-          languages: [...new Set(analyses.map(a => a.language))]
-        }
-      }
-      outputContent = JSON.stringify(output, null, 2)
-    } else {
-      // Pretty output for humans - full detailed analysis
-      const output = {
-        files: filesAnalysis,
-        dependencies: dependencies.map(dep => ({
-          source: relative(targetPath, dep.source),
-          target: relative(targetPath, dep.target),
-          importedNames: dep.importedNames
-        })),
-        metadata: {
-          filesAnalyzed: files.length,
-          totalFunctions: analyses.reduce((sum, a) => sum + a.functions.length, 0),
-          totalClasses: analyses.reduce((sum, a) => sum + a.classes.length, 0),
-          totalCalls: analyses.reduce((sum, a) => sum + a.calls.length, 0),
-          languages: [...new Set(analyses.map(a => a.language))]
-        }
-      }
-
-      // Format as readable text with indentation
-      outputContent = `=== Codebase Analysis ===
-
-${JSON.stringify(output, null, 2)}`
-    }
-
-    // Write to file or console
-    if (options.output) {
-      writeFileSync(options.output, outputContent, 'utf8')
-      console.log(`Analysis saved to: ${options.output}`)
-    } else {
-      console.log(outputContent)
-    }
+    // Perform split analysis
+    const outputDir = options.output || join(targetPath, '.specmind/analysis')
+    await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)
     process.exit(1)
