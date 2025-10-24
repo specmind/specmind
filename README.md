@@ -374,21 +374,7 @@ sequenceDiagram
 
 ## Project Structure
 
-### Current Structure (v0.1.x)
-
-```
-.specmind/
-├── system.sm                    # Root system architecture
-├── features/
-│   ├── user-auth.sm
-│   ├── payment-flow.sm
-│   └── real-time-notifications.sm
-└── services/                    # (Future: microservices)
-    ├── api-gateway.sm
-    └── user-service.sm
-```
-
-### Split Analysis Structure
+### Current Structure
 
 For large codebases, SpecMind automatically splits analysis into services and layers:
 
@@ -461,7 +447,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 
 ## Roadmap
 
-### Phase 1: Core Foundation (Current)
+### Completed
 - [x] Project structure and constitution
 - [x] Tree-sitter integration (@specmind/core)
 - [x] .sm file format parser (@specmind/format)
@@ -470,10 +456,8 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] Architecture diagram generation
 - [x] LLM-powered documentation generation
 - [x] TypeScript, JavaScript, Python language support
-- [ ] Code alignment validation
-
-### Phase 2: Split Analysis Architecture (✅ Complete)
-- [x] Comprehensive specification
+- [x] CLI integration
+- [x] Split analysis architecture
 - [x] Service detection (monorepo/monolith)
 - [x] Layer categorization (data/api/service/external)
 - [x] Pattern-based detection with JSON configs (180+ packages/tools)
@@ -481,17 +465,14 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] Database type detection (PostgreSQL, MySQL, Redis, MongoDB)
 - [x] API endpoint extraction (32 frameworks)
 - [x] Message queue detection (RabbitMQ, Kafka, SQS, etc.)
-- [x] Output to `.specmind/analysis/` directory structure
-- [x] Comprehensive unit tests (51 new tests, all passing)
-- [x] CLI integration
 
-### Phase 3: Advanced Features
+### Phase 1: Advanced Features
+- [ ] Code alignment validation
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
-- [ ] LLM-enhanced layer detection (supplement pattern matching)
 
-### Phase 4: Community & Ecosystem
+### Phase 2: Community & Ecosystem
 - [ ] Plugin system
 - [ ] Custom diagram types
 - [ ] Architecture templates
