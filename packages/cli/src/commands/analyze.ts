@@ -17,6 +17,7 @@ import type { FileAnalysis } from '@specmind/core'
  * Usage:
  *   specmind analyze
  *   specmind analyze --path ./src
+ *   specmind analyze -o ./custom/output
  */
 
 export interface AnalyzeOptions {
