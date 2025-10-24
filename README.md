@@ -471,6 +471,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
+- [ ] Additional language support (Go, Rust, Java, C#, PHP, Ruby)
 
 ### Phase 2: Community & Ecosystem
 - [ ] Plugin system
