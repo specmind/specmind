@@ -74,7 +74,7 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 - Supports TypeScript, JavaScript, and Python (see Language Support section below for details)
 - Respects `.gitignore` - Automatically excludes ignored files and directories
 - `.specmindignore` support - Tool-specific exclusions for files you want in git but not in analysis
-- **Split analysis (v0.2.0)** - Automatically splits large codebases into services and architectural layers for LLM-friendly analysis
+- **Split analysis** - Automatically splits large codebases into services and architectural layers for LLM-friendly analysis
 
 ---
 
@@ -388,7 +388,7 @@ sequenceDiagram
     └── user-service.sm
 ```
 
-### Split Analysis Structure (v0.2.0)
+### Split Analysis Structure
 
 For large codebases, SpecMind automatically splits analysis into services and layers:
 
@@ -398,7 +398,7 @@ For large codebases, SpecMind automatically splits analysis into services and la
 ├── features/                    # Feature specifications
 │   ├── user-auth.sm
 │   └── payment-flow.sm
-└── analysis/                    # Split analysis output (v0.2.0+)
+└── analysis/                    # Split analysis output
     ├── metadata.json            # Overall summary
     ├── services/                # Per-service layer analysis
     │   ├── api-gateway/
@@ -472,8 +472,8 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] TypeScript, JavaScript, Python language support
 - [ ] Code alignment validation
 
-### Phase 2: Split Analysis Architecture (v0.2.0 - ✅ Complete)
-- [x] Comprehensive specification ([ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md))
+### Phase 2: Split Analysis Architecture (✅ Complete)
+- [x] Comprehensive specification
 - [x] Service detection (monorepo/monolith)
 - [x] Layer categorization (data/api/service/external)
 - [x] Pattern-based detection with JSON configs (180+ packages/tools)
