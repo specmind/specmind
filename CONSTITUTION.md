@@ -135,9 +135,9 @@ specmind/
 - **Thin wrapper** around `@specmind/core`
 - **Two modes:**
   1. **Setup mode** - `npx specmind setup <assistant>` - Copies slash commands to user's project
-  2. **Analysis mode** - `npx specmind analyze` - Invoked by AI assistants via bash, outputs JSON
+  2. **Analysis mode** - `npx specmind analyze` - Invoked by AI assistants via bash, outputs split analysis
 - Commands: `setup`, `analyze`
-- Example: `npx specmind analyze --format json`
+- Example: `npx specmind analyze` or `npx specmind analyze -o ./custom/path`
 - Future commands: `diff`, `validate`
 
 #### vscode (VS Code Extension)

@@ -42,7 +42,6 @@ vi.mock('fs', () => ({
   }),
   existsSync: vi.fn().mockReturnValue(false), // No .gitignore by default
   readFileSync: vi.fn().mockReturnValue(''),
-  writeFileSync: vi.fn(), // Mock for writing output files
   mkdirSync: vi.fn() // Mock for creating directories
 }))
 
@@ -65,8 +64,7 @@ describe('analyzeCommand', () => {
 
   it('should analyze with default options', async () => {
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await analyzeCommand(options)
@@ -76,19 +74,7 @@ describe('analyzeCommand', () => {
 
   it('should analyze with custom path', async () => {
     const options: AnalyzeOptions = {
-      path: '/custom/path',
-      format: 'json'
-    }
-
-    await analyzeCommand(options)
-
-    expect(mockConsoleLog).toHaveBeenCalled()
-  })
-
-  it('should analyze with pretty format', async () => {
-    const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'pretty'
+      path: '/custom/path'
     }
 
     await analyzeCommand(options)
@@ -103,8 +89,7 @@ describe('analyzeCommand', () => {
     })
 
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     try {
@@ -123,8 +108,7 @@ describe('analyzeCommand', () => {
     vi.mocked(readdirSync).mockReturnValueOnce([])
 
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await expect(analyzeCommand(options)).rejects.toThrow('process.exit called')
@@ -135,38 +119,12 @@ describe('analyzeCommand', () => {
     const { performSplitAnalysis } = await import('@specmind/core')
 
     const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json'
+      path: process.cwd()
     }
 
     await analyzeCommand(options)
 
     // Verify split analysis was called
     expect(performSplitAnalysis).toHaveBeenCalled()
-  })
-
-  it('should write to custom output file when --output is specified', async () => {
-    const { writeFileSync } = await import('fs')
-
-    const options: AnalyzeOptions = {
-      path: process.cwd(),
-      format: 'json',
-      output: '/tmp/output.json'
-    }
-
-    await analyzeCommand(options)
-
-    // Verify output was written to the specified file
-    expect(writeFileSync).toHaveBeenCalled()
-    const writeCall = vi.mocked(writeFileSync).mock.calls[0]
-    expect(writeCall[0]).toBe('/tmp/output.json')
-
-    // Parse and verify the written content
-    const writtenContent = writeCall[1] as string
-    const parsed = JSON.parse(writtenContent)
-
-    expect(parsed).toHaveProperty('files')
-    expect(parsed).toHaveProperty('dependencies')
-    expect(parsed).toHaveProperty('metadata')
   })
 })
