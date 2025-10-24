@@ -9,16 +9,14 @@ This prompt template contains the core logic for the `/analyze` command that ana
    npx specmind analyze
    ```
 
-2. **Review the split analysis output** in `.specmind/analysis/`:
-   - `metadata.json`: Overall summary with services, architecture type, file counts
-   - `services/{service}/`: Per-service layer analysis (data, API, service, external layers)
-   - `layers/`: Cross-service layer views showing system-wide patterns
+2. **Review the split analysis output** in `.specmind/system/`:
+   - `metadata.json`: Overall summary with services, architecture type, file counts, and cross-service dependencies
+   - `services/{service}/metadata.json`: Service metadata with cross-layer dependencies
+   - `services/{service}/{layer}/`: Per-layer chunked analysis (data, API, service, external layers)
 
-   Each layer file contains:
-   - Files in that layer with their functions, classes, and imports
-   - Internal dependencies (within the layer)
-   - Cross-layer dependencies (to other layers)
-   - Layer-specific metadata (databases, APIs, external services, etc.)
+   Each layer directory contains:
+   - `summary.json`: Layer overview with chunk manifest, cross-layer dependencies, and layer-specific metadata (databases, APIs, external services)
+   - `chunk-N.json`: File analysis chunks (≤256KB each, minified) with files, functions, classes, imports, and same-layer dependencies
 
 3. **Analyze the split structure** to understand:
    - **Services**: How many services exist (monorepo vs monolith)

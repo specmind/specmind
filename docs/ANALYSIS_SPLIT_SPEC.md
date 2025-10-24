@@ -107,48 +107,92 @@ Detection patterns are tailored per language ecosystem:
 
 ## Output Structure
 
-**Default output location:** `.specmind/analysis/`
+**Default output location:** `.specmind/system/`
+
+### Overview
+
+Files are organized in a three-level hierarchy:
+1. **Root level**: Cross-service dependencies and overall metadata
+2. **Service level**: Per-service metadata and cross-layer dependencies
+3. **Layer level**: Chunked file analysis (≤256KB per chunk)
+
+### Structure
 
 ```
-.specmind/analysis/
-├── metadata.json              # Overall analysis summary
-├── services/                  # Per-service analysis
-│   ├── api-gateway/
-│   │   ├── metadata.json      # Service-specific metadata
-│   │   ├── data-layer.json    # DB interactions in this service
-│   │   ├── api-layer.json     # API endpoints in this service
-│   │   ├── service-layer.json # Business logic in this service
-│   │   └── external-layer.json # External calls in this service
-│   ├── core-service/
-│   │   ├── metadata.json
-│   │   ├── data-layer.json
-│   │   └── ...
-│   └── worker-service/
-│       ├── metadata.json
-│       └── ...
-└── layers/                    # Cross-service layer view
-    ├── data-layer.json        # All DB interactions across all services
-    ├── api-layer.json         # All API endpoints across all services
-    ├── service-layer.json     # All business logic across all services
-    └── external-layer.json    # All external integrations across all services
+.specmind/system/
+├── metadata.json                          # Root metadata (pretty-printed)
+│   ├── analyzedAt
+│   ├── architecture: "monolith" | "microservices"
+│   ├── services: [...]
+│   ├── totals: { files, functions, classes, calls, languages }
+│   ├── crossServiceDependencies: [...]    # Dependencies between services
+│   └── violations: [...]                  # Architecture violations
+│
+└── services/
+    ├── api-gateway/
+    │   ├── metadata.json                  # Service metadata (pretty-printed)
+    │   │   ├── name, rootPath, entryPoint, type, framework, port
+    │   │   ├── filesAnalyzed, layers
+    │   │   └── crossLayerDependencies: [...]  # Dependencies between layers
+    │   │
+    │   ├── data-layer/
+    │   │   ├── summary.json               # Layer summary (pretty-printed)
+    │   │   │   ├── layer, totalChunks, totalFiles
+    │   │   │   ├── files: [...]           # Just file paths
+    │   │   │   ├── databases: {...}       # Full database metadata
+    │   │   │   ├── summary: {...}         # Metrics
+    │   │   │   └── chunks: [...]          # Chunk manifest
+    │   │   │
+    │   │   ├── chunk-1.json               # Files 1-N (minified, ≤256KB)
+    │   │   ├── chunk-2.json               # Files N+1-M (minified, ≤256KB)
+    │   │   └── ...
+    │   │
+    │   ├── api-layer/
+    │   │   ├── summary.json               # Includes endpoints metadata
+    │   │   └── chunk-1.json
+    │   │
+    │   ├── service-layer/
+    │   │   ├── summary.json
+    │   │   ├── chunk-1.json
+    │   │   └── chunk-2.json
+    │   │
+    │   └── external-layer/
+    │       ├── summary.json               # Includes external services metadata
+    │       └── chunk-1.json
+    │
+    ├── core-service/                      # Additional services (if microservices)
+    │   └── ...
+    │
+    └── worker-service/
+        └── ...
 ```
 
-**For monoliths** (single service detected):
+### File Size Limits
+
+- **`summary.json`**: Target <50KB, pretty-printed for readability
+- **`chunk-N.json`**: Max 256KB, minified (no whitespace) to maximize data
+- **`metadata.json`**: Pretty-printed, no size limit (contains only metadata, not file analysis)
+
+### Chunking Strategy
+
+When a layer contains many files, they are split into chunks:
+1. Files are grouped sequentially until 256KB limit is reached
+2. Each chunk is saved as `chunk-N.json` (minified)
+3. Chunk manifest in `summary.json` lists which files are in which chunk
+4. Same-layer dependencies are included only in the chunk containing those files
+
+### Monolith Structure
+
+For single-service codebases:
 ```
-.specmind/analysis/
-├── metadata.json
-├── services/
-│   └── my-app/               # Service name from package.json or directory
-│       ├── metadata.json
-│       ├── data-layer.json
-│       ├── api-layer.json
-│       ├── service-layer.json
-│       └── external-layer.json
-└── layers/                   # Same as services/my-app/ for single service
-    ├── data-layer.json
-    ├── api-layer.json
-    ├── service-layer.json
-    └── external-layer.json
+.specmind/system/
+├── metadata.json                          # crossServiceDependencies is empty
+└── services/
+    └── my-app/                            # Single service
+        ├── metadata.json                  # Contains all crossLayerDependencies
+        └── [data/api/service/external]-layer/
+            ├── summary.json
+            └── chunk-*.json
 ```
 
 ---
@@ -159,8 +203,12 @@ Detection patterns are tailored per language ecosystem:
 
 All files are automatically categorized into one or more of these layers:
 
-#### 1. Data Layer (`data-layer.json`)
+#### 1. Data Layer (`data-layer/`)
 **Purpose:** All files that interact with databases or data stores
+
+**Output Files:**
+- `summary.json`: Database metadata, file list, metrics (pretty-printed)
+- `chunk-*.json`: Full file analysis for files in this layer (minified)
 
 **Enhanced Features:**
 - ✅ Detects ORM/ODM usage
@@ -356,8 +404,12 @@ interface DataLayerDetection {
 }
 ```
 
-#### 2. API Layer (`api-layer.json`)
+#### 2. API Layer (`api-layer/`)
 **Purpose:** All files that define API routes, endpoints, or GraphQL schemas
+
+**Output Files:**
+- `summary.json`: Endpoint metadata, file list, metrics (pretty-printed)
+- `chunk-*.json`: Full file analysis for files in this layer (minified)
 
 **Enhanced Features:**
 - ✅ Extracts endpoint details (method, path, handler)
@@ -536,8 +588,12 @@ interface APILayerDetection {
 }
 ```
 
-#### 3. External Layer (`external-layer.json`)
+#### 3. External Layer (`external-layer/`)
 **Purpose:** All files that interact with external services and APIs
+
+**Output Files:**
+- `summary.json`: External services metadata, message systems, file list, metrics (pretty-printed)
+- `chunk-*.json`: Full file analysis for files in this layer (minified)
 
 **Enhanced Features:**
 - ✅ Categorizes external services by type (payment, messaging, cloud, AI, etc.)
@@ -845,8 +901,12 @@ interface ExternalLayerDetection {
 }
 ```
 
-#### 4. Service Layer (`service-layer.json`)
+#### 4. Service Layer (`service-layer/`)
 **Purpose:** Business logic, utilities, and files not in other layers
+
+**Output Files:**
+- `summary.json`: File list, metrics (pretty-printed)
+- `chunk-*.json`: Full file analysis for files in this layer (minified)
 
 **Detection Rules:**
 ```typescript

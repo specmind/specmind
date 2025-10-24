@@ -2,11 +2,12 @@
 
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
-**Last Updated:** 2025-10-23
-**Version:** 1.8.0
+**Last Updated:** 2025-10-24
+**Version:** 1.9.0
 
 ## Changelog
-- **v1.8.0** (2025-10-23): Introduced split analysis architecture to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external) in `.specmind/analysis/` directory. Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
+- **v1.9.0** (2025-10-24): Enhanced split analysis with chunking to handle very large codebases. Layer files now chunked at 256KB (minified) with summary files. Renamed output directory from `.specmind/analysis/` to `.specmind/system/`. Removed redundant `layers/` directory. Cross-service dependencies stored in root metadata, cross-layer dependencies stored in service metadata. Each layer now has `summary.json` (pretty-printed) and `chunk-N.json` files (minified).
+- **v1.8.0** (2025-10-23): Introduced split analysis architecture to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external). Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
 - **v1.7.0** (2025-10-19): Implemented Python language support with language-specific extractor architecture. Added tree-sitter-python integration. Refactored extractors from generic (with conditionals) to language-specific implementations (typescript.ts, javascript.ts, python.ts) following "duplication is cheaper than wrong abstraction" principle. Python now fully supported for .py and .pyi files.
 - **v1.6.0** (2025-10-19): Enhanced `/design` and `/implement` workflow with color-coded architectural changes. Feature .sm files now show system-wide diagrams with green (added), yellow (modified), red (removed) components. Added system.changelog file to track architectural evolution. Implemented function/method call tracking for accurate sequence diagrams. Standardized two-diagram requirement across all .sm files.
 - **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
@@ -223,14 +224,14 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 **Analysis Output:**
 - Automatically splits large codebases into smaller, LLM-friendly chunks
 - Detects services (monorepo vs monolith) and categorizes files by architectural layer
-- Outputs to `.specmind/analysis/` directory structure:
-  - `metadata.json` - Overall analysis summary
-  - `services/{service}/` - Per-service layer analysis
-  - `layers/` - Cross-service layer view
-- Each layer file contains files, dependencies, cross-layer dependencies, and summaries
+- Outputs to `.specmind/system/` directory structure:
+  - `metadata.json` - Root metadata with cross-service dependencies
+  - `services/{service}/metadata.json` - Service metadata with cross-layer dependencies
+  - `services/{service}/{layer}/summary.json` - Layer summary (pretty-printed, <50KB)
+  - `services/{service}/{layer}/chunk-N.json` - Chunked file analysis (minified, ≤256KB)
 - Four layer types: **data** (database interactions), **api** (endpoints/routes), **service** (business logic), **external** (third-party integrations)
 - Detects 180+ frameworks, ORMs, databases, SDKs, and message queues
-- Tracks cross-layer dependencies for architecture validation
+- Tracks cross-service and cross-layer dependencies for architecture validation
 - See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for complete specification
 
 #### `/design <feature-name>`
@@ -549,20 +550,20 @@ packages/{package}/
 
 **Output Structure:**
 ```
-.specmind/analysis/
-├── metadata.json
-├── services/{service}/
-│   ├── metadata.json
-│   ├── data-layer.json
-│   ├── api-layer.json
-│   ├── service-layer.json
-│   └── external-layer.json
-└── layers/
-    ├── data-layer.json
-    ├── api-layer.json
-    ├── service-layer.json
-    └── external-layer.json
+.specmind/system/
+├── metadata.json                  # Cross-service dependencies
+└── services/{service}/
+    ├── metadata.json              # Cross-layer dependencies
+    └── {layer}/
+        ├── summary.json           # Layer metadata (<50KB, pretty)
+        └── chunk-N.json           # File analysis (≤256KB, minified)
 ```
+
+**Chunking Strategy:**
+- Layer files split at 256KB to fit in LLM context windows
+- Summary files pretty-printed for readability
+- Chunk files minified to maximize data density
+- Same-layer deps in chunks, cross-layer deps in service metadata
 
 **Detection Coverage:**
 - 27 ORMs (Prisma, TypeORM, SQLAlchemy, Mongoose, etc.)

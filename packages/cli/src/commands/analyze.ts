@@ -22,7 +22,7 @@ import type { FileAnalysis } from '@specmind/core'
 
 export interface AnalyzeOptions {
   path?: string
-  output?: string // Output directory for analysis (default: .specmind/analysis)
+  output?: string // Output directory for analysis (default: .specmind/system)
 }
 
 /**
@@ -152,7 +152,7 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
     const dependencies = buildDependencyGraph(analyses)
 
     // Perform split analysis
-    const outputDir = options.output || join(targetPath, '.specmind/analysis')
+    const outputDir = options.output || join(targetPath, '.specmind/system')
     await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)
