@@ -136,8 +136,9 @@ describe('analyzeCommand', () => {
 
     await analyzeCommand(options)
 
-    // Get the JSON output from console.log
-    const output = mockConsoleLog.mock.calls[0][0]
+    // Get the JSON output from console.log (last call, after progress messages)
+    const calls = mockConsoleLog.mock.calls
+    const output = calls[calls.length - 1][0]
     const parsed = JSON.parse(output)
 
     // Verify new structure

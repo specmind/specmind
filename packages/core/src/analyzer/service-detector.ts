@@ -45,6 +45,7 @@ export function detectServices(rootPath: string, allFiles: string[]): Service[] 
     name: getServiceName(rootPath),
     rootPath,
     type: detectServiceType(rootPath, allFiles),
+    framework: detectFramework(rootPath, allFiles),
     files: allFiles,
   }];
 }
