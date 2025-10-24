@@ -424,7 +424,7 @@ For large codebases, SpecMind automatically splits analysis into services and la
 - Cross-layer dependency tracking for architecture validation
 - Detects 180+ frameworks, ORMs, databases, and SDKs
 
-See [ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md) for the complete specification.
+See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for the complete specification.
 
 ---
 

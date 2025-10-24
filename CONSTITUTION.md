@@ -231,7 +231,7 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 - Four layer types: **data** (database interactions), **api** (endpoints/routes), **service** (business logic), **external** (third-party integrations)
 - Detects 180+ frameworks, ORMs, databases, SDKs, and message queues
 - Tracks cross-layer dependencies for architecture validation
-- See [ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md) for complete specification
+- See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for complete specification
 
 #### `/design <feature-name>`
 - LLM analyzes existing code and user intent for new feature
