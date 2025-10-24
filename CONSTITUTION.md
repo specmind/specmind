@@ -6,7 +6,7 @@ This document defines the core architectural decisions, principles, and constrai
 **Version:** 1.8.0
 
 ## Changelog
-- **v1.8.0** (2025-10-23): Introduced split analysis architecture (v0.2.0) to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external) in `.specmind/analysis/` directory. Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
+- **v1.8.0** (2025-10-23): Introduced split analysis architecture to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external) in `.specmind/analysis/` directory. Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
 - **v1.7.0** (2025-10-19): Implemented Python language support with language-specific extractor architecture. Added tree-sitter-python integration. Refactored extractors from generic (with conditionals) to language-specific implementations (typescript.ts, javascript.ts, python.ts) following "duplication is cheaper than wrong abstraction" principle. Python now fully supported for .py and .pyi files.
 - **v1.6.0** (2025-10-19): Enhanced `/design` and `/implement` workflow with color-coded architectural changes. Feature .sm files now show system-wide diagrams with green (added), yellow (modified), red (removed) components. Added system.changelog file to track architectural evolution. Implemented function/method call tracking for accurate sequence diagrams. Standardized two-diagram requirement across all .sm files.
 - **v1.5.0** (2025-10-18): Renamed `/init` to `/analyze` to avoid conflicts. Setup command now inlines `_shared` prompt templates into slash command files for self-contained distribution. Updated VS Code extension to use esbuild bundling.
@@ -217,21 +217,10 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 
 #### `/analyze`
 - Slash command that orchestrates system initialization and codebase analysis
-- LLM executes: `npx specmind analyze --format json` (v0.1.x) or `npx specmind analyze` (v0.2.0+)
+- LLM executes: `npx specmind analyze`
 - CLI wrapper calls `@specmind/core` to analyze codebase with tree-sitter
 
-**v0.1.x Output (current):**
-- Returns single JSON file with:
-  - Mermaid diagram (architecture visualization)
-  - Component metadata (files, classes, functions, relationships)
-  - **Call expressions** - Function/method calls for sequence diagram generation
-- LLM receives JSON output and generates markdown documentation
-- Creates `.specmind/system.sm` with **two diagrams**:
-  1. Component/dependency graph (structural view)
-  2. Sequence diagram (behavioral/flow view using call data)
-- Creates `.specmind/features/` directory for future feature specs
-
-**v0.2.0 Output (split analysis - planned):**
+**Analysis Output:**
 - Automatically splits large codebases into smaller, LLM-friendly chunks
 - Detects services (monorepo vs monolith) and categorizes files by architectural layer
 - Outputs to `.specmind/analysis/` directory structure:
@@ -540,9 +529,9 @@ packages/{package}/
 
 ## 7. Future Scope
 
-### 7.1 Split Analysis Architecture (v0.2.0 - ✅ Implemented)
+### 7.1 Split Analysis Architecture (✅ Implemented)
 
-**Status:** Fully implemented and tested. See [ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md) for complete specification.
+**Status:** Fully implemented and tested.
 
 **Problem:** Large codebases (300+ files) produce analysis output too large for LLM context windows
 
@@ -556,7 +545,7 @@ packages/{package}/
 - **Database Type Detection:** Maps ORMs/drivers to specific databases (PostgreSQL, MySQL, Redis, MongoDB)
 - **API Endpoint Extraction:** Method, path, handler, framework detection for 32 frameworks
 - **Message Queue Detection:** RabbitMQ, Kafka, SQS, Celery, Bull, and 20+ more
-- **Language Support:** TypeScript, JavaScript, Python (v0.2.0), with Go/Java/C# planned
+- **Language Support:** TypeScript, JavaScript, Python, with Go/Java/C# planned
 
 **Output Structure:**
 ```
@@ -585,10 +574,8 @@ packages/{package}/
 
 **Rationale:** Hardcoded pattern matching (vs LLM-based detection) for speed, cost-effectiveness, and deterministic results
 
-**See:** [ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md) for complete specification
-
 ### 7.2 Multi-Service Architectures
-- Service-oriented architecture analysis (partially addressed by v0.2.0 split analysis)
+- Service-oriented architecture analysis (partially addressed by split analysis)
 - Microservice architecture diagrams
 - Service interaction optimization
 - Client/server and front-end/back-end visualization
