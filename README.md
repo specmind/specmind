@@ -447,7 +447,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 
 ## Roadmap
 
-### Completed
+### Phase 1: Core Foundation (✅ Complete)
 - [x] Project structure and constitution
 - [x] Tree-sitter integration (@specmind/core)
 - [x] .sm file format parser (@specmind/format)
@@ -457,6 +457,8 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] LLM-powered documentation generation
 - [x] TypeScript, JavaScript, Python language support
 - [x] CLI integration
+
+### Phase 2: Split Analysis Architecture (✅ Complete)
 - [x] Split analysis architecture
 - [x] Service detection (monorepo/monolith)
 - [x] Layer categorization (data/api/service/external)
@@ -466,14 +468,14 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] API endpoint extraction (32 frameworks)
 - [x] Message queue detection (RabbitMQ, Kafka, SQS, etc.)
 
-### Phase 1: Advanced Features
+### Phase 3: Advanced Features
 - [ ] Code alignment validation
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
 - [ ] Additional language support (Go, Rust, Java, C#, PHP, Ruby)
 
-### Phase 2: Community & Ecosystem
+### Phase 4: Community & Ecosystem
 - [ ] Plugin system
 - [ ] Custom diagram types
 - [ ] Architecture templates
