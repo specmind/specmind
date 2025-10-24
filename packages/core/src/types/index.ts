@@ -185,3 +185,215 @@ export const AnalysisOptionsSchema = z.object({
 })
 
 export type AnalysisOptions = z.infer<typeof AnalysisOptionsSchema>
+
+/**
+ * Architectural layer types
+ */
+export type Layer = 'data' | 'api' | 'service' | 'external'
+
+/**
+ * Layer detection result
+ */
+export const LayerDetectionResultSchema = z.object({
+  layers: z.array(z.enum(['data', 'api', 'service', 'external'])),
+  confidence: z.number().min(0).max(1),
+  reasons: z.array(z.string()),
+})
+
+export type LayerDetectionResult = z.infer<typeof LayerDetectionResultSchema>
+
+/**
+ * Cross-layer dependency
+ */
+export const CrossLayerDependencySchema = z.object({
+  source: z.string(), // Source file path
+  target: z.string(), // Target file path
+  targetLayer: z.enum(['data', 'api', 'service', 'external']),
+  importedNames: z.array(z.string()),
+  type: z.literal('uses'),
+  direction: z.string(), // e.g., "api -> service"
+})
+
+export type CrossLayerDependency = z.infer<typeof CrossLayerDependencySchema>
+
+/**
+ * Database detection result
+ */
+export const DatabaseDetectionSchema = z.object({
+  type: z.string(), // postgresql, mysql, redis, mongodb, etc.
+  driver: z.string().optional(),
+  orm: z.string().optional(),
+  files: z.array(z.string()),
+  totalModels: z.number().default(0),
+})
+
+export type DatabaseDetection = z.infer<typeof DatabaseDetectionSchema>
+
+/**
+ * API endpoint
+ */
+export const APIEndpointSchema = z.object({
+  method: z.string(), // GET, POST, PUT, DELETE, etc.
+  path: z.string(),
+  handler: z.string(),
+  location: SourceLocationSchema,
+})
+
+export type APIEndpoint = z.infer<typeof APIEndpointSchema>
+
+/**
+ * External service
+ */
+export const ExternalServiceSchema = z.object({
+  name: z.string(),
+  type: z.string(), // payment, messaging, cloud, ai, etc.
+  sdk: z.string(),
+})
+
+export type ExternalService = z.infer<typeof ExternalServiceSchema>
+
+/**
+ * Message system
+ */
+export const MessageSystemSchema = z.object({
+  library: z.string(),
+  files: z.array(z.string()),
+  type: z.string(), // message-queue, event-stream, task-queue, pub-sub
+})
+
+export type MessageSystem = z.infer<typeof MessageSystemSchema>
+
+/**
+ * Layer analysis output (per layer)
+ */
+export const LayerAnalysisSchema = z.object({
+  layer: z.enum(['data', 'api', 'service', 'external']),
+  files: z.array(FileAnalysisSchema),
+  dependencies: z.array(ModuleDependencySchema), // Same-layer dependencies
+  crossLayerDependencies: z.array(CrossLayerDependencySchema),
+  summary: z.object({
+    totalFiles: z.number(),
+    totalFunctions: z.number().optional(),
+    totalClasses: z.number().optional(),
+  }),
+})
+
+export type LayerAnalysis = z.infer<typeof LayerAnalysisSchema>
+
+/**
+ * Data layer specific analysis
+ */
+export const DataLayerAnalysisSchema = LayerAnalysisSchema.extend({
+  layer: z.literal('data'),
+  databases: z.record(DatabaseDetectionSchema).optional(),
+  summary: z.object({
+    totalFiles: z.number(),
+    totalModels: z.number().optional(),
+    totalQueries: z.number().optional(),
+    databaseTypes: z.array(z.string()).optional(),
+    orms: z.array(z.string()).optional(),
+  }),
+})
+
+export type DataLayerAnalysis = z.infer<typeof DataLayerAnalysisSchema>
+
+/**
+ * API layer specific analysis
+ */
+export const APILayerAnalysisSchema = LayerAnalysisSchema.extend({
+  layer: z.literal('api'),
+  endpoints: z.array(APIEndpointSchema).optional(),
+  summary: z.object({
+    totalFiles: z.number(),
+    totalEndpoints: z.number().optional(),
+    frameworks: z.array(z.string()).optional(),
+    methods: z.record(z.number()).optional(), // { GET: 10, POST: 5, ... }
+  }),
+})
+
+export type APILayerAnalysis = z.infer<typeof APILayerAnalysisSchema>
+
+/**
+ * External layer specific analysis
+ */
+export const ExternalLayerAnalysisSchema = LayerAnalysisSchema.extend({
+  layer: z.literal('external'),
+  externalServices: z.record(z.array(z.string())).optional(), // { payment: ['stripe'], cloud: ['aws-s3'] }
+  messageSystems: z.record(MessageSystemSchema).optional(),
+  summary: z.object({
+    totalFiles: z.number(),
+    totalExternalServices: z.number().optional(),
+    totalMessageSystems: z.number().optional(),
+    serviceTypes: z.array(z.string()).optional(),
+    messagingTypes: z.array(z.string()).optional(),
+  }),
+})
+
+export type ExternalLayerAnalysis = z.infer<typeof ExternalLayerAnalysisSchema>
+
+/**
+ * Service metadata
+ */
+export const ServiceMetadataSchema = z.object({
+  name: z.string(),
+  rootPath: z.string(),
+  entryPoint: z.string().optional(),
+  type: z.enum(['api-server', 'worker', 'frontend', 'library', 'unknown']),
+  framework: z.string().optional(),
+  port: z.number().optional(),
+  filesAnalyzed: z.number(),
+  layers: z.array(z.enum(['data', 'api', 'service', 'external'])),
+})
+
+export type ServiceMetadata = z.infer<typeof ServiceMetadataSchema>
+
+/**
+ * Split analysis metadata
+ */
+export const SplitAnalysisMetadataSchema = z.object({
+  analyzedAt: z.string(), // ISO timestamp
+  rootPath: z.string(),
+  architecture: z.enum(['microservices', 'monolith']),
+  services: z.array(ServiceMetadataSchema),
+  layers: z.object({
+    data: z.object({
+      filesAnalyzed: z.number(),
+      databases: z.array(z.string()).optional(),
+      totalModels: z.number().optional(),
+    }).optional(),
+    api: z.object({
+      filesAnalyzed: z.number(),
+      totalEndpoints: z.number().optional(),
+      frameworks: z.array(z.string()).optional(),
+    }).optional(),
+    service: z.object({
+      filesAnalyzed: z.number(),
+      totalFunctions: z.number().optional(),
+      totalClasses: z.number().optional(),
+    }).optional(),
+    external: z.object({
+      filesAnalyzed: z.number(),
+      services: z.array(z.string()).optional(),
+    }).optional(),
+  }),
+  totals: z.object({
+    filesAnalyzed: z.number(),
+    totalFunctions: z.number(),
+    totalClasses: z.number(),
+    totalCalls: z.number(),
+    languages: z.array(z.string()),
+  }),
+  crossLayerDependencies: z.record(z.number()).optional(), // { "api -> service": 45 }
+  violations: z.array(z.object({
+    type: z.string(),
+    from: z.string(),
+    to: z.string(),
+    files: z.array(z.object({
+      source: z.string(),
+      target: z.string(),
+      reason: z.string(),
+    })),
+  })).optional(),
+})
+
+export type SplitAnalysisMetadata = z.infer<typeof SplitAnalysisMetadataSchema>

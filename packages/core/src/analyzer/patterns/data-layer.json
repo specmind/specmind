@@ -1,0 +1,117 @@
+{
+  "orms": {
+    "typescript": [
+      "prisma",
+      "@prisma/client",
+      "typeorm",
+      "mikro-orm",
+      "@mikro-orm/core",
+      "sequelize",
+      "sequelize-typescript",
+      "mongoose",
+      "typegoose",
+      "@typegoose/typegoose",
+      "knex",
+      "objection",
+      "drizzle-orm",
+      "kysely",
+      "bookshelf",
+      "waterline"
+    ],
+    "python": [
+      "sqlalchemy",
+      "sqlalchemy.orm",
+      "django.db",
+      "django.db.models",
+      "tortoise",
+      "tortoise.models",
+      "peewee",
+      "pony.orm",
+      "mongoengine",
+      "odmantic",
+      "piccolo"
+    ]
+  },
+  "drivers": {
+    "postgresql": {
+      "typescript": ["pg", "pg-promise", "postgres"],
+      "python": ["psycopg2", "psycopg", "asyncpg"]
+    },
+    "mysql": {
+      "typescript": ["mysql", "mysql2"],
+      "python": ["pymysql", "aiomysql", "mysqlclient"]
+    },
+    "sqlite": {
+      "typescript": ["better-sqlite3", "sqlite", "sqlite3"],
+      "python": ["sqlite3", "aiosqlite"]
+    },
+    "redis": {
+      "typescript": ["redis", "ioredis", "@redis/client"],
+      "python": ["redis", "aioredis"]
+    },
+    "mongodb": {
+      "typescript": ["mongodb"],
+      "python": ["pymongo", "motor"]
+    },
+    "cassandra": {
+      "typescript": ["cassandra-driver"],
+      "python": ["cassandra"]
+    },
+    "elasticsearch": {
+      "typescript": ["@elastic/elasticsearch"],
+      "python": ["elasticsearch"]
+    },
+    "neo4j": {
+      "typescript": ["neo4j-driver"],
+      "python": ["py2neo", "neo4j"]
+    }
+  },
+  "queryBuilders": [
+    "knex",
+    "kysely",
+    "@databases/pg",
+    "@databases/mysql",
+    "slonik"
+  ],
+  "filePatterns": [
+    "**/*model*.{ts,js,py}",
+    "**/*schema*.{ts,js,py}",
+    "**/*entity*.{ts,js,py}",
+    "**/*repository*.{ts,js,py}",
+    "**/models/**",
+    "**/schemas/**",
+    "**/entities/**",
+    "**/repositories/**",
+    "**/migrations/**",
+    "**/db/**",
+    "**/database/**",
+    "**/persistence/**"
+  ],
+  "codePatterns": [
+    "@Entity",
+    "@Column",
+    "@PrimaryGeneratedColumn",
+    "@ManyToOne",
+    "@OneToMany",
+    "@ManyToMany",
+    "PrismaClient",
+    "Schema(",
+    "model(",
+    "declarative_base",
+    "Base.metadata",
+    "db.Model",
+    "Column(",
+    "relationship(",
+    "models.Model",
+    "models.CharField",
+    "class.*Model",
+    "class.*Entity",
+    "class.*Schema",
+    "CREATE TABLE",
+    "ALTER TABLE",
+    "SELECT",
+    "INSERT",
+    "UPDATE",
+    "DELETE"
+  ]
+}

@@ -51,6 +51,9 @@ importers:
       '@specmind/format':
         specifier: workspace:^
         version: link:../format
+      minimatch:
+        specifier: ^10.0.3
+        version: 10.0.3
       tree-sitter:
         specifier: ^0.21.1
         version: 0.21.1

@@ -1,0 +1,183 @@
+{
+  "httpClients": {
+    "typescript": [
+      "axios",
+      "fetch",
+      "node-fetch",
+      "undici",
+      "got",
+      "superagent",
+      "request",
+      "needle",
+      "bent",
+      "ky",
+      "wretch"
+    ],
+    "python": [
+      "requests",
+      "httpx",
+      "aiohttp",
+      "urllib",
+      "urllib3",
+      "urllib.request",
+      "http.client",
+      "httplib2"
+    ]
+  },
+  "services": {
+    "cloud": {
+      "aws": ["@aws-sdk/*", "aws-sdk", "boto3", "aioboto3"],
+      "gcp": ["@google-cloud/*", "google-cloud-*"],
+      "azure": ["@azure/*", "azure-*"]
+    },
+    "payment": {
+      "stripe": ["stripe", "@stripe/stripe-js"],
+      "paypal": ["paypal-rest-sdk", "@paypal/checkout-server-sdk"],
+      "square": ["square"],
+      "braintree": ["braintree"],
+      "adyen": ["adyen"]
+    },
+    "messaging": {
+      "twilio": ["twilio", "@twilio/conversations"],
+      "sendgrid": ["sendgrid", "@sendgrid/mail"],
+      "mailgun": ["mailgun-js"],
+      "postmark": ["postmark"],
+      "slack": ["@slack/web-api", "@slack/bolt"],
+      "discord": ["discord.js"],
+      "telegram": ["telegraf"],
+      "whatsapp": ["whatsapp-web.js"]
+    },
+    "ai": {
+      "openai": ["openai"],
+      "anthropic": ["@anthropic-ai/sdk", "anthropic"],
+      "cohere": ["cohere-ai"],
+      "google-ai": ["@google-ai/generativelanguage"],
+      "replicate": ["replicate"],
+      "huggingface": ["huggingface", "@huggingface/inference"]
+    },
+    "auth": {
+      "auth0": ["auth0", "@auth0/auth0-react"],
+      "passport": ["passport", "passport-*"],
+      "firebase": ["firebase-admin", "firebase/auth"],
+      "supabase": ["@supabase/supabase-js"],
+      "clerk": ["@clerk/nextjs"],
+      "next-auth": ["next-auth"],
+      "okta": ["@okta/okta-auth-js"]
+    },
+    "analytics": {
+      "segment": ["@segment/analytics-node"],
+      "mixpanel": ["mixpanel"],
+      "amplitude": ["amplitude-js"],
+      "sentry": ["@sentry/node", "@sentry/browser"],
+      "datadog": ["@datadog/browser-rum"],
+      "newrelic": ["newrelic"],
+      "bugsnag": ["bugsnag"],
+      "rollbar": ["rollbar"]
+    },
+    "storage": {
+      "cloudinary": ["cloudinary", "@cloudinary/url-gen"],
+      "uploadcare": ["@uploadcare/upload-client"],
+      "dropbox": ["dropbox"],
+      "box": ["box-node-sdk"],
+      "onedrive": ["onedrive-api"]
+    },
+    "search": {
+      "elasticsearch": ["@elastic/elasticsearch"],
+      "algolia": ["algoliasearch", "@algolia/client-search"],
+      "typesense": ["typesense"],
+      "meilisearch": ["meilisearch"]
+    },
+    "crm": {
+      "salesforce": ["salesforce", "jsforce"],
+      "hubspot": ["@hubspot/api-client"],
+      "intercom": ["intercom-client"],
+      "zendesk": ["zendesk-node-api"]
+    },
+    "social": {
+      "twitter": ["twitter-api-v2"],
+      "facebook": ["facebook-nodejs-sdk"],
+      "instagram": ["instagram-private-api"],
+      "linkedin": ["linkedin-api"],
+      "pinterest": ["pinterest-api"]
+    }
+  },
+  "messageQueues": {
+    "rabbitmq": {
+      "typescript": ["amqplib", "amqp"],
+      "python": ["pika", "aio-pika"],
+      "type": "message-queue"
+    },
+    "kafka": {
+      "typescript": ["kafkajs", "node-rdkafka"],
+      "python": ["kafka-python", "confluent-kafka", "aiokafka"],
+      "type": "event-stream"
+    },
+    "redis-queue": {
+      "typescript": ["bull", "bee-queue", "bullmq", "kue"],
+      "python": ["rq", "huey"],
+      "type": "task-queue"
+    },
+    "celery": {
+      "python": ["celery"],
+      "type": "task-queue"
+    },
+    "aws-sqs": {
+      "typescript": ["@aws-sdk/client-sqs"],
+      "python": ["boto3"],
+      "type": "message-queue"
+    },
+    "aws-sns": {
+      "typescript": ["@aws-sdk/client-sns"],
+      "python": ["boto3"],
+      "type": "pub-sub"
+    },
+    "aws-eventbridge": {
+      "typescript": ["@aws-sdk/client-eventbridge"],
+      "python": ["boto3"],
+      "type": "event-bus"
+    },
+    "gcp-pubsub": {
+      "typescript": ["@google-cloud/pubsub"],
+      "python": ["google-cloud-pubsub"],
+      "type": "pub-sub"
+    },
+    "azure-servicebus": {
+      "typescript": ["@azure/service-bus"],
+      "python": ["azure-servicebus"],
+      "type": "message-queue"
+    },
+    "nats": {
+      "typescript": ["nats"],
+      "python": ["nats.py"],
+      "type": "message-queue"
+    }
+  },
+  "codePatterns": [
+    "axios.get(",
+    "axios.post(",
+    "axios.put(",
+    "axios.delete(",
+    "fetch(",
+    "requests.get(",
+    "requests.post(",
+    "httpx.get(",
+    "httpx.post(",
+    "aiohttp.ClientSession",
+    "new S3Client(",
+    "Stripe(",
+    "OpenAI(",
+    "new Anthropic(",
+    "SendGridClient(",
+    "TwilioClient("
+  ],
+  "filePatterns": [
+    "**/integrations/**",
+    "**/external/**",
+    "**/clients/**",
+    "**/services/external/**",
+    "**/third-party/**",
+    "**/*client*.{ts,js,py}",
+    "**/*integration*.{ts,js,py}",
+    "**/*sdk*.{ts,js,py}"
+  ]
+}

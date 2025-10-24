@@ -74,6 +74,7 @@ The default prompts suggest sections like Overview, Requirements, Architecture, 
 - Supports TypeScript, JavaScript, and Python (see Language Support section below for details)
 - Respects `.gitignore` - Automatically excludes ignored files and directories
 - `.specmindignore` support - Tool-specific exclusions for files you want in git but not in analysis
+- **Split analysis (v0.2.0 - coming soon)** - Automatically splits large codebases into services and architectural layers for LLM-friendly analysis
 
 ---
 
@@ -373,6 +374,8 @@ sequenceDiagram
 
 ## Project Structure
 
+### Current Structure (v0.1.x)
+
 ```
 .specmind/
 ├── system.sm                    # Root system architecture
@@ -384,6 +387,44 @@ sequenceDiagram
     ├── api-gateway.sm
     └── user-service.sm
 ```
+
+### Split Analysis Structure (v0.2.0 - Coming Soon)
+
+For large codebases, SpecMind will automatically split analysis into services and layers:
+
+```
+.specmind/
+├── system.sm                    # Root system architecture
+├── features/                    # Feature specifications
+│   ├── user-auth.sm
+│   └── payment-flow.sm
+└── analysis/                    # Split analysis output (v0.2.0+)
+    ├── metadata.json            # Overall summary
+    ├── services/                # Per-service layer analysis
+    │   ├── api-gateway/
+    │   │   ├── metadata.json
+    │   │   ├── data-layer.json
+    │   │   ├── api-layer.json
+    │   │   ├── service-layer.json
+    │   │   └── external-layer.json
+    │   └── worker-service/
+    │       ├── metadata.json
+    │       └── ...
+    └── layers/                  # Cross-service layer view
+        ├── data-layer.json      # All database interactions
+        ├── api-layer.json       # All API endpoints
+        ├── service-layer.json   # All business logic
+        └── external-layer.json  # All external integrations
+```
+
+**Benefits:**
+- Each JSON file is small enough for LLM context windows (target: <50KB)
+- Organized by architectural concerns (data/api/service/external)
+- Supports both monorepo (multiple services) and monolith (single service)
+- Cross-layer dependency tracking for architecture validation
+- Detects 180+ frameworks, ORMs, databases, and SDKs
+
+See [ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md) for the complete specification.
 
 ---
 
@@ -428,15 +469,27 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] Slash commands for AI assistants
 - [x] Architecture diagram generation
 - [x] LLM-powered documentation generation
+- [x] TypeScript, JavaScript, Python language support
 - [ ] Code alignment validation
 
-### Phase 2: Advanced Features
-- [ ] Multi-service architecture support
+### Phase 2: Split Analysis Architecture (v0.2.0 - In Progress)
+- [x] Comprehensive specification ([ANALYSIS_SPLIT_SPEC.md](./ANALYSIS_SPLIT_SPEC.md))
+- [ ] Service detection (monorepo/monolith)
+- [ ] Layer categorization (data/api/service/external)
+- [ ] Pattern-based detection with JSON configs (180+ packages/tools)
+- [ ] Cross-layer dependency tracking
+- [ ] Database type detection (PostgreSQL, MySQL, Redis, MongoDB)
+- [ ] API endpoint extraction (32 frameworks)
+- [ ] Message queue detection (RabbitMQ, Kafka, SQS, etc.)
+- [ ] Output to `.specmind/analysis/` directory structure
+
+### Phase 3: Advanced Features
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
+- [ ] LLM-enhanced layer detection (supplement pattern matching)
 
-### Phase 3: Community & Ecosystem
+### Phase 4: Community & Ecosystem
 - [ ] Plugin system
 - [ ] Custom diagram types
 - [ ] Architecture templates
