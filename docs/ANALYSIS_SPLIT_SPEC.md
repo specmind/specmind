@@ -128,8 +128,7 @@ Files are organized in a three-level hierarchy:
 │   ├── crossServiceDependencies: [...]    # Dependencies between services
 │   └── violations: [...]                  # Architecture violations
 │
-├── architecture-diagram.sm                # Component/architecture diagram
-├── sequence-diagram.sm                    # Request flow diagram
+├── sequence-diagram.sm                    # Cross-service interactions diagram
 │
 └── services/
     ├── api-gateway/
@@ -137,6 +136,8 @@ Files are organized in a three-level hierarchy:
     │   │   ├── name, rootPath, entryPoint, type, framework, port
     │   │   ├── filesAnalyzed, layers
     │   │   └── crossLayerDependencies: [...]  # Dependencies between layers
+    │   │
+    │   ├── architecture-diagram.sm        # Per-service function call graph
     │   │
     │   ├── data-layer/
     │   │   ├── summary.json               # Layer summary (pretty-printed)
@@ -190,11 +191,11 @@ For single-service codebases:
 ```
 .specmind/system/
 ├── metadata.json                          # crossServiceDependencies is empty
-├── architecture-diagram.sm                # Component/architecture diagram
-├── sequence-diagram.sm                    # Request flow diagram
+├── sequence-diagram.sm                    # Simple request/response flow
 └── services/
     └── my-app/                            # Single service
         ├── metadata.json                  # Contains all crossLayerDependencies
+        ├── architecture-diagram.sm        # Function call graph for this service
         └── [data/api/service/external]-layer/
             ├── summary.json
             └── chunk-*.json
@@ -202,50 +203,49 @@ For single-service codebases:
 
 ### Generated Diagrams
 
-Split analysis now automatically generates architecture diagrams in separate files:
+Split analysis automatically generates Mermaid diagrams showing architecture and interactions:
 
 **File Structure:**
 ```
 .specmind/system/
-├── architecture-diagram.sm                # Component/architecture diagram
-└── sequence-diagram.sm                    # Request flow diagram
+├── sequence-diagram.sm                    # Cross-service interactions
+└── services/{service}/
+    └── architecture-diagram.sm            # Per-service architecture
 ```
 
 **Contents:**
 
-**`architecture-diagram.sm`** - Component/Architecture Diagram:
-- Shows system architecture:
-   - Services as subgraphs (for microservices)
-   - Layers within each service (data, api, service, external)
+**Per-Service Architecture Diagram** (`services/{service}/architecture-diagram.sm`):
+- Shows internal architecture of each service:
+   - Functions and methods grouped by layer (data, api, service, external)
+   - Call relationships between functions (arrows showing dependencies)
    - Databases with cylinder notation and brand colors
-   - External services with proper icons
-   - Cross-service dependencies
-   - Cross-layer dependencies within services
+   - External services with proper styling
+   - Cross-layer function calls within the service
 
-**`sequence-diagram.sm`** - Sequence/Flow Diagram:
-- Shows typical request flow:
-   - Entry point (API/HTTP request)
-   - Flow through layers (api → service → data)
-   - Database interactions
-   - External service calls
-   - Response path
+**Cross-Service Sequence Diagram** (`sequence-diagram.sm`):
+- Shows interactions between services:
+   - Client requests to entry service
+   - Service-to-service calls with dependency counts
+   - Response flow back to client
+   - For monoliths: simple request/response flow
 
-**Database Styling:**
-- Uses cylinder notation: `[(Database Name)]`
-- Brand colors from `databases.json`:
+**Key Features:**
+- **Function-level detail**: Shows actual methods/functions, not just layers
+- **Call graph visualization**: Arrows between functions show code dependencies
+- **Database styling**: Cylinder notation `[(DatabaseName)]` with brand colors
   - PostgreSQL: `#336791` (blue)
   - MySQL: `#4479A1` (blue)
   - MongoDB: `#47A248` (green)
   - Redis: `#DC382D` (red)
   - SQLite: `#003B57` (dark blue)
-  - And more...
 
 **Benefits:**
-- ✅ Accurate diagrams generated from code analysis
-- ✅ Consistent styling using pattern configurations
-- ✅ LLM doesn't need to manually parse JSON to create diagrams
-- ✅ Faster `/analyze` workflow - LLM uses pre-generated diagrams
-- ✅ Can be used standalone for documentation
+- ✅ Per-service diagrams show detailed internal architecture
+- ✅ Function call graphs reveal actual code dependencies
+- ✅ Cross-service diagram shows service interactions
+- ✅ Accurate diagrams generated directly from code analysis
+- ✅ LLM uses pre-generated diagrams instead of manually creating them
 
 ---
 

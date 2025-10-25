@@ -3,9 +3,10 @@
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
 **Last Updated:** 2025-10-24
-**Version:** 1.10.0
+**Version:** 1.11.0
 
 ## Changelog
+- **v1.11.0** (2025-10-24): Enhanced diagram generation with per-service architecture diagrams. Each service now gets its own `architecture-diagram.sm` showing function-level call graphs grouped by layer. Root-level `sequence-diagram.sm` shows cross-service interactions. Diagrams now show actual functions/methods with arrows indicating dependencies, not just high-level layers. Provides detailed visibility into internal service architecture and cross-service communication patterns.
 - **v1.10.0** (2025-10-24): Added automatic diagram generation to split analysis. Analysis now generates separate diagram files: `.specmind/system/architecture-diagram.sm` (component diagram showing services, layers, databases with brand colors) and `.specmind/system/sequence-diagram.sm` (request flow through layers). Diagrams use database cylinder notation and brand colors from `databases.json` pattern config. LLM workflows now use pre-generated diagrams instead of manually creating them from JSON data.
 - **v1.9.0** (2025-10-24): Enhanced split analysis with chunking to handle very large codebases. Layer files now chunked at 256KB (minified) with summary files. Renamed output directory from `.specmind/analysis/` to `.specmind/system/`. Removed redundant `layers/` directory. Cross-service dependencies stored in root metadata, cross-layer dependencies stored in service metadata. Each layer now has `summary.json` (pretty-printed) and `chunk-N.json` files (minified).
 - **v1.8.0** (2025-10-23): Introduced split analysis architecture to handle large codebases. Analysis automatically splits output into services and architectural layers (data/api/service/external). Hardcoded pattern-based detection with JSON configuration files for 180+ packages/tools. Cross-layer dependency tracking with architecture violation detection. Supports multi-service (monorepo) and single-service (monolith) detection. Enhanced data layer with database type detection (PostgreSQL, MySQL, Redis, MongoDB), API layer with endpoint extraction, external layer with message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull).
@@ -227,15 +228,16 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 - Detects services (monorepo vs monolith) and categorizes files by architectural layer
 - Outputs to `.specmind/system/` directory structure:
   - `metadata.json` - Root metadata with cross-service dependencies
-  - `architecture-diagram.sm` - Component diagram (services, layers, databases)
-  - `sequence-diagram.sm` - Request flow diagram (through layers)
+  - `sequence-diagram.sm` - Cross-service interactions diagram
   - `services/{service}/metadata.json` - Service metadata with cross-layer dependencies
+  - `services/{service}/architecture-diagram.sm` - Per-service function call graph
   - `services/{service}/{layer}/summary.json` - Layer summary (pretty-printed, <50KB)
   - `services/{service}/{layer}/chunk-N.json` - Chunked file analysis (minified, ≤256KB)
 - Four layer types: **data** (database interactions), **api** (endpoints/routes), **service** (business logic), **external** (third-party integrations)
 - Detects 180+ frameworks, ORMs, databases, SDKs, and message queues
 - Tracks cross-service and cross-layer dependencies for architecture validation
-- **Generates architecture diagrams** showing services, layers, databases (with brand colors), and request flows
+- **Generates per-service architecture diagrams** showing function call graphs with layer grouping, databases (with brand colors), and external services
+- **Generates cross-service sequence diagrams** showing service interactions and dependency counts
 - See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for complete specification
 
 #### `/design <feature-name>`

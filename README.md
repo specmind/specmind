@@ -386,11 +386,11 @@ For large codebases, SpecMind automatically splits analysis into services and la
 │   └── payment-flow.sm
 └── system/                      # Split analysis output (chunked)
     ├── metadata.json            # Root metadata with cross-service dependencies
-    ├── architecture-diagram.sm  # Component diagram (services, layers, databases)
-    ├── sequence-diagram.sm      # Request flow diagram (through layers)
+    ├── sequence-diagram.sm      # Cross-service interactions
     └── services/                # Per-service layer analysis
         ├── api-gateway/
-        │   ├── metadata.json    # Service metadata with cross-layer dependencies
+        │   ├── metadata.json        # Service metadata with cross-layer dependencies
+        │   ├── architecture-diagram.sm  # Function call graph for this service
         │   ├── data-layer/
         │   │   ├── summary.json # Layer summary (pretty-printed, <50KB)
         │   │   ├── chunk-0.json # File analysis (minified, ≤256KB)
@@ -404,12 +404,15 @@ For large codebases, SpecMind automatically splits analysis into services and la
         │       └── ...
         └── worker-service/
             ├── metadata.json
+            ├── architecture-diagram.sm
             └── ...
 ```
 
 **Benefits:**
 - Chunked files (≤256KB) fit in LLM context windows for optimal analysis
-- **Auto-generated Mermaid diagrams** show architecture and request flows
+- **Per-service architecture diagrams** show function call graphs with layer grouping
+- **Cross-service sequence diagrams** show service interactions and dependencies
+- Function-level detail with arrows showing actual code dependencies
 - Summary files provide quick layer overview without loading full data
 - Organized by architectural concerns (data/api/service/external)
 - Supports both monorepo (multiple services) and monolith (single service)
