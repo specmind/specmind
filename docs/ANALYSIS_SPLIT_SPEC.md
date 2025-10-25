@@ -128,8 +128,8 @@ Files are organized in a three-level hierarchy:
 │   ├── crossServiceDependencies: [...]    # Dependencies between services
 │   └── violations: [...]                  # Architecture violations
 │
-├── architecture-diagram.md                # Component/architecture diagram
-├── sequence-diagram.md                    # Request flow diagram
+├── architecture-diagram.sm                # Component/architecture diagram
+├── sequence-diagram.sm                    # Request flow diagram
 │
 └── services/
     ├── api-gateway/
@@ -190,8 +190,8 @@ For single-service codebases:
 ```
 .specmind/system/
 ├── metadata.json                          # crossServiceDependencies is empty
-├── architecture-diagram.md                # Component/architecture diagram
-├── sequence-diagram.md                    # Request flow diagram
+├── architecture-diagram.sm                # Component/architecture diagram
+├── sequence-diagram.sm                    # Request flow diagram
 └── services/
     └── my-app/                            # Single service
         ├── metadata.json                  # Contains all crossLayerDependencies
@@ -207,13 +207,13 @@ Split analysis now automatically generates architecture diagrams in separate fil
 **File Structure:**
 ```
 .specmind/system/
-├── architecture-diagram.md                # Component/architecture diagram
-└── sequence-diagram.md                    # Request flow diagram
+├── architecture-diagram.sm                # Component/architecture diagram
+└── sequence-diagram.sm                    # Request flow diagram
 ```
 
 **Contents:**
 
-**`architecture-diagram.md`** - Component/Architecture Diagram:
+**`architecture-diagram.sm`** - Component/Architecture Diagram:
 - Shows system architecture:
    - Services as subgraphs (for microservices)
    - Layers within each service (data, api, service, external)
@@ -222,7 +222,7 @@ Split analysis now automatically generates architecture diagrams in separate fil
    - Cross-service dependencies
    - Cross-layer dependencies within services
 
-**`sequence-diagram.md`** - Sequence/Flow Diagram:
+**`sequence-diagram.sm`** - Sequence/Flow Diagram:
 - Shows typical request flow:
    - Entry point (API/HTTP request)
    - Flow through layers (api → service → data)

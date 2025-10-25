@@ -386,8 +386,8 @@ For large codebases, SpecMind automatically splits analysis into services and la
 │   └── payment-flow.sm
 └── system/                      # Split analysis output (chunked)
     ├── metadata.json            # Root metadata with cross-service dependencies
-    ├── architecture-diagram.md  # Component diagram (services, layers, databases)
-    ├── sequence-diagram.md      # Request flow diagram (through layers)
+    ├── architecture-diagram.sm  # Component diagram (services, layers, databases)
+    ├── sequence-diagram.sm      # Request flow diagram (through layers)
     └── services/                # Per-service layer analysis
         ├── api-gateway/
         │   ├── metadata.json    # Service metadata with cross-layer dependencies
