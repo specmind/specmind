@@ -82,98 +82,139 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
 }
 
 /**
- * Generate architecture diagram showing services, layers, and databases
+ * Generate architecture diagram for a single service showing methods and their calls
  */
-function generateArchitectureDiagram(
-  services: ReturnType<typeof detectServices>,
+function generateServiceArchitectureDiagram(
+  serviceName: string,
+  serviceAnalyses: FileAnalysis[],
+  serviceDeps: ModuleDependency[],
   layers: Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>,
-  patterns: PatternConfig,
-  isMultiService: boolean
+  patterns: PatternConfig
 ): string {
   const lines: string[] = [];
 
-  lines.push('# Architecture Diagram');
+  lines.push(`# ${serviceName} - Architecture Diagram`);
   lines.push('');
   lines.push('```mermaid');
   lines.push('graph TB');
   lines.push('');
 
-  if (isMultiService) {
-    // Multi-service architecture: create subgraphs for each service
-    for (const service of services) {
-      lines.push(`  subgraph ${service.name.replace(/[^a-zA-Z0-9]/g, '_')}["${service.name}"]`);
+  // Create a map of file path to layer
+  const fileToLayer = new Map<string, Layer>();
+  for (const [layerName, layerData] of Object.entries(layers)) {
+    for (const file of layerData.files) {
+      fileToLayer.set(file.filePath, layerName as Layer);
+    }
+  }
 
-      // Add layers for this service
-      const serviceLayers = ['api', 'service', 'data', 'external'] as const;
-      for (const layer of serviceLayers) {
-        const layerData = layers[layer];
-        if (layerData && layerData.files.length > 0) {
-          const layerId = `${service.name}_${layer}`.replace(/[^a-zA-Z0-9]/g, '_');
-          lines.push(`    ${layerId}["${layer.toUpperCase()} Layer"]`);
+  // Generate nodes for functions grouped by layer
+  const functionIds = new Map<string, string>();
+  let nodeCounter = 0;
+
+  for (const [layerName, layerData] of Object.entries(layers)) {
+    if (layerData.files.length === 0) continue;
+
+    lines.push(`  subgraph ${layerName}_layer["${layerName.toUpperCase()} Layer"]`);
+
+    // Add function nodes for this layer
+    for (const file of layerData.files) {
+      for (const func of file.functions) {
+        const nodeId = `fn_${nodeCounter++}`;
+        functionIds.set(`${file.filePath}::${func.name}`, nodeId);
+
+        // Clean function name for display
+        const displayName = func.name.length > 30 ? func.name.substring(0, 27) + '...' : func.name;
+        lines.push(`    ${nodeId}["${displayName}"]`);
+      }
+
+      // Add class methods
+      for (const cls of file.classes) {
+        for (const method of cls.methods) {
+          const nodeId = `fn_${nodeCounter++}`;
+          functionIds.set(`${file.filePath}::${cls.name}.${method.name}`, nodeId);
+
+          const displayName = `${cls.name}.${method.name}`.length > 30
+            ? `${cls.name}.${method.name}`.substring(0, 27) + '...'
+            : `${cls.name}.${method.name}`;
+          lines.push(`    ${nodeId}["${displayName}"]`);
+        }
+      }
+    }
+
+    lines.push('  end');
+    lines.push('');
+  }
+
+  // Add call relationships between functions
+  lines.push('  %% Function calls');
+  for (const file of serviceAnalyses) {
+    for (const call of file.calls) {
+      // Find source function
+      let sourceFuncName: string | null = null;
+      for (const func of file.functions) {
+        if (call.location.startLine >= func.location.startLine &&
+            call.location.startLine <= func.location.endLine) {
+          sourceFuncName = `${file.filePath}::${func.name}`;
+          break;
         }
       }
 
-      lines.push('  end');
-      lines.push('');
-    }
+      if (!sourceFuncName) {
+        // Check if call is within a class method
+        for (const cls of file.classes) {
+          for (const method of cls.methods) {
+            if (call.location.startLine >= method.location.startLine &&
+                call.location.startLine <= method.location.endLine) {
+              sourceFuncName = `${file.filePath}::${cls.name}.${method.name}`;
+              break;
+            }
+          }
+          if (sourceFuncName) break;
+        }
+      }
 
-    // Add cross-service dependencies
-    lines.push('  %% Cross-service dependencies');
-    for (const service of services) {
-      const serviceLayers = ['api', 'service', 'data', 'external'] as const;
-      for (const layer of serviceLayers) {
-        const layerData = layers[layer];
-        if (layerData) {
-          for (const dep of layerData.crossLayerDependencies) {
-            // Find target service
-            const targetService = services.find(s => s.files.includes(dep.target));
-            if (targetService && targetService.name !== service.name) {
-              const sourceId = `${service.name}_${layer}`.replace(/[^a-zA-Z0-9]/g, '_');
-              const targetId = `${targetService.name}_${dep.targetLayer}`.replace(/[^a-zA-Z0-9]/g, '_');
+      if (!sourceFuncName) continue;
+
+      // Find target function in dependencies
+      for (const dep of serviceDeps) {
+        if (dep.source === file.filePath && dep.importedNames.includes(call.calleeName)) {
+          // Find the target file
+          const targetFile = serviceAnalyses.find(f => f.filePath === dep.target);
+          if (!targetFile) continue;
+
+          // Check if it's a function
+          const targetFunc = targetFile.functions.find(f => f.name === call.calleeName);
+          if (targetFunc) {
+            const targetFuncName = `${targetFile.filePath}::${targetFunc.name}`;
+            const sourceId = functionIds.get(sourceFuncName);
+            const targetId = functionIds.get(targetFuncName);
+
+            if (sourceId && targetId) {
               lines.push(`  ${sourceId} --> ${targetId}`);
+            }
+          }
+
+          // Check if it's a class method
+          for (const cls of targetFile.classes) {
+            const method = cls.methods.find(m => m.name === call.calleeName);
+            if (method) {
+              const targetFuncName = `${targetFile.filePath}::${cls.name}.${method.name}`;
+              const sourceId = functionIds.get(sourceFuncName);
+              const targetId = functionIds.get(targetFuncName);
+
+              if (sourceId && targetId) {
+                lines.push(`  ${sourceId} --> ${targetId}`);
+              }
             }
           }
         }
       }
     }
-  } else {
-    // Monolith: single service with layers
-    const layerIds: Record<string, string> = {};
-
-    if (layers.api && layers.api.files.length > 0) {
-      layerIds.api = 'APILayer';
-      lines.push(`  ${layerIds.api}["API Layer"]`);
-    }
-    if (layers.service && layers.service.files.length > 0) {
-      layerIds.service = 'ServiceLayer';
-      lines.push(`  ${layerIds.service}["Service Layer"]`);
-    }
-    if (layers.data && layers.data.files.length > 0) {
-      layerIds.data = 'DataLayer';
-      lines.push(`  ${layerIds.data}["Data Layer"]`);
-    }
-    if (layers.external && layers.external.files.length > 0) {
-      layerIds.external = 'ExternalLayer';
-      lines.push(`  ${layerIds.external}["External Layer"]`);
-    }
-
-    lines.push('');
-
-    // Add layer connections
-    if (layerIds.api && layerIds.service) {
-      lines.push(`  ${layerIds.api} --> ${layerIds.service}`);
-    }
-    if (layerIds.service && layerIds.data) {
-      lines.push(`  ${layerIds.service} --> ${layerIds.data}`);
-    }
-    if (layerIds.service && layerIds.external) {
-      lines.push(`  ${layerIds.service} --> ${layerIds.external}`);
-    }
   }
 
   lines.push('');
 
-  // Add databases with cylinder notation and brand colors
+  // Add databases
   if (layers.data) {
     const dataLayer = layers.data as DataLayerAnalysis;
     if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
@@ -184,17 +225,6 @@ function generateArchitectureDiagram(
           const dbId = `DB_${dbType}`.replace(/[^a-zA-Z0-9]/g, '_');
           lines.push(`  ${dbId}${dbConfig.icon}`);
           lines.push(`  style ${dbId} fill:${dbConfig.color},stroke:#333,stroke-width:2px,color:#fff`);
-
-          // Connect data layer to database
-          if (isMultiService) {
-            // Find which service uses this database
-            for (const service of services) {
-              const dataLayerId = `${service.name}_data`.replace(/[^a-zA-Z0-9]/g, '_');
-              lines.push(`  ${dataLayerId} --> ${dbId}`);
-            }
-          } else {
-            lines.push(`  DataLayer --> ${dbId}`);
-          }
         }
       }
       lines.push('');
@@ -211,16 +241,6 @@ function generateArchitectureDiagram(
           const svcId = `EXT_${svcName}`.replace(/[^a-zA-Z0-9]/g, '_');
           lines.push(`  ${svcId}["${svcName}"]`);
           lines.push(`  style ${svcId} fill:#f9f,stroke:#333,stroke-width:2px`);
-
-          // Connect external layer to service
-          if (isMultiService) {
-            for (const service of services) {
-              const extLayerId = `${service.name}_external`.replace(/[^a-zA-Z0-9]/g, '_');
-              lines.push(`  ${extLayerId} --> ${svcId}`);
-            }
-          } else {
-            lines.push(`  ExternalLayer --> ${svcId}`);
-          }
         }
       }
       lines.push('');
@@ -233,104 +253,77 @@ function generateArchitectureDiagram(
 }
 
 /**
- * Generate sequence diagram showing typical request flow through layers
+ * Generate sequence diagram showing cross-service interactions
  */
 function generateSequenceDiagram(
-  layers: Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>
+  services: ReturnType<typeof detectServices>,
+  dependencies: ModuleDependency[]
 ): string {
   const lines: string[] = [];
 
-  lines.push('# Request Flow Diagram');
+  lines.push('# Cross-Service Interaction Diagram');
   lines.push('');
   lines.push('```mermaid');
   lines.push('sequenceDiagram');
   lines.push('  participant Client');
 
-  // Add layer participants
-  if (layers.api && layers.api.files.length > 0) {
-    lines.push('  participant API as API Layer');
-  }
-  if (layers.service && layers.service.files.length > 0) {
-    lines.push('  participant Service as Service Layer');
-  }
-  if (layers.data && layers.data.files.length > 0) {
-    lines.push('  participant Data as Data Layer');
-  }
-
-  // Add database participants
-  if (layers.data) {
-    const dataLayer = layers.data as DataLayerAnalysis;
-    if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
-      for (const dbType of Object.keys(dataLayer.databases)) {
-        const dbName = dbType.charAt(0).toUpperCase() + dbType.slice(1);
-        lines.push(`  participant ${dbType} as ${dbName}`);
-      }
-    }
-  }
-
-  // Add external service participants
-  if (layers.external) {
-    const externalLayer = layers.external as ExternalLayerAnalysis;
-    if (externalLayer.externalServices && Object.keys(externalLayer.externalServices).length > 0) {
-      const allExtServices = Object.values(externalLayer.externalServices).flat();
-      if (allExtServices.length > 0) {
-        lines.push(`  participant External as External Services`);
-      }
-    }
+  // Add service participants
+  for (const service of services) {
+    const serviceName = service.name.replace(/[^a-zA-Z0-9]/g, '_');
+    lines.push(`  participant ${serviceName} as ${service.name}`);
   }
 
   lines.push('');
-  lines.push('  %% Typical request flow');
+  lines.push('  %% Cross-service interactions');
 
-  // Build request flow
-  if (layers.api && layers.api.files.length > 0) {
-    lines.push('  Client->>+API: HTTP Request');
-
-    if (layers.service && layers.service.files.length > 0) {
-      lines.push('  API->>+Service: Process Request');
-
-      if (layers.data && layers.data.files.length > 0) {
-        lines.push('  Service->>+Data: Query/Update');
-
-        // Database interaction
-        const dataLayer = layers.data as DataLayerAnalysis;
-        if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
-          const dbType = Object.keys(dataLayer.databases)[0];
-          lines.push(`  Data->>+${dbType}: Execute Query`);
-          lines.push(`  ${dbType}-->>-Data: Return Results`);
-        }
-
-        lines.push('  Data-->>-Service: Return Data');
-      }
-
-      // External service call (if applicable)
-      if (layers.external && (layers.external as ExternalLayerAnalysis).externalServices) {
-        lines.push('  Service->>+External: Call API');
-        lines.push('  External-->>-Service: Return Response');
-      }
-
-      lines.push('  Service-->>-API: Return Response');
+  if (services.length === 1) {
+    // Single service - show simple flow
+    const serviceId = services[0]?.name.replace(/[^a-zA-Z0-9]/g, '_');
+    if (serviceId) {
+      lines.push(`  Client->>+${serviceId}: Request`);
+      lines.push(`  ${serviceId}-->>-Client: Response`);
+    }
+  } else {
+    // Multi-service - show cross-service calls
+    const firstServiceId = services[0]?.name.replace(/[^a-zA-Z0-9]/g, '_');
+    if (firstServiceId) {
+      lines.push(`  Client->>+${firstServiceId}: Request`);
     }
 
-    lines.push('  API-->>-Client: HTTP Response');
-  } else if (layers.service && layers.service.files.length > 0) {
-    // No API layer, direct service access
-    lines.push('  Client->>+Service: Request');
+    // Find cross-service dependencies
+    const crossServiceDeps = dependencies.filter(dep => {
+      const sourceService = services.find(s => s.files.includes(dep.source));
+      const targetService = services.find(s => s.files.includes(dep.target));
+      return sourceService && targetService && sourceService.name !== targetService.name;
+    });
 
-    if (layers.data && layers.data.files.length > 0) {
-      lines.push('  Service->>+Data: Query/Update');
-
-      const dataLayer = layers.data as DataLayerAnalysis;
-      if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
-        const dbType = Object.keys(dataLayer.databases)[0];
-        lines.push(`  Data->>+${dbType}: Execute Query`);
-        lines.push(`  ${dbType}-->>-Data: Return Results`);
+    // Group by source/target service pairs
+    const servicePairs = new Map<string, number>();
+    for (const dep of crossServiceDeps) {
+      const sourceService = services.find(s => s.files.includes(dep.source));
+      const targetService = services.find(s => s.files.includes(dep.target));
+      if (sourceService && targetService) {
+        const key = `${sourceService.name} -> ${targetService.name}`;
+        servicePairs.set(key, (servicePairs.get(key) || 0) + 1);
       }
-
-      lines.push('  Data-->>-Service: Return Data');
     }
 
-    lines.push('  Service-->>-Client: Response');
+    // Show interactions between services
+    for (const [pair, count] of servicePairs.entries()) {
+      const parts = pair.split(' -> ');
+      const source = parts[0];
+      const target = parts[1];
+      if (source && target) {
+        const sourceId = source.replace(/[^a-zA-Z0-9]/g, '_');
+        const targetId = target.replace(/[^a-zA-Z0-9]/g, '_');
+        lines.push(`  ${sourceId}->>+${targetId}: Call (${count} dependencies)`);
+        lines.push(`  ${targetId}-->>-${sourceId}: Response`);
+      }
+    }
+
+    if (firstServiceId) {
+      lines.push(`  ${firstServiceId}-->>-Client: Response`);
+    }
   }
 
   lines.push('```');
@@ -462,6 +455,17 @@ export async function performSplitAnalysis(
       'utf-8'
     );
 
+    // Generate service architecture diagram
+    const serviceDiagram = generateServiceArchitectureDiagram(
+      service.name,
+      serviceAnalyses,
+      serviceDeps,
+      layers,
+      patterns
+    );
+    writeFileSync(join(serviceDir, 'architecture-diagram.sm'), serviceDiagram, 'utf-8');
+    console.log(`  ✓ architecture-diagram.sm`);
+
     serviceMetadata.push(metadata);
   }
 
@@ -534,14 +538,10 @@ export async function performSplitAnalysis(
     'utf-8'
   );
 
-  // 7. Generate architecture diagrams
-  console.log('\nGenerating architecture diagrams...');
+  // 7. Generate cross-service sequence diagram
+  console.log('\nGenerating cross-service sequence diagram...');
 
-  const architectureDiagram = generateArchitectureDiagram(services, globalLayers, patterns, isMultiService);
-  writeFileSync(join(outputDir, 'architecture-diagram.sm'), architectureDiagram, 'utf-8');
-  console.log('  ✓ architecture-diagram.sm');
-
-  const sequenceDiagram = generateSequenceDiagram(globalLayers);
+  const sequenceDiagram = generateSequenceDiagram(services, dependencies);
   writeFileSync(join(outputDir, 'sequence-diagram.sm'), sequenceDiagram, 'utf-8');
   console.log('  ✓ sequence-diagram.sm');
 
