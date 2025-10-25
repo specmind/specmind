@@ -199,19 +199,23 @@ export class SpecMindPreviewPanel {
             }
             .markdown-content {
                 max-width: 100%;
+                overflow-x: hidden;
             }
             .mermaid-container {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
                 padding: 0;
-                margin: 20px 0;
+                margin: 20px calc(-1 * (100vw - 100%) / 2);
                 position: relative;
                 overflow: hidden;
                 width: calc(100vw - 40px);
-                max-width: 100%;
                 height: 600px;
                 box-sizing: border-box;
+            }
+            .section-content .mermaid-container {
+                margin-left: -10px;
+                width: calc(100vw - 40px);
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
