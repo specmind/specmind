@@ -201,20 +201,29 @@ export class SpecMindPreviewPanel {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 20px;
+                padding: 0;
                 margin: 20px 0;
                 position: relative;
                 overflow: hidden;
                 width: 100%;
+                max-width: 100%;
                 height: 600px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
                 height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .mermaid-container .mermaid-diagram svg {
-                width: 100%;
-                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+                width: auto;
+                height: auto;
             }
             .mermaid-container.fullscreen {
                 position: fixed;
@@ -222,12 +231,16 @@ export class SpecMindPreviewPanel {
                 left: 0;
                 width: 100vw !important;
                 height: 100vh !important;
+                max-width: 100vw !important;
                 margin: 0;
                 padding: 0;
                 border-radius: 0;
                 border: none;
                 z-index: 9999;
                 background: var(--vscode-editor-background);
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .mermaid-container.fullscreen .diagram-controls {
                 position: fixed;
@@ -235,12 +248,17 @@ export class SpecMindPreviewPanel {
                 right: 20px;
             }
             .mermaid-container.fullscreen .mermaid-diagram {
-                width: 100vw !important;
-                height: 100vh !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .mermaid-container.fullscreen .mermaid-diagram svg {
-                width: 100vw !important;
-                height: 100vh !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
             }
             .mermaid-diagram {
                 user-select: none;
@@ -378,10 +396,6 @@ export class SpecMindPreviewPanel {
                         return true;
                     }
                 });
-
-                // Set SVG to use full container width/height
-                svg.style.width = '100%';
-                svg.style.height = '100%';
 
                 panZoomInstances.set(index, panZoomInstance);
 
