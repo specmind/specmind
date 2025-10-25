@@ -390,8 +390,8 @@ export class SpecMindPreviewPanel {
                 const panZoomInstance = svgPanZoom(svg, {
                     zoomEnabled: true,
                     controlIconsEnabled: false,
-                    fit: true,
-                    center: true,
+                    fit: false,
+                    center: false,
                     minZoom: 0.1,
                     maxZoom: 10,
                     zoomScaleSensitivity: 0.3,
@@ -403,6 +403,12 @@ export class SpecMindPreviewPanel {
                         return true;
                     }
                 });
+
+                // Manually fit to width instead of using library's fit
+                // This makes the diagram use the full width available
+                panZoomInstance.updateBBox();
+                panZoomInstance.resize();
+                panZoomInstance.center();
 
                 panZoomInstances.set(index, panZoomInstance);
 
