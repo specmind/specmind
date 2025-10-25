@@ -203,31 +203,31 @@ export class SpecMindPreviewPanel {
                 border-radius: 8px;
                 padding: 20px;
                 margin: 20px 0;
-                text-align: center;
                 position: relative;
                 overflow: hidden;
-                min-height: 400px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                width: 100%;
+                height: 600px;
+            }
+            .mermaid-container .mermaid-diagram {
+                width: 100%;
+                height: 100%;
+            }
+            .mermaid-container .mermaid-diagram svg {
+                width: 100%;
+                height: 100%;
             }
             .mermaid-container.fullscreen {
                 position: fixed;
                 top: 0;
                 left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100vw;
-                height: 100vh;
+                width: 100vw !important;
+                height: 100vh !important;
                 margin: 0;
                 padding: 0;
                 border-radius: 0;
                 border: none;
                 z-index: 9999;
                 background: var(--vscode-editor-background);
-                display: flex;
-                align-items: center;
-                justify-content: center;
             }
             .mermaid-container.fullscreen .diagram-controls {
                 position: fixed;
@@ -235,15 +235,12 @@ export class SpecMindPreviewPanel {
                 right: 20px;
             }
             .mermaid-container.fullscreen .mermaid-diagram {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                width: 100vw !important;
+                height: 100vh !important;
             }
             .mermaid-container.fullscreen .mermaid-diagram svg {
-                max-width: 100%;
-                max-height: 100%;
+                width: 100vw !important;
+                height: 100vh !important;
             }
             .mermaid-diagram {
                 user-select: none;
@@ -445,8 +442,15 @@ export class SpecMindPreviewPanel {
                         const wasFullscreen = container.classList.contains('fullscreen');
                         container.classList.toggle('fullscreen');
                         document.body.classList.toggle('fullscreen-mode');
-                        fullscreenBtn.textContent = container.classList.contains('fullscreen') ? '✕' : '⛶';
-                        fullscreenBtn.title = container.classList.contains('fullscreen') ? 'Exit Fullscreen' : 'Fullscreen';
+
+                        // Toggle fullscreen icon
+                        if (container.classList.contains('fullscreen')) {
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>';
+                            fullscreenBtn.title = 'Exit Fullscreen';
+                        } else {
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+                            fullscreenBtn.title = 'Fullscreen';
+                        }
 
                         // Resize pan-zoom after fullscreen toggle
                         setTimeout(() => {
@@ -464,7 +468,7 @@ export class SpecMindPreviewPanel {
                         container.classList.remove('fullscreen');
                         document.body.classList.remove('fullscreen-mode');
                         if (fullscreenBtn) {
-                            fullscreenBtn.textContent = '⛶';
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
                             fullscreenBtn.title = 'Fullscreen';
                         }
                         setTimeout(() => {
@@ -572,11 +576,11 @@ export class SpecMindPreviewPanel {
             // Render mermaid in a special container with controls
             output.push('<div class="mermaid-container">')
             output.push('<div class="diagram-controls">')
-            output.push('<button class="zoom-in-btn" title="Zoom In">🔍︎+</button>')
-            output.push('<button class="zoom-out-btn" title="Zoom Out">🔍︎−</button>')
-            output.push('<button class="zoom-reset-btn" title="Reset Zoom">↻</button>')
+            output.push('<button class="zoom-in-btn" title="Zoom In"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>')
+            output.push('<button class="zoom-out-btn" title="Zoom Out"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>')
+            output.push('<button class="zoom-reset-btn" title="Reset Zoom"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>')
             output.push('<span class="zoom-level">100%</span>')
-            output.push('<button class="fullscreen-btn" title="Fullscreen">⛶</button>')
+            output.push('<button class="fullscreen-btn" title="Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>')
             output.push('</div>')
             output.push('<div class="mermaid-diagram">')
             output.push(this.escapeHtml(codeBlockContent.join('\n')))
