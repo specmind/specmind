@@ -205,17 +205,20 @@ export class SpecMindPreviewPanel {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 0;
-                margin: 20px calc(-1 * (100vw - 100%) / 2);
+                padding: 20px;
+                margin: 20px 0;
                 position: relative;
                 overflow: hidden;
-                width: calc(100vw - 40px);
                 height: 600px;
                 box-sizing: border-box;
+
+                /* Break free from all parent constraints */
+                width: 100vw;
+                margin-left: -20px;
             }
             .section-content .mermaid-container {
-                margin-left: -10px;
-                width: calc(100vw - 40px);
+                /* Account for section-content margin-left: 10px */
+                margin-left: -30px;
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
