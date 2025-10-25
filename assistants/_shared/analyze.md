@@ -11,8 +11,8 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
 2. **Review the split analysis output** in `.specmind/system/`:
    - `metadata.json`: Overall summary with services, architecture type, file counts, and cross-service dependencies
-   - `architecture-diagram.md`: Pre-generated component/architecture diagram showing services, layers, and databases with brand colors
-   - `sequence-diagram.md`: Pre-generated request flow diagram showing typical flow through layers
+   - `architecture-diagram.sm`: Pre-generated component/architecture diagram showing services, layers, and databases with brand colors
+   - `sequence-diagram.sm`: Pre-generated request flow diagram showing typical flow through layers
    - `services/{service}/metadata.json`: Service metadata with cross-layer dependencies
    - `services/{service}/{layer}/`: Per-layer chunked analysis (data, API, service, external layers)
 
@@ -30,13 +30,13 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
    The analysis tool has already generated two Mermaid diagrams for you:
 
-   - **`architecture-diagram.md`**: Component/architecture diagram showing:
+   - **`architecture-diagram.sm`**: Component/architecture diagram showing:
      - Services (if monorepo) or layers (if monolith)
      - Architectural layers (data, API, service, external)
      - Databases with cylinder notation and brand colors (PostgreSQL blue, MongoDB green, Redis red, etc.)
      - External services and dependencies
 
-   - **`sequence-diagram.md`**: Request flow diagram showing:
+   - **`sequence-diagram.sm`**: Request flow diagram showing:
      - Typical request flow through the layers
      - API request → service layer → data layer → response
      - Database interactions
@@ -64,7 +64,7 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
 7. **Write the system.sm file** at `.specmind/system.sm`:
    - Include markdown documentation with your chosen sections
-   - Embed the pre-generated Mermaid diagrams from `architecture-diagram.md` and `sequence-diagram.md`
+   - Embed the pre-generated Mermaid diagrams from `architecture-diagram.sm` and `sequence-diagram.sm`
    - Read both diagram files and copy their Mermaid code blocks into system.sm
    - Example structure (customize as needed):
      ```markdown
@@ -74,10 +74,10 @@ This prompt template contains the core logic for the `/analyze` command that ana
      [Your generated overview]
 
      ## Component Architecture
-     [Copy the Mermaid diagram from architecture-diagram.md here]
+     [Copy the Mermaid diagram from architecture-diagram.sm here]
 
      ## Request Flow
-     [Copy the Mermaid diagram from sequence-diagram.md here]
+     [Copy the Mermaid diagram from sequence-diagram.sm here]
 
      [Additional sections as needed]
      ```
@@ -89,8 +89,8 @@ This prompt template contains the core logic for the `/analyze` command that ana
 The `.specmind/system.sm` file should be created as a markdown file with:
 - Documentation sections (structure is flexible)
 - **Two pre-generated Mermaid diagrams** (copied from the generated diagram files):
-  1. Component/architecture diagram (from `architecture-diagram.md`)
-  2. Sequence/flow diagram (from `sequence-diagram.md`)
+  1. Component/architecture diagram (from `architecture-diagram.sm`)
+  2. Sequence/flow diagram (from `sequence-diagram.sm`)
 
 ## Notes
 

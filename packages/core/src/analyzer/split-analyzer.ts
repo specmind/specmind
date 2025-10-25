@@ -538,12 +538,12 @@ export async function performSplitAnalysis(
   console.log('\nGenerating architecture diagrams...');
 
   const architectureDiagram = generateArchitectureDiagram(services, globalLayers, patterns, isMultiService);
-  writeFileSync(join(outputDir, 'architecture-diagram.md'), architectureDiagram, 'utf-8');
-  console.log('  ✓ architecture-diagram.md');
+  writeFileSync(join(outputDir, 'architecture-diagram.sm'), architectureDiagram, 'utf-8');
+  console.log('  ✓ architecture-diagram.sm');
 
   const sequenceDiagram = generateSequenceDiagram(globalLayers);
-  writeFileSync(join(outputDir, 'sequence-diagram.md'), sequenceDiagram, 'utf-8');
-  console.log('  ✓ sequence-diagram.md');
+  writeFileSync(join(outputDir, 'sequence-diagram.sm'), sequenceDiagram, 'utf-8');
+  console.log('  ✓ sequence-diagram.sm');
 
   console.log(`\n✅ Split analysis complete: ${outputDir}`);
   console.log(`   Services: ${services.length}`);
