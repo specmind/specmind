@@ -376,22 +376,23 @@ export class SpecMindPreviewPanel {
                 const containerWidth = container.clientWidth;
                 const containerHeight = container.clientHeight;
 
-                // Set SVG to fill container
-                svg.setAttribute('width', containerWidth);
-                svg.setAttribute('height', containerHeight);
+                // Remove any existing width/height attributes from Mermaid
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.removeAttribute('style');
 
-                // Preserve viewBox if it exists, otherwise create one from the SVG bounds
-                if (!svg.hasAttribute('viewBox')) {
-                    const bbox = svg.getBBox();
-                    svg.setAttribute('viewBox', \`\${bbox.x} \${bbox.y} \${bbox.width} \${bbox.height}\`);
-                }
+                // Set SVG to fill container completely
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.width = '100%';
+                svg.style.height = '100%';
 
                 // Initialize svg-pan-zoom
                 const panZoomInstance = svgPanZoom(svg, {
                     zoomEnabled: true,
                     controlIconsEnabled: false,
-                    fit: false,
-                    center: false,
+                    fit: true,
+                    center: true,
                     minZoom: 0.1,
                     maxZoom: 10,
                     zoomScaleSensitivity: 0.3,
@@ -403,12 +404,6 @@ export class SpecMindPreviewPanel {
                         return true;
                     }
                 });
-
-                // Manually fit to width instead of using library's fit
-                // This makes the diagram use the full width available
-                panZoomInstance.updateBBox();
-                panZoomInstance.resize();
-                panZoomInstance.center();
 
                 panZoomInstances.set(index, panZoomInstance);
 
