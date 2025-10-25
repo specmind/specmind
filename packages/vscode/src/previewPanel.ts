@@ -131,7 +131,7 @@ export class SpecMindPreviewPanel {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net;">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net; img-src data:;">
         <title>SpecMind Preview</title>
         <style>
             body {
@@ -141,6 +141,10 @@ export class SpecMindPreviewPanel {
                 background-color: var(--vscode-editor-background);
                 padding: 20px;
                 margin: 0;
+            }
+            body.fullscreen-mode {
+                padding: 0;
+                overflow: hidden;
             }
             .header {
                 border-bottom: 2px solid var(--vscode-panel-border);
@@ -193,13 +197,113 @@ export class SpecMindPreviewPanel {
                 font-weight: 600;
                 color: var(--vscode-editor-foreground);
             }
+            .markdown-content {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
             .mermaid-container {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 20px;
+                padding: 0;
                 margin: 20px 0;
-                text-align: center;
+                position: relative;
+                overflow: hidden;
+                height: 600px;
+                box-sizing: border-box;
+
+                /* Break free from all parent constraints */
+                width: 100vw;
+                margin-left: -20px;
+            }
+            .section-content .mermaid-container {
+                /* Account for section-content margin-left: 10px */
+                margin-left: -30px;
+            }
+            .mermaid-container .mermaid-diagram {
+                width: 100%;
+                height: 100%;
+            }
+            .mermaid-container .mermaid-diagram svg {
+                display: block;
+            }
+            .mermaid-container.fullscreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+                border: none;
+                z-index: 9999;
+                background: var(--vscode-editor-background);
+            }
+            .mermaid-container.fullscreen .diagram-controls {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+            }
+            .mermaid-container.fullscreen .mermaid-diagram {
+                width: 100% !important;
+                height: 100% !important;
+            }
+            .mermaid-container.fullscreen .mermaid-diagram svg {
+                display: block !important;
+            }
+            .mermaid-diagram {
+                user-select: none;
+            }
+            .diagram-controls {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 6px;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 8px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                z-index: 10000;
+            }
+            .diagram-controls button {
+                background: rgba(255, 255, 255, 0.15);
+                color: #ffffff;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                padding: 8px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 500;
+                transition: all 0.2s;
+                min-width: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .diagram-controls button:hover {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.5);
+                transform: translateY(-1px);
+            }
+            .diagram-controls button:active {
+                transform: translateY(0) scale(0.95);
+            }
+            .zoom-level {
+                color: #ffffff;
+                padding: 8px 12px;
+                font-size: 13px;
+                font-family: monospace;
+                display: flex;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                min-width: 60px;
+                justify-content: center;
+                font-weight: 600;
             }
             .architecture-diagram {
                 width: 100%;
@@ -234,6 +338,7 @@ export class SpecMindPreviewPanel {
         </div>
 
         <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
         <script nonce="${nonce}">
             // Initialize Mermaid
             mermaid.initialize({
@@ -242,6 +347,9 @@ export class SpecMindPreviewPanel {
                 securityLevel: 'loose'
             });
 
+            // Store pan-zoom instances for each diagram
+            const panZoomInstances = new Map();
+
             // Render all mermaid diagrams
             const diagramElements = document.querySelectorAll('.mermaid-diagram');
             diagramElements.forEach((element, index) => {
@@ -249,12 +357,151 @@ export class SpecMindPreviewPanel {
                     mermaid.render('mermaid-svg-' + index, element.textContent.trim())
                         .then(({svg}) => {
                             element.innerHTML = svg;
+                            setupDiagramControls(element, index);
                         })
                         .catch(error => {
                             element.innerHTML = '<p style="color: #f44747;">Error rendering diagram: ' + error.message + '</p>';
                         });
                 }
             });
+
+            function setupDiagramControls(diagramElement, index) {
+                const container = diagramElement.closest('.mermaid-container');
+                if (!container) return;
+
+                const svg = diagramElement.querySelector('svg');
+                if (!svg) return;
+
+                // Get the container dimensions
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+
+                // Remove any existing width/height attributes from Mermaid
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.removeAttribute('style');
+
+                // Set SVG to fill container completely
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+
+                // Initialize svg-pan-zoom
+                const panZoomInstance = svgPanZoom(svg, {
+                    zoomEnabled: true,
+                    controlIconsEnabled: false,
+                    fit: true,
+                    center: true,
+                    minZoom: 0.1,
+                    maxZoom: 10,
+                    zoomScaleSensitivity: 0.3,
+                    dblClickZoomEnabled: true,
+                    mouseWheelZoomEnabled: true,
+                    preventMouseEventsDefault: true,
+                    contain: false,
+                    beforePan: function() {
+                        return true;
+                    }
+                });
+
+                panZoomInstances.set(index, panZoomInstance);
+
+                // Get controls
+                const zoomInBtn = container.querySelector('.zoom-in-btn');
+                const zoomOutBtn = container.querySelector('.zoom-out-btn');
+                const zoomResetBtn = container.querySelector('.zoom-reset-btn');
+                const fullscreenBtn = container.querySelector('.fullscreen-btn');
+                const zoomLevel = container.querySelector('.zoom-level');
+
+                // Update zoom level display
+                function updateZoomLevel() {
+                    if (zoomLevel) {
+                        const zoom = panZoomInstance.getZoom();
+                        zoomLevel.textContent = Math.round(zoom * 100) + '%';
+                    }
+                }
+
+                // Initial zoom level
+                updateZoomLevel();
+
+                // Listen to zoom events
+                svg.addEventListener('wheel', () => {
+                    setTimeout(updateZoomLevel, 50);
+                });
+
+                // Zoom in
+                if (zoomInBtn) {
+                    zoomInBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.zoomIn();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Zoom out
+                if (zoomOutBtn) {
+                    zoomOutBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.zoomOut();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Reset zoom
+                if (zoomResetBtn) {
+                    zoomResetBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.reset();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Fullscreen toggle
+                if (fullscreenBtn) {
+                    fullscreenBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const wasFullscreen = container.classList.contains('fullscreen');
+                        container.classList.toggle('fullscreen');
+                        document.body.classList.toggle('fullscreen-mode');
+
+                        // Toggle fullscreen icon
+                        if (container.classList.contains('fullscreen')) {
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>';
+                            fullscreenBtn.title = 'Exit Fullscreen';
+                        } else {
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+                            fullscreenBtn.title = 'Fullscreen';
+                        }
+
+                        // Resize pan-zoom after fullscreen toggle
+                        setTimeout(() => {
+                            panZoomInstance.resize();
+                            panZoomInstance.fit();
+                            panZoomInstance.center();
+                            updateZoomLevel();
+                        }, 100);
+                    });
+                }
+
+                // ESC to exit fullscreen
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && container.classList.contains('fullscreen')) {
+                        container.classList.remove('fullscreen');
+                        document.body.classList.remove('fullscreen-mode');
+                        if (fullscreenBtn) {
+                            fullscreenBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+                            fullscreenBtn.title = 'Fullscreen';
+                        }
+                        setTimeout(() => {
+                            panZoomInstance.resize();
+                            panZoomInstance.fit();
+                            panZoomInstance.center();
+                            updateZoomLevel();
+                        }, 100);
+                    }
+                });
+            }
         </script>
     </body>
     </html>`
@@ -348,8 +595,15 @@ export class SpecMindPreviewPanel {
           inCodeBlock = false
 
           if (codeBlockType === 'mermaid') {
-            // Render mermaid in a special container
+            // Render mermaid in a special container with controls
             output.push('<div class="mermaid-container">')
+            output.push('<div class="diagram-controls">')
+            output.push('<button class="zoom-in-btn" title="Zoom In"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>')
+            output.push('<button class="zoom-out-btn" title="Zoom Out"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>')
+            output.push('<button class="zoom-reset-btn" title="Reset Zoom"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>')
+            output.push('<span class="zoom-level">100%</span>')
+            output.push('<button class="fullscreen-btn" title="Fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>')
+            output.push('</div>')
             output.push('<div class="mermaid-diagram">')
             output.push(this.escapeHtml(codeBlockContent.join('\n')))
             output.push('</div>')
