@@ -131,7 +131,7 @@ export class SpecMindPreviewPanel {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net;">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net; img-src data:;">
         <title>SpecMind Preview</title>
         <style>
             body {
@@ -141,6 +141,10 @@ export class SpecMindPreviewPanel {
                 background-color: var(--vscode-editor-background);
                 padding: 20px;
                 margin: 0;
+            }
+            body.fullscreen-mode {
+                padding: 0;
+                overflow: hidden;
             }
             .header {
                 border-bottom: 2px solid var(--vscode-panel-border);
@@ -200,6 +204,65 @@ export class SpecMindPreviewPanel {
                 padding: 20px;
                 margin: 20px 0;
                 text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+            .mermaid-container.fullscreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                margin: 0;
+                border-radius: 0;
+                z-index: 9999;
+                background: var(--vscode-editor-background);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mermaid-diagram {
+                user-select: none;
+            }
+            .diagram-controls {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 8px;
+                background: var(--vscode-editor-background);
+                padding: 4px;
+                border-radius: 6px;
+                border: 1px solid var(--vscode-panel-border);
+                opacity: 0.9;
+                z-index: 10;
+            }
+            .diagram-controls button {
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background 0.2s;
+            }
+            .diagram-controls button:hover {
+                background: var(--vscode-button-hoverBackground);
+            }
+            .diagram-controls button:active {
+                transform: scale(0.95);
+            }
+            .zoom-level {
+                color: var(--vscode-foreground);
+                padding: 6px 12px;
+                font-size: 12px;
+                font-family: monospace;
+                display: flex;
+                align-items: center;
             }
             .architecture-diagram {
                 width: 100%;
@@ -234,6 +297,7 @@ export class SpecMindPreviewPanel {
         </div>
 
         <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
         <script nonce="${nonce}">
             // Initialize Mermaid
             mermaid.initialize({
@@ -242,6 +306,9 @@ export class SpecMindPreviewPanel {
                 securityLevel: 'loose'
             });
 
+            // Store pan-zoom instances for each diagram
+            const panZoomInstances = new Map();
+
             // Render all mermaid diagrams
             const diagramElements = document.querySelectorAll('.mermaid-diagram');
             diagramElements.forEach((element, index) => {
@@ -249,12 +316,128 @@ export class SpecMindPreviewPanel {
                     mermaid.render('mermaid-svg-' + index, element.textContent.trim())
                         .then(({svg}) => {
                             element.innerHTML = svg;
+                            setupDiagramControls(element, index);
                         })
                         .catch(error => {
                             element.innerHTML = '<p style="color: #f44747;">Error rendering diagram: ' + error.message + '</p>';
                         });
                 }
             });
+
+            function setupDiagramControls(diagramElement, index) {
+                const container = diagramElement.closest('.mermaid-container');
+                if (!container) return;
+
+                const svg = diagramElement.querySelector('svg');
+                if (!svg) return;
+
+                // Initialize svg-pan-zoom
+                const panZoomInstance = svgPanZoom(svg, {
+                    zoomEnabled: true,
+                    controlIconsEnabled: false,
+                    fit: true,
+                    center: true,
+                    minZoom: 0.1,
+                    maxZoom: 10,
+                    zoomScaleSensitivity: 0.3,
+                    dblClickZoomEnabled: true,
+                    mouseWheelZoomEnabled: true,
+                    preventMouseEventsDefault: true,
+                    beforePan: function() {
+                        return true;
+                    }
+                });
+
+                panZoomInstances.set(index, panZoomInstance);
+
+                // Get controls
+                const zoomInBtn = container.querySelector('.zoom-in-btn');
+                const zoomOutBtn = container.querySelector('.zoom-out-btn');
+                const zoomResetBtn = container.querySelector('.zoom-reset-btn');
+                const fullscreenBtn = container.querySelector('.fullscreen-btn');
+                const zoomLevel = container.querySelector('.zoom-level');
+
+                // Update zoom level display
+                function updateZoomLevel() {
+                    if (zoomLevel) {
+                        const zoom = panZoomInstance.getZoom();
+                        zoomLevel.textContent = Math.round(zoom * 100) + '%';
+                    }
+                }
+
+                // Initial zoom level
+                updateZoomLevel();
+
+                // Listen to zoom events
+                svg.addEventListener('wheel', () => {
+                    setTimeout(updateZoomLevel, 50);
+                });
+
+                // Zoom in
+                if (zoomInBtn) {
+                    zoomInBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.zoomIn();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Zoom out
+                if (zoomOutBtn) {
+                    zoomOutBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.zoomOut();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Reset zoom
+                if (zoomResetBtn) {
+                    zoomResetBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        panZoomInstance.reset();
+                        updateZoomLevel();
+                    });
+                }
+
+                // Fullscreen toggle
+                if (fullscreenBtn) {
+                    fullscreenBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const wasFullscreen = container.classList.contains('fullscreen');
+                        container.classList.toggle('fullscreen');
+                        document.body.classList.toggle('fullscreen-mode');
+                        fullscreenBtn.textContent = container.classList.contains('fullscreen') ? '✕' : '⛶';
+                        fullscreenBtn.title = container.classList.contains('fullscreen') ? 'Exit Fullscreen' : 'Fullscreen';
+
+                        // Resize pan-zoom after fullscreen toggle
+                        setTimeout(() => {
+                            panZoomInstance.resize();
+                            panZoomInstance.fit();
+                            panZoomInstance.center();
+                            updateZoomLevel();
+                        }, 100);
+                    });
+                }
+
+                // ESC to exit fullscreen
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && container.classList.contains('fullscreen')) {
+                        container.classList.remove('fullscreen');
+                        document.body.classList.remove('fullscreen-mode');
+                        if (fullscreenBtn) {
+                            fullscreenBtn.textContent = '⛶';
+                            fullscreenBtn.title = 'Fullscreen';
+                        }
+                        setTimeout(() => {
+                            panZoomInstance.resize();
+                            panZoomInstance.fit();
+                            panZoomInstance.center();
+                            updateZoomLevel();
+                        }, 100);
+                    }
+                });
+            }
         </script>
     </body>
     </html>`
@@ -348,8 +531,15 @@ export class SpecMindPreviewPanel {
           inCodeBlock = false
 
           if (codeBlockType === 'mermaid') {
-            // Render mermaid in a special container
+            // Render mermaid in a special container with controls
             output.push('<div class="mermaid-container">')
+            output.push('<div class="diagram-controls">')
+            output.push('<button class="zoom-in-btn" title="Zoom In">🔍+</button>')
+            output.push('<button class="zoom-out-btn" title="Zoom Out">🔍-</button>')
+            output.push('<button class="zoom-reset-btn" title="Reset Zoom">⟲</button>')
+            output.push('<span class="zoom-level">100%</span>')
+            output.push('<button class="fullscreen-btn" title="Fullscreen">⛶</button>')
+            output.push('</div>')
             output.push('<div class="mermaid-diagram">')
             output.push(this.escapeHtml(codeBlockContent.join('\n')))
             output.push('</div>')
