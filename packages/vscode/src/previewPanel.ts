@@ -361,6 +361,20 @@ export class SpecMindPreviewPanel {
                 const svg = diagramElement.querySelector('svg');
                 if (!svg) return;
 
+                // Get the container dimensions
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+
+                // Set SVG to fill container
+                svg.setAttribute('width', containerWidth);
+                svg.setAttribute('height', containerHeight);
+
+                // Preserve viewBox if it exists, otherwise create one from the SVG bounds
+                if (!svg.hasAttribute('viewBox')) {
+                    const bbox = svg.getBBox();
+                    svg.setAttribute('viewBox', \`\${bbox.x} \${bbox.y} \${bbox.width} \${bbox.height}\`);
+                }
+
                 // Initialize svg-pan-zoom
                 const panZoomInstance = svgPanZoom(svg, {
                     zoomEnabled: true,
@@ -450,6 +464,12 @@ export class SpecMindPreviewPanel {
 
                         // Resize pan-zoom after fullscreen toggle
                         setTimeout(() => {
+                            // Update SVG dimensions to match container
+                            const newWidth = container.clientWidth;
+                            const newHeight = container.clientHeight;
+                            svg.setAttribute('width', newWidth);
+                            svg.setAttribute('height', newHeight);
+
                             panZoomInstance.resize();
                             panZoomInstance.fit();
                             panZoomInstance.center();
@@ -468,6 +488,12 @@ export class SpecMindPreviewPanel {
                             fullscreenBtn.title = 'Fullscreen';
                         }
                         setTimeout(() => {
+                            // Update SVG dimensions to match container
+                            const newWidth = container.clientWidth;
+                            const newHeight = container.clientHeight;
+                            svg.setAttribute('width', newWidth);
+                            svg.setAttribute('height', newHeight);
+
                             panZoomInstance.resize();
                             panZoomInstance.fit();
                             panZoomInstance.center();
