@@ -205,7 +205,7 @@ export class SpecMindPreviewPanel {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 20px;
+                padding: 0;
                 margin: 20px 0;
                 position: relative;
                 overflow: hidden;
