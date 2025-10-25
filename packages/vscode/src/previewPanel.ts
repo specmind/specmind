@@ -220,12 +220,30 @@ export class SpecMindPreviewPanel {
                 width: 100vw;
                 height: 100vh;
                 margin: 0;
+                padding: 0;
                 border-radius: 0;
+                border: none;
                 z-index: 9999;
                 background: var(--vscode-editor-background);
                 display: flex;
                 align-items: center;
                 justify-content: center;
+            }
+            .mermaid-container.fullscreen .diagram-controls {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+            }
+            .mermaid-container.fullscreen .mermaid-diagram {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mermaid-container.fullscreen .mermaid-diagram svg {
+                max-width: 100%;
+                max-height: 100%;
             }
             .mermaid-diagram {
                 user-select: none;
@@ -235,38 +253,49 @@ export class SpecMindPreviewPanel {
                 top: 10px;
                 right: 10px;
                 display: flex;
-                gap: 8px;
-                background: var(--vscode-editor-background);
-                padding: 4px;
-                border-radius: 6px;
-                border: 1px solid var(--vscode-panel-border);
-                opacity: 0.9;
-                z-index: 10;
+                gap: 6px;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 8px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                z-index: 10000;
             }
             .diagram-controls button {
-                background: var(--vscode-button-background);
-                color: var(--vscode-button-foreground);
-                border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.15);
+                color: #ffffff;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                padding: 8px 12px;
+                border-radius: 6px;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 500;
-                transition: background 0.2s;
+                transition: all 0.2s;
+                min-width: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .diagram-controls button:hover {
-                background: var(--vscode-button-hoverBackground);
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.5);
+                transform: translateY(-1px);
             }
             .diagram-controls button:active {
-                transform: scale(0.95);
+                transform: translateY(0) scale(0.95);
             }
             .zoom-level {
-                color: var(--vscode-foreground);
-                padding: 6px 12px;
-                font-size: 12px;
+                color: #ffffff;
+                padding: 8px 12px;
+                font-size: 13px;
                 font-family: monospace;
                 display: flex;
                 align-items: center;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                min-width: 60px;
+                justify-content: center;
+                font-weight: 600;
             }
             .architecture-diagram {
                 width: 100%;
@@ -347,10 +376,15 @@ export class SpecMindPreviewPanel {
                     dblClickZoomEnabled: true,
                     mouseWheelZoomEnabled: true,
                     preventMouseEventsDefault: true,
+                    contain: false,
                     beforePan: function() {
                         return true;
                     }
                 });
+
+                // Set SVG to use full container width/height
+                svg.style.width = '100%';
+                svg.style.height = '100%';
 
                 panZoomInstances.set(index, panZoomInstance);
 
@@ -538,9 +572,9 @@ export class SpecMindPreviewPanel {
             // Render mermaid in a special container with controls
             output.push('<div class="mermaid-container">')
             output.push('<div class="diagram-controls">')
-            output.push('<button class="zoom-in-btn" title="Zoom In">🔍+</button>')
-            output.push('<button class="zoom-out-btn" title="Zoom Out">🔍-</button>')
-            output.push('<button class="zoom-reset-btn" title="Reset Zoom">⟲</button>')
+            output.push('<button class="zoom-in-btn" title="Zoom In">🔍︎+</button>')
+            output.push('<button class="zoom-out-btn" title="Zoom Out">🔍︎−</button>')
+            output.push('<button class="zoom-reset-btn" title="Reset Zoom">↻</button>')
             output.push('<span class="zoom-level">100%</span>')
             output.push('<button class="fullscreen-btn" title="Fullscreen">⛶</button>')
             output.push('</div>')
