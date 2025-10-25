@@ -476,12 +476,6 @@ export class SpecMindPreviewPanel {
 
                         // Resize pan-zoom after fullscreen toggle
                         setTimeout(() => {
-                            // Update SVG dimensions to match container
-                            const newWidth = container.clientWidth;
-                            const newHeight = container.clientHeight;
-                            svg.setAttribute('width', newWidth);
-                            svg.setAttribute('height', newHeight);
-
                             panZoomInstance.resize();
                             panZoomInstance.fit();
                             panZoomInstance.center();
@@ -500,12 +494,6 @@ export class SpecMindPreviewPanel {
                             fullscreenBtn.title = 'Fullscreen';
                         }
                         setTimeout(() => {
-                            // Update SVG dimensions to match container
-                            const newWidth = container.clientWidth;
-                            const newHeight = container.clientHeight;
-                            svg.setAttribute('width', newWidth);
-                            svg.setAttribute('height', newHeight);
-
                             panZoomInstance.resize();
                             panZoomInstance.fit();
                             panZoomInstance.center();
