@@ -197,6 +197,9 @@ export class SpecMindPreviewPanel {
                 font-weight: 600;
                 color: var(--vscode-editor-foreground);
             }
+            .markdown-content {
+                max-width: 100%;
+            }
             .mermaid-container {
                 background: var(--vscode-editor-background);
                 border: 1px solid var(--vscode-panel-border);
@@ -205,9 +208,10 @@ export class SpecMindPreviewPanel {
                 margin: 20px 0;
                 position: relative;
                 overflow: hidden;
-                width: 100%;
+                width: calc(100vw - 40px);
                 max-width: 100%;
                 height: 600px;
+                box-sizing: border-box;
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
