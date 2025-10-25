@@ -128,6 +128,9 @@ Files are organized in a three-level hierarchy:
 │   ├── crossServiceDependencies: [...]    # Dependencies between services
 │   └── violations: [...]                  # Architecture violations
 │
+├── architecture-diagram.md                # Component/architecture diagram
+├── sequence-diagram.md                    # Request flow diagram
+│
 └── services/
     ├── api-gateway/
     │   ├── metadata.json                  # Service metadata (pretty-printed)
@@ -187,6 +190,8 @@ For single-service codebases:
 ```
 .specmind/system/
 ├── metadata.json                          # crossServiceDependencies is empty
+├── architecture-diagram.md                # Component/architecture diagram
+├── sequence-diagram.md                    # Request flow diagram
 └── services/
     └── my-app/                            # Single service
         ├── metadata.json                  # Contains all crossLayerDependencies
@@ -194,6 +199,53 @@ For single-service codebases:
             ├── summary.json
             └── chunk-*.json
 ```
+
+### Generated Diagrams
+
+Split analysis now automatically generates architecture diagrams in separate files:
+
+**File Structure:**
+```
+.specmind/system/
+├── architecture-diagram.md                # Component/architecture diagram
+└── sequence-diagram.md                    # Request flow diagram
+```
+
+**Contents:**
+
+**`architecture-diagram.md`** - Component/Architecture Diagram:
+- Shows system architecture:
+   - Services as subgraphs (for microservices)
+   - Layers within each service (data, api, service, external)
+   - Databases with cylinder notation and brand colors
+   - External services with proper icons
+   - Cross-service dependencies
+   - Cross-layer dependencies within services
+
+**`sequence-diagram.md`** - Sequence/Flow Diagram:
+- Shows typical request flow:
+   - Entry point (API/HTTP request)
+   - Flow through layers (api → service → data)
+   - Database interactions
+   - External service calls
+   - Response path
+
+**Database Styling:**
+- Uses cylinder notation: `[(Database Name)]`
+- Brand colors from `databases.json`:
+  - PostgreSQL: `#336791` (blue)
+  - MySQL: `#4479A1` (blue)
+  - MongoDB: `#47A248` (green)
+  - Redis: `#DC382D` (red)
+  - SQLite: `#003B57` (dark blue)
+  - And more...
+
+**Benefits:**
+- ✅ Accurate diagrams generated from code analysis
+- ✅ Consistent styling using pattern configurations
+- ✅ LLM doesn't need to manually parse JSON to create diagrams
+- ✅ Faster `/analyze` workflow - LLM uses pre-generated diagrams
+- ✅ Can be used standalone for documentation
 
 ---
 
