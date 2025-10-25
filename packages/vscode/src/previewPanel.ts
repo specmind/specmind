@@ -206,6 +206,10 @@ export class SpecMindPreviewPanel {
                 text-align: center;
                 position: relative;
                 overflow: hidden;
+                min-height: 400px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .mermaid-container.fullscreen {
                 position: fixed;
