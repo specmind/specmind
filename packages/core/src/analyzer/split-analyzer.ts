@@ -14,7 +14,7 @@ import type {
 } from '../types/index.js';
 import { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './layer-detector.js';
 import { detectServices } from './service-detector.js';
-import { loadPatterns } from './pattern-loader.js';
+import { loadPatterns, type PatternConfig } from './pattern-loader.js';
 
 /**
  * Maximum chunk size in bytes (256KB minified)
@@ -79,6 +79,263 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
   }
 
   return { chunks, manifest };
+}
+
+/**
+ * Generate architecture diagram showing services, layers, and databases
+ */
+function generateArchitectureDiagram(
+  services: ReturnType<typeof detectServices>,
+  layers: Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>,
+  patterns: PatternConfig,
+  isMultiService: boolean
+): string {
+  const lines: string[] = [];
+
+  lines.push('# Architecture Diagram');
+  lines.push('');
+  lines.push('```mermaid');
+  lines.push('graph TB');
+  lines.push('');
+
+  if (isMultiService) {
+    // Multi-service architecture: create subgraphs for each service
+    for (const service of services) {
+      lines.push(`  subgraph ${service.name.replace(/[^a-zA-Z0-9]/g, '_')}["${service.name}"]`);
+
+      // Add layers for this service
+      const serviceLayers = ['api', 'service', 'data', 'external'] as const;
+      for (const layer of serviceLayers) {
+        const layerData = layers[layer];
+        if (layerData && layerData.files.length > 0) {
+          const layerId = `${service.name}_${layer}`.replace(/[^a-zA-Z0-9]/g, '_');
+          lines.push(`    ${layerId}["${layer.toUpperCase()} Layer"]`);
+        }
+      }
+
+      lines.push('  end');
+      lines.push('');
+    }
+
+    // Add cross-service dependencies
+    lines.push('  %% Cross-service dependencies');
+    for (const service of services) {
+      const serviceLayers = ['api', 'service', 'data', 'external'] as const;
+      for (const layer of serviceLayers) {
+        const layerData = layers[layer];
+        if (layerData) {
+          for (const dep of layerData.crossLayerDependencies) {
+            // Find target service
+            const targetService = services.find(s => s.files.includes(dep.target));
+            if (targetService && targetService.name !== service.name) {
+              const sourceId = `${service.name}_${layer}`.replace(/[^a-zA-Z0-9]/g, '_');
+              const targetId = `${targetService.name}_${dep.targetLayer}`.replace(/[^a-zA-Z0-9]/g, '_');
+              lines.push(`  ${sourceId} --> ${targetId}`);
+            }
+          }
+        }
+      }
+    }
+  } else {
+    // Monolith: single service with layers
+    const layerIds: Record<string, string> = {};
+
+    if (layers.api && layers.api.files.length > 0) {
+      layerIds.api = 'APILayer';
+      lines.push(`  ${layerIds.api}["API Layer"]`);
+    }
+    if (layers.service && layers.service.files.length > 0) {
+      layerIds.service = 'ServiceLayer';
+      lines.push(`  ${layerIds.service}["Service Layer"]`);
+    }
+    if (layers.data && layers.data.files.length > 0) {
+      layerIds.data = 'DataLayer';
+      lines.push(`  ${layerIds.data}["Data Layer"]`);
+    }
+    if (layers.external && layers.external.files.length > 0) {
+      layerIds.external = 'ExternalLayer';
+      lines.push(`  ${layerIds.external}["External Layer"]`);
+    }
+
+    lines.push('');
+
+    // Add layer connections
+    if (layerIds.api && layerIds.service) {
+      lines.push(`  ${layerIds.api} --> ${layerIds.service}`);
+    }
+    if (layerIds.service && layerIds.data) {
+      lines.push(`  ${layerIds.service} --> ${layerIds.data}`);
+    }
+    if (layerIds.service && layerIds.external) {
+      lines.push(`  ${layerIds.service} --> ${layerIds.external}`);
+    }
+  }
+
+  lines.push('');
+
+  // Add databases with cylinder notation and brand colors
+  if (layers.data) {
+    const dataLayer = layers.data as DataLayerAnalysis;
+    if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
+      lines.push('  %% Databases');
+      for (const dbType of Object.keys(dataLayer.databases)) {
+        const dbConfig = patterns.databases[dbType];
+        if (dbConfig) {
+          const dbId = `DB_${dbType}`.replace(/[^a-zA-Z0-9]/g, '_');
+          lines.push(`  ${dbId}${dbConfig.icon}`);
+          lines.push(`  style ${dbId} fill:${dbConfig.color},stroke:#333,stroke-width:2px,color:#fff`);
+
+          // Connect data layer to database
+          if (isMultiService) {
+            // Find which service uses this database
+            for (const service of services) {
+              const dataLayerId = `${service.name}_data`.replace(/[^a-zA-Z0-9]/g, '_');
+              lines.push(`  ${dataLayerId} --> ${dbId}`);
+            }
+          } else {
+            lines.push(`  DataLayer --> ${dbId}`);
+          }
+        }
+      }
+      lines.push('');
+    }
+  }
+
+  // Add external services
+  if (layers.external) {
+    const externalLayer = layers.external as ExternalLayerAnalysis;
+    if (externalLayer.externalServices && Object.keys(externalLayer.externalServices).length > 0) {
+      lines.push('  %% External Services');
+      for (const extServices of Object.values(externalLayer.externalServices)) {
+        for (const svcName of extServices) {
+          const svcId = `EXT_${svcName}`.replace(/[^a-zA-Z0-9]/g, '_');
+          lines.push(`  ${svcId}["${svcName}"]`);
+          lines.push(`  style ${svcId} fill:#f9f,stroke:#333,stroke-width:2px`);
+
+          // Connect external layer to service
+          if (isMultiService) {
+            for (const service of services) {
+              const extLayerId = `${service.name}_external`.replace(/[^a-zA-Z0-9]/g, '_');
+              lines.push(`  ${extLayerId} --> ${svcId}`);
+            }
+          } else {
+            lines.push(`  ExternalLayer --> ${svcId}`);
+          }
+        }
+      }
+      lines.push('');
+    }
+  }
+
+  lines.push('```');
+
+  return lines.join('\n');
+}
+
+/**
+ * Generate sequence diagram showing typical request flow through layers
+ */
+function generateSequenceDiagram(
+  layers: Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>
+): string {
+  const lines: string[] = [];
+
+  lines.push('# Request Flow Diagram');
+  lines.push('');
+  lines.push('```mermaid');
+  lines.push('sequenceDiagram');
+  lines.push('  participant Client');
+
+  // Add layer participants
+  if (layers.api && layers.api.files.length > 0) {
+    lines.push('  participant API as API Layer');
+  }
+  if (layers.service && layers.service.files.length > 0) {
+    lines.push('  participant Service as Service Layer');
+  }
+  if (layers.data && layers.data.files.length > 0) {
+    lines.push('  participant Data as Data Layer');
+  }
+
+  // Add database participants
+  if (layers.data) {
+    const dataLayer = layers.data as DataLayerAnalysis;
+    if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
+      for (const dbType of Object.keys(dataLayer.databases)) {
+        const dbName = dbType.charAt(0).toUpperCase() + dbType.slice(1);
+        lines.push(`  participant ${dbType} as ${dbName}`);
+      }
+    }
+  }
+
+  // Add external service participants
+  if (layers.external) {
+    const externalLayer = layers.external as ExternalLayerAnalysis;
+    if (externalLayer.externalServices && Object.keys(externalLayer.externalServices).length > 0) {
+      const allExtServices = Object.values(externalLayer.externalServices).flat();
+      if (allExtServices.length > 0) {
+        lines.push(`  participant External as External Services`);
+      }
+    }
+  }
+
+  lines.push('');
+  lines.push('  %% Typical request flow');
+
+  // Build request flow
+  if (layers.api && layers.api.files.length > 0) {
+    lines.push('  Client->>+API: HTTP Request');
+
+    if (layers.service && layers.service.files.length > 0) {
+      lines.push('  API->>+Service: Process Request');
+
+      if (layers.data && layers.data.files.length > 0) {
+        lines.push('  Service->>+Data: Query/Update');
+
+        // Database interaction
+        const dataLayer = layers.data as DataLayerAnalysis;
+        if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
+          const dbType = Object.keys(dataLayer.databases)[0];
+          lines.push(`  Data->>+${dbType}: Execute Query`);
+          lines.push(`  ${dbType}-->>-Data: Return Results`);
+        }
+
+        lines.push('  Data-->>-Service: Return Data');
+      }
+
+      // External service call (if applicable)
+      if (layers.external && (layers.external as ExternalLayerAnalysis).externalServices) {
+        lines.push('  Service->>+External: Call API');
+        lines.push('  External-->>-Service: Return Response');
+      }
+
+      lines.push('  Service-->>-API: Return Response');
+    }
+
+    lines.push('  API-->>-Client: HTTP Response');
+  } else if (layers.service && layers.service.files.length > 0) {
+    // No API layer, direct service access
+    lines.push('  Client->>+Service: Request');
+
+    if (layers.data && layers.data.files.length > 0) {
+      lines.push('  Service->>+Data: Query/Update');
+
+      const dataLayer = layers.data as DataLayerAnalysis;
+      if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
+        const dbType = Object.keys(dataLayer.databases)[0];
+        lines.push(`  Data->>+${dbType}: Execute Query`);
+        lines.push(`  ${dbType}-->>-Data: Return Results`);
+      }
+
+      lines.push('  Data-->>-Service: Return Data');
+    }
+
+    lines.push('  Service-->>-Client: Response');
+  }
+
+  lines.push('```');
+
+  return lines.join('\n');
 }
 
 /**
@@ -276,6 +533,17 @@ export async function performSplitAnalysis(
     }, null, 2),
     'utf-8'
   );
+
+  // 7. Generate architecture diagrams
+  console.log('\nGenerating architecture diagrams...');
+
+  const architectureDiagram = generateArchitectureDiagram(services, globalLayers, patterns, isMultiService);
+  writeFileSync(join(outputDir, 'architecture-diagram.md'), architectureDiagram, 'utf-8');
+  console.log('  ✓ architecture-diagram.md');
+
+  const sequenceDiagram = generateSequenceDiagram(globalLayers);
+  writeFileSync(join(outputDir, 'sequence-diagram.md'), sequenceDiagram, 'utf-8');
+  console.log('  ✓ sequence-diagram.md');
 
   console.log(`\n✅ Split analysis complete: ${outputDir}`);
   console.log(`   Services: ${services.length}`);

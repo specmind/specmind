@@ -386,6 +386,8 @@ For large codebases, SpecMind automatically splits analysis into services and la
 │   └── payment-flow.sm
 └── system/                      # Split analysis output (chunked)
     ├── metadata.json            # Root metadata with cross-service dependencies
+    ├── architecture-diagram.md  # Component diagram (services, layers, databases)
+    ├── sequence-diagram.md      # Request flow diagram (through layers)
     └── services/                # Per-service layer analysis
         ├── api-gateway/
         │   ├── metadata.json    # Service metadata with cross-layer dependencies
@@ -407,12 +409,14 @@ For large codebases, SpecMind automatically splits analysis into services and la
 
 **Benefits:**
 - Chunked files (≤256KB) fit in LLM context windows for optimal analysis
+- **Auto-generated Mermaid diagrams** show architecture and request flows
 - Summary files provide quick layer overview without loading full data
 - Organized by architectural concerns (data/api/service/external)
 - Supports both monorepo (multiple services) and monolith (single service)
 - Three-level dependency hierarchy (cross-service, cross-layer, same-layer)
 - Detects 180+ frameworks, ORMs, databases, and SDKs
 - Minified chunks maximize data density while keeping summaries readable
+- Database nodes styled with brand colors (PostgreSQL blue, MongoDB green, Redis red, etc.)
 
 See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for the complete specification.
 
