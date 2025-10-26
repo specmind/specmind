@@ -647,8 +647,8 @@ export class SpecMindPreviewPanel {
         output.push(`<h2 class="section-title">${this.escapeHtml(sectionName)}</h2>`)
         output.push('<div class="section-content">')
 
-        // Add special wrapper for Notes section
-        if (currentSection === 'notes') {
+        // Add special wrapper for Notes or Summary section
+        if (currentSection === 'notes' || currentSection === 'summary') {
           output.push('<div class="notes">')
         }
         continue
@@ -659,8 +659,8 @@ export class SpecMindPreviewPanel {
     }
 
     // Close any open sections
-    if (currentSection === 'notes') {
-      output.push('</div>') // Close notes div
+    if (currentSection === 'notes' || currentSection === 'summary') {
+      output.push('</div>') // Close notes/summary div
     }
     if (currentSection) {
       output.push('</div></div>') // Close section-content and section

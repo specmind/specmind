@@ -107,8 +107,15 @@ This prompt template contains the core logic for the `/analyze` command that ana
    **Global Sections:**
    - **## Overview** - High-level system architecture description
    - **## System Architecture** - Global view diagram of all services, databases, external systems
+     - **### Services** - List and describe each service (name, type, framework, purpose)
+     - **### Data Stores** - List databases and caching systems used
+     - **### External Integrations** - List external services, APIs, and third-party systems
+     - **### Communication Patterns** - Describe how services communicate (REST, gRPC, message queues, etc.)
    - **## Cross-Service Flows** - Section containing multiple subsections, one sequence diagram per flow:
      - **### {Flow Name} Flow** (e.g., "Create Task Flow", "Update Task Flow") - One diagram per flow
+       - **#### Summary** - Brief description of what this flow does and when it's triggered
+       - **#### Participants** - List of services/components involved in this flow
+       - **#### Key Operations** - Main operations performed (database writes, external API calls, etc.)
 
    **Per-Service Sections (one section per service):**
    - **## {service-name} Service** - Service overview (type, framework)
@@ -120,6 +127,13 @@ This prompt template contains the core logic for the `/analyze` command that ana
      - External Layer - external services, HTTP clients
    - **### Technology Stack** - Technologies used in this service
    - **### Architecture Violations** - Service-specific violations (if any)
+
+   **Closing Section:**
+   - **## Summary** - High-level recap of the entire system:
+     - Total services and their types
+     - Key technologies used (databases, frameworks, external services)
+     - Main architectural patterns observed
+     - Overall system health and any critical violations
 
    ### Required Diagrams:
 
@@ -332,18 +346,45 @@ This prompt template contains the core logic for the `/analyze` command that ana
    ## System Architecture
    [Mermaid diagram: Global view of all services, databases, external systems]
 
+   ### Services
+   [List and describe each service: name, type, framework, purpose]
+
+   ### Data Stores
+   [List databases and caching systems]
+
+   ### External Integrations
+   [List external services, APIs, third-party systems]
+
+   ### Communication Patterns
+   [Describe inter-service communication: REST APIs, message queues, etc.]
+
    ## Cross-Service Flows
 
    ### Create Task Flow
    [Mermaid sequence diagram: Complete flow for creating a task]
 
+   #### Summary
+   [Brief description of what this flow does and when it's triggered]
+
+   #### Participants
+   [List services/components involved]
+
+   #### Key Operations
+   [Database writes, external API calls, etc.]
+
    ### Update Task Flow
    [Mermaid sequence diagram: Complete flow for updating a task]
 
-   ### Delete Task Flow
-   [Mermaid sequence diagram: Complete flow for deleting a task]
+   #### Summary
+   [Flow description]
 
-   [... one subsection per flow ...]
+   #### Participants
+   [Services involved]
+
+   #### Key Operations
+   [Main operations]
+
+   [... one subsection per flow with Summary, Participants, Key Operations ...]
 
    ## api-service Service
    ### Architecture
@@ -376,6 +417,13 @@ This prompt template contains the core logic for the `/analyze` command that ana
    [Same structure as above]
 
    [... repeat for each service ...]
+
+   ## Summary
+   [High-level recap of the entire system]
+   - Total services: 3 (1 frontend, 2 api-server)
+   - Key technologies: React, Express, PostgreSQL, Redis, SendGrid
+   - Architecture patterns: Microservices with layered architecture
+   - Overall health: No critical violations detected
    ```
 
 9. **Confirm completion** to the user
