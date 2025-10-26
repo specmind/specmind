@@ -1,0 +1,10 @@
+# SpecMind generated files
+.specmind/
+.claude/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
