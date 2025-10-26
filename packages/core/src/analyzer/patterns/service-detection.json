@@ -1,4 +1,17 @@
 {
+  "monorepoPatterns": [
+    "packages",
+    "services",
+    "apps",
+    "microservices"
+  ],
+  "metaFrameworks": [
+    "next",
+    "nuxt",
+    "@nestjs/core",
+    "@angular/core",
+    "@sveltejs/kit"
+  ],
   "entryPoints": [
     "main.py",
     "index.ts",

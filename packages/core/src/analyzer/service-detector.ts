@@ -58,7 +58,7 @@ export function detectServices(rootPath: string, allFiles: string[]): Service[] 
  */
 function detectMonorepoServices(rootPath: string, allFiles: string[], patterns: PatternConfig): Service[] {
   const services: Service[] = [];
-  const monorepoPatterns = ['packages', 'services', 'apps', 'microservices'];
+  const monorepoPatterns = patterns.serviceDetection.monorepoPatterns;
 
   // Check for monorepo config files
   const hasMonorepoConfig =
@@ -315,7 +315,7 @@ function detectFramework(servicePath: string, _files: string[], patterns: Patter
       // Check TypeScript/JavaScript frameworks from patterns
       // Priority order: meta-frameworks first, then specific frameworks, then base frameworks
       // This ensures Next.js is detected before React, Nuxt before Vue, etc.
-      const metaFrameworks = ['next', 'nuxt', '@nestjs/core', '@angular/core', '@sveltejs/kit'];
+      const metaFrameworks = patterns.serviceDetection.metaFrameworks;
       const allFrameworks = [
         ...patterns.serviceDetection.apiServer.frameworks.typescript,
         ...patterns.serviceDetection.frontend.frameworks.typescript,

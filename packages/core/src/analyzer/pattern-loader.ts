@@ -53,6 +53,8 @@ export interface DatabaseMapping {
 }
 
 export interface ServiceDetectionPatterns {
+  monorepoPatterns: string[];
+  metaFrameworks: string[];
   entryPoints: string[];
   commonSourceDirectories: string[];
   frontend: {
