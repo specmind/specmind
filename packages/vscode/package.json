@@ -2,7 +2,7 @@
   "name": "specmind-vscode",
   "displayName": "SpecMind",
   "description": "Visual preview and syntax highlighting for SpecMind .sm architecture specification files",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "commonjs",
   "publisher": "SpecMind",
   "license": "MIT",
