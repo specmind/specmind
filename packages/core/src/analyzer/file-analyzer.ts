@@ -3,6 +3,7 @@ import type { FileAnalysis, SupportedLanguage, ExportStatement } from '../types/
 import { detectLanguage } from './language-config.js'
 import { parseFile } from './parser.js'
 import { extractCalls, buildFunctionContext } from './extractors/calls.js'
+import { extractHttpCalls } from './extractors/http-calls.js'
 import {
   extractTypeScriptFunctions,
   extractTypeScriptClasses,
@@ -67,6 +68,7 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
     // Build function context and extract calls
     const functionContext = buildFunctionContext(functions, classes)
     const calls = extractCalls(tree, filePath, language, functionContext)
+    const httpCalls = extractHttpCalls(tree, filePath, language, functions, classes)
 
     return {
       filePath,
@@ -76,6 +78,7 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
       imports,
       exports,
       calls,
+      httpCalls,
     }
   } catch (error) {
     throw new Error(
@@ -126,6 +129,7 @@ export function analyzeFileContent(
   // Build function context and extract calls
   const functionContext = buildFunctionContext(functions, classes)
   const calls = extractCalls(tree, filePath, language, functionContext)
+  const httpCalls = extractHttpCalls(tree, filePath, language, functions, classes)
 
   return {
     filePath,
@@ -135,5 +139,6 @@ export function analyzeFileContent(
     imports,
     exports,
     calls,
+    httpCalls,
   }
 }

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { resolve } from 'path'
 import { buildDependencyGraph, findEntryPoints } from '../analyzer/dependency-graph.js'
 import { analyzeFileContent } from '../analyzer/file-analyzer.js'
 import type { FileAnalysis } from '../types/index.js'
@@ -6,26 +7,33 @@ import type { FileAnalysis } from '../types/index.js'
 describe('Dependency Graph', () => {
   describe('buildDependencyGraph', () => {
     it('should build graph from file analyses', () => {
+      const indexPath = resolve('/test/index.ts')
+      const typesPath = resolve('/test/types.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('index.ts', `import { User } from './types'`, 'typescript'),
-        analyzeFileContent('types.ts', `export interface User {}`, 'typescript'),
+        analyzeFileContent(indexPath, `import { User } from './types'`, 'typescript'),
+        analyzeFileContent(typesPath, `export interface User {}`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
 
       expect(deps).toHaveLength(1)
-      expect(deps[0].source).toBe('index.ts')
-      expect(deps[0].target).toBe('./types')
+      expect(deps[0].source).toBe(indexPath)
+      expect(deps[0].target).toBe(typesPath)
       expect(deps[0].importedNames).toContain('User')
     })
 
     it('should handle multiple imports from same file', () => {
+      const indexPath = resolve('/test/index.ts')
+      const typesPath = resolve('/test/types.ts')
+
       const files: FileAnalysis[] = [
         analyzeFileContent(
-          'index.ts',
+          indexPath,
           `import { User, Admin } from './types'`,
           'typescript'
         ),
+        analyzeFileContent(typesPath, `export interface User {}; export interface Admin {}`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
@@ -37,8 +45,10 @@ describe('Dependency Graph', () => {
     })
 
     it('should handle files with no imports', () => {
+      const standalonePath = resolve('/test/standalone.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('standalone.ts', `export const x = 1`, 'typescript'),
+        analyzeFileContent(standalonePath, `export const x = 1`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
@@ -47,10 +57,14 @@ describe('Dependency Graph', () => {
     })
 
     it('should handle multiple files with imports', () => {
+      const aPath = resolve('/test/a.ts')
+      const bPath = resolve('/test/b.ts')
+      const cPath = resolve('/test/c.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('a.ts', `import { B } from './b'`, 'typescript'),
-        analyzeFileContent('b.ts', `import { C } from './c'`, 'typescript'),
-        analyzeFileContent('c.ts', `export const x = 1`, 'typescript'),
+        analyzeFileContent(aPath, `import { B } from './b'`, 'typescript'),
+        analyzeFileContent(bPath, `import { C } from './c'`, 'typescript'),
+        analyzeFileContent(cPath, `export const x = 1`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
@@ -61,22 +75,28 @@ describe('Dependency Graph', () => {
 
   describe('findEntryPoints', () => {
     it('should find files not imported by anyone', () => {
+      const indexPath = resolve('/test/index.ts')
+      const typesPath = resolve('/test/types.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('index.ts', `import { User } from './types'`, 'typescript'),
-        analyzeFileContent('types.ts', `export interface User {}`, 'typescript'),
+        analyzeFileContent(indexPath, `import { User } from './types'`, 'typescript'),
+        analyzeFileContent(typesPath, `export interface User {}`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
       const entryPoints = findEntryPoints(files, deps)
 
-      expect(entryPoints).toContain('index.ts')
-      expect(entryPoints).not.toContain('types.ts')
+      expect(entryPoints).toContain(indexPath)
+      expect(entryPoints).not.toContain(typesPath)
     })
 
     it('should return all files when no dependencies', () => {
+      const aPath = resolve('/test/a.ts')
+      const bPath = resolve('/test/b.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('a.ts', `export const x = 1`, 'typescript'),
-        analyzeFileContent('b.ts', `export const y = 2`, 'typescript'),
+        analyzeFileContent(aPath, `export const x = 1`, 'typescript'),
+        analyzeFileContent(bPath, `export const y = 2`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
@@ -91,19 +111,23 @@ describe('Dependency Graph', () => {
     })
 
     it('should identify multiple entry points', () => {
+      const cliPath = resolve('/test/cli.ts')
+      const serverPath = resolve('/test/server.ts')
+      const utilsPath = resolve('/test/utils.ts')
+
       const files: FileAnalysis[] = [
-        analyzeFileContent('cli.ts', `import { Utils } from './utils'`, 'typescript'),
-        analyzeFileContent('server.ts', `import { Utils } from './utils'`, 'typescript'),
-        analyzeFileContent('utils.ts', `export const Utils = {}`, 'typescript'),
+        analyzeFileContent(cliPath, `import { Utils } from './utils'`, 'typescript'),
+        analyzeFileContent(serverPath, `import { Utils } from './utils'`, 'typescript'),
+        analyzeFileContent(utilsPath, `export const Utils = {}`, 'typescript'),
       ]
 
       const deps = buildDependencyGraph(files)
       const entryPoints = findEntryPoints(files, deps)
 
       expect(entryPoints).toHaveLength(2)
-      expect(entryPoints).toContain('cli.ts')
-      expect(entryPoints).toContain('server.ts')
-      expect(entryPoints).not.toContain('utils.ts')
+      expect(entryPoints).toContain(cliPath)
+      expect(entryPoints).toContain(serverPath)
+      expect(entryPoints).not.toContain(utilsPath)
     })
   })
 })

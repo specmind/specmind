@@ -1,120 +1,51 @@
 # Analysis Split Specification
 
-> **TL;DR:** `specmind analyze` automatically detects services and splits files by architectural layers (data/API/service/external). Outputs to `.specmind/analysis/`. Supports TypeScript, JavaScript, and Python.
+> **TL;DR:** `specmind analyze` automatically detects services, splits files by architectural layers (data/api/service/external), and tracks dependencies. Outputs to `.specmind/system/`. Supports TypeScript, JavaScript, and Python.
 
-**Scope:**
-- ✅ Multi-service detection
+**Current Status:**
+- ✅ Multi-service detection (monorepo, Docker Compose, entry points)
 - ✅ Layer detection: data/api/service/external
-- ✅ Cross-layer dependency tracking
+- ✅ Cross-layer dependency tracking (with absolute path resolution)
+- ✅ Cross-service dependency tracking (HTTP calls + imports)
 - ✅ Database type detection
 - ✅ API endpoint extraction
 - ✅ Message queue detection
+- ✅ Architecture violation detection
+- ✅ Pattern-driven detection (JSON configuration files)
+- ✅ Service type classification (frontend, api-server, worker, library)
+- ✅ Framework detection (Next.js, NestJS, FastAPI, etc.)
 
 **Out of Scope (future):**
+- ❌ Diagram generation (handled by AI from analyzed data)
 - ❌ Configuration/secrets detection
 - ❌ Auth pattern detection
-- ❌ Frontend framework detection
 - ❌ Deployment/infrastructure detection
 
 ---
 
 ## Overview
 
-This document specifies how SpecMind will **always** split codebase analysis into smaller, logical chunks organized by services and layers.
+SpecMind automatically splits codebase analysis into smaller, logical chunks organized by **services** and **layers**.
 
 **This is the default behavior** - no flags needed. The CLI will automatically:
 1. Detect all services in the codebase (monorepo or single service)
 2. Split each service's files by architectural layer (data, API, service, external)
-3. Generate cross-service layer views for system-wide analysis
+3. Track dependencies within and across layers
+4. Track dependencies between services (HTTP calls and imports)
+5. Detect architecture violations
 
 **Benefits:**
-- Fits within LLM context windows
+- Fits within LLM context windows (~20K tokens per chunk, well under 25K limit)
 - Organized by architectural concerns
 - Enables incremental and focused analysis
 - Works for both monoliths and microservices
-
----
-
-## Supported Languages
-
-### Initial Implementation (Phase 1)
-
-| Language | Version | Support Level | Rationale |
-|----------|---------|---------------|-----------|
-| **TypeScript** | 5.x | ✅ Full | Most popular for modern web apps, Node.js APIs |
-| **JavaScript** | ES2020+ | ✅ Full | Legacy codebases, Express/Node.js backends |
-| **Python** | 3.8+ | ✅ Full | FastAPI/Django/Flask APIs, data processing, ML services |
-
-### Future Support (Phase 2+)
-
-| Language | Priority | Use Case |
-|----------|----------|----------|
-| **Go** | High | Microservices, high-performance APIs |
-| **Java** | Medium | Enterprise backends, Spring Boot |
-| **C#** | Medium | .NET applications, ASP.NET Core |
-| **Rust** | Low | Performance-critical services |
-| **Ruby** | Low | Rails applications |
-
-### Language-Specific Detection Patterns
-
-Detection patterns are tailored per language ecosystem:
-
-#### TypeScript/JavaScript
-```typescript
-// Data Layer
-- ORMs: prisma, typeorm, mongoose, sequelize, drizzle-orm, mikro-orm
-- Drivers: pg, mysql2, redis, ioredis, mongodb
-
-// API Layer
-- Frameworks: express, @nestjs/common, fastify, koa, hapi, next
-- Decorators: @Get, @Post, @Controller, @ApiTags
-
-// External Layer
-- HTTP: axios, node-fetch, got, undici
-- SDKs: @aws-sdk/*, @stripe/*, @sendgrid/*, openai, @anthropic-ai/*
-
-// Service Detection
-- Entry: index.ts, server.ts, main.ts, app.ts
-- Config: package.json, tsconfig.json
-```
-
-#### Python
-```python
-# Data Layer
-- ORMs: sqlalchemy, tortoise, django.db, mongoengine, peewee
-- Drivers: psycopg2, pymongo, redis, aiomysql
-
-# API Layer
-- Frameworks: fastapi, flask, django, starlette, tornado, aiohttp
-- Decorators: @app.route, @app.get, @app.post, @api_view
-
-# External Layer
-- HTTP: requests, httpx, aiohttp, urllib3
-- SDKs: boto3, stripe, sendgrid, openai, anthropic
-
-# Service Detection
-- Entry: main.py, app.py, __main__.py, manage.py
-- Config: pyproject.toml, setup.py, requirements.txt
-```
-
-### Cross-Language Considerations
-
-1. **Mixed Language Projects**: Detect and split by language first, then by layer
-2. **Polyglot Services**: A service can contain multiple languages (e.g., TS frontend + Python backend)
-3. **Future Extensibility**: Detection logic is pluggable - new languages can be added without changing core split logic
+- Provides data for AI-generated diagrams
 
 ---
 
 ## Output Structure
 
 **Default output location:** `.specmind/system/`
-
-### Overview
-
-Files are organized in a three-level hierarchy:
-1. **Root level**: Cross-service dependencies and overall metadata
-2. **Service level**: Per-service metadata and cross-layer dependencies
-3. **Layer level**: Chunked file analysis (≤256KB per chunk)
 
 ### Structure
 
@@ -125,127 +56,125 @@ Files are organized in a three-level hierarchy:
 │   ├── architecture: "monolith" | "microservices"
 │   ├── services: [...]
 │   ├── totals: { files, functions, classes, calls, languages }
-│   ├── crossServiceDependencies: [...]    # Dependencies between services
+│   ├── crossLayerDependencies: {}         # Global cross-layer summary
+│   ├── crossServiceDependencies: {}       # HTTP + import dependencies
 │   └── violations: [...]                  # Architecture violations
 │
-├── sequence-diagram.sm                    # Cross-service interactions diagram
-│
 └── services/
-    ├── api-gateway/
-    │   ├── metadata.json                  # Service metadata (pretty-printed)
-    │   │   ├── name, rootPath, entryPoint, type, framework, port
-    │   │   ├── filesAnalyzed, layers
-    │   │   └── crossLayerDependencies: [...]  # Dependencies between layers
-    │   │
-    │   ├── architecture-diagram.sm        # Per-service function call graph
-    │   │
-    │   ├── data-layer/
-    │   │   ├── summary.json               # Layer summary (pretty-printed)
-    │   │   │   ├── layer, totalChunks, totalFiles
-    │   │   │   ├── files: [...]           # Just file paths
-    │   │   │   ├── databases: {...}       # Full database metadata
-    │   │   │   ├── summary: {...}         # Metrics
-    │   │   │   └── chunks: [...]          # Chunk manifest
-    │   │   │
-    │   │   ├── chunk-1.json               # Files 1-N (minified, ≤256KB)
-    │   │   ├── chunk-2.json               # Files N+1-M (minified, ≤256KB)
-    │   │   └── ...
-    │   │
-    │   ├── api-layer/
-    │   │   ├── summary.json               # Includes endpoints metadata
-    │   │   └── chunk-1.json
-    │   │
-    │   ├── service-layer/
-    │   │   ├── summary.json
-    │   │   ├── chunk-1.json
-    │   │   └── chunk-2.json
-    │   │
-    │   └── external-layer/
-    │       ├── summary.json               # Includes external services metadata
-    │       └── chunk-1.json
-    │
-    ├── core-service/                      # Additional services (if microservices)
-    │   └── ...
-    │
-    └── worker-service/
-        └── ...
+    └── api-service/
+        ├── metadata.json                  # Service metadata (pretty-printed)
+        │   ├── name, rootPath, entryPoint, type, framework
+        │   ├── filesAnalyzed, layers
+        │   └── crossLayerDependencies: {}  # Service-level cross-layer deps
+        │
+        ├── data-layer/
+        │   ├── summary.json               # Layer summary (pretty-printed)
+        │   │   ├── layer, totalFiles, totalChunks
+        │   │   ├── chunkManifest: [...]   # Which files in which chunks
+        │   │   ├── databases: {...}       # Database metadata
+        │   │   ├── summary: {...}         # Metrics
+        │   │   └── crossLayerDependencies: [...] # Detailed cross-layer deps
+        │   │
+        │   ├── chunk-0.json               # Files 1-N (minified, ~20K tokens)
+        │   └── chunk-1.json               # Files N+1-M (minified, ~20K tokens)
+        │
+        ├── api-layer/
+        │   ├── summary.json               # Includes endpoints metadata
+        │   └── chunk-0.json
+        │
+        ├── service-layer/
+        │   ├── summary.json
+        │   └── chunk-0.json
+        │
+        └── external-layer/
+            ├── summary.json               # Includes external services metadata
+            └── chunk-0.json
 ```
 
 ### File Size Limits
 
 - **`summary.json`**: Target <50KB, pretty-printed for readability
-- **`chunk-N.json`**: Max 256KB, minified (no whitespace) to maximize data
-- **`metadata.json`**: Pretty-printed, no size limit (contains only metadata, not file analysis)
+- **`chunk-N.json`**: Max ~20K tokens (~80KB), minified (no whitespace) to maximize data
+- **`metadata.json`**: Pretty-printed, no size limit
 
 ### Chunking Strategy
 
 When a layer contains many files, they are split into chunks:
-1. Files are grouped sequentially until 256KB limit is reached
+1. Files are grouped sequentially until ~20K token limit is reached (estimated as text_length / 4)
 2. Each chunk is saved as `chunk-N.json` (minified)
 3. Chunk manifest in `summary.json` lists which files are in which chunk
 4. Same-layer dependencies are included only in the chunk containing those files
 
-### Monolith Structure
+---
 
-For single-service codebases:
-```
-.specmind/system/
-├── metadata.json                          # crossServiceDependencies is empty
-├── sequence-diagram.sm                    # Simple request/response flow
-└── services/
-    └── my-app/                            # Single service
-        ├── metadata.json                  # Contains all crossLayerDependencies
-        ├── architecture-diagram.sm        # Function call graph for this service
-        └── [data/api/service/external]-layer/
-            ├── summary.json
-            └── chunk-*.json
-```
+## Key Concepts: Layers vs Service Types
 
-### Generated Diagrams
+SpecMind uses two distinct classification systems:
 
-Split analysis automatically generates Mermaid diagrams showing architecture and interactions:
+### 1. Layers (File Classification)
 
-**File Structure:**
-```
-.specmind/system/
-├── sequence-diagram.sm                    # Cross-service interactions
-└── services/{service}/
-    └── architecture-diagram.sm            # Per-service architecture
+**What:** Architectural layers that classify **individual files** within a service
+
+**Count:** 4 layers
+
+```typescript
+type Layer = 'data' | 'api' | 'service' | 'external'
 ```
 
-**Contents:**
+**Purpose:** Organize files by architectural concern
 
-**Per-Service Architecture Diagram** (`services/{service}/architecture-diagram.sm`):
-- Shows internal architecture of each service:
-   - Functions and methods grouped by layer (data, api, service, external)
-   - Call relationships between functions (arrows showing dependencies)
-   - Databases with cylinder notation and brand colors
-   - External services with proper styling
-   - Cross-layer function calls within the service
+**Example:**
+```
+api-service/
+├── data-layer/         ← user-repository.ts, models.ts
+├── api-layer/          ← user-controller.ts, routes.ts
+├── service-layer/      ← user-service.ts, validators.ts
+└── external-layer/     ← email-client.ts, stripe-client.ts
+```
 
-**Cross-Service Sequence Diagram** (`sequence-diagram.sm`):
-- Shows interactions between services:
-   - Client requests to entry service
-   - Service-to-service calls with dependency counts
-   - Response flow back to client
-   - For monoliths: simple request/response flow
+### 2. Service Types (Service Classification)
 
-**Key Features:**
-- **Function-level detail**: Shows actual methods/functions, not just layers
-- **Call graph visualization**: Arrows between functions show code dependencies
-- **Database styling**: Cylinder notation `[(DatabaseName)]` with brand colors
-  - PostgreSQL: `#336791` (blue)
-  - MySQL: `#4479A1` (blue)
-  - MongoDB: `#47A248` (green)
-  - Redis: `#DC382D` (red)
-  - SQLite: `#003B57` (dark blue)
+**What:** Type of service that classifies **entire services/applications**
 
-**Benefits:**
-- ✅ Per-service diagrams show detailed internal architecture
-- ✅ Function call graphs reveal actual code dependencies
-- ✅ Cross-service diagram shows service interactions
-- ✅ Accurate diagrams generated directly from code analysis
-- ✅ LLM uses pre-generated diagrams instead of manually creating them
+**Count:** 5 types
+
+```typescript
+type ServiceType = 'frontend' | 'api-server' | 'worker' | 'library' | 'unknown'
+```
+
+**Purpose:** Identify what kind of application/service it is
+
+**Example:**
+```json
+{
+  "name": "web-ui-service",
+  "type": "frontend",        // ← SERVICE TYPE
+  "framework": "next",
+  "layers": [                // ← Has all 4 LAYERS
+    "data",
+    "api",
+    "service",
+    "external"
+  ]
+}
+```
+
+### How They Work Together
+
+**Every service has a type AND contains files split into layers:**
+
+| Service | Service Type | Layers It Contains |
+|---------|-------------|-------------------|
+| `web-ui-service` | `frontend` | data, api, service, external |
+| `api-service` | `api-server` | data, api, service, external |
+| `worker-service` | `worker` | data, service, external |
+| `shared-lib` | `library` | service |
+
+**Key Point:** A **frontend** service (type) still has files organized into the 4 architectural **layers**. For example:
+- `data` layer = State management, API client wrappers
+- `api` layer = Next.js API routes, tRPC procedures
+- `service` layer = React components, hooks, business logic
+- `external` layer = fetch() calls to backend APIs
 
 ---
 
@@ -256,11 +185,12 @@ Split analysis automatically generates Mermaid diagrams showing architecture and
 All files are automatically categorized into one or more of these layers:
 
 #### 1. Data Layer (`data-layer/`)
-**Purpose:** All files that interact with databases or data stores
+**Purpose:** Files that interact with databases or data stores
 
-**Output Files:**
-- `summary.json`: Database metadata, file list, metrics (pretty-printed)
-- `chunk-*.json`: Full file analysis for files in this layer (minified)
+**Detection Patterns:** (See `packages/core/src/analyzer/patterns/data-layer.json`)
+- **ORMs:** Prisma, TypeORM, SQLAlchemy, Mongoose, Drizzle, Sequelize, etc.
+- **Drivers:** pg, mysql2, psycopg2, redis, mongodb, etc.
+- **File patterns:** `**/models/**`, `**/schemas/**`, `**/repositories/**`, etc.
 
 **Enhanced Features:**
 - ✅ Detects ORM/ODM usage
@@ -269,784 +199,73 @@ All files are automatically categorized into one or more of these layers:
 - ✅ Extracts model definitions
 - ✅ Tracks database-specific files
 
-**Detection Rules:**
-```typescript
-interface DataLayerDetection {
-  // TypeScript/JavaScript ORMs
-  tsJsOrms: [
-    'prisma',
-    '@prisma/client',
-    'typeorm',
-    'mikro-orm',
-    '@mikro-orm/core',
-    'sequelize',
-    'sequelize-typescript',
-    'mongoose',
-    'typegoose',
-    '@typegoose/typegoose',
-    'knex',
-    'objection',
-    'drizzle-orm',
-    'kysely',
-    'bookshelf',
-    'waterline'
-  ]
-
-  // Python ORMs
-  pythonOrms: [
-    'sqlalchemy',
-    'sqlalchemy.orm',
-    'django.db',
-    'django.db.models',
-    'tortoise',
-    'tortoise.models',
-    'peewee',
-    'pony.orm',
-    'mongoengine',
-    'odmantic',
-    'piccolo'
-  ]
-
-  // Database drivers - TypeScript/JavaScript
-  tsJsDrivers: [
-    'pg',                    // PostgreSQL
-    'pg-promise',
-    'postgres',
-    'mysql',                 // MySQL
-    'mysql2',
-    'better-sqlite3',        // SQLite
-    'sqlite',
-    'sqlite3',
-    'redis',                 // Redis
-    'ioredis',
-    '@redis/client',
-    'mongodb',               // MongoDB
-    'cassandra-driver',      // Cassandra
-    '@elastic/elasticsearch', // Elasticsearch
-    'neo4j-driver'           // Neo4j
-  ]
-
-  // Database drivers - Python
-  pythonDrivers: [
-    'psycopg2',              // PostgreSQL
-    'psycopg',
-    'asyncpg',
-    'pymysql',               // MySQL
-    'aiomysql',
-    'mysqlclient',
-    'sqlite3',               // SQLite
-    'aiosqlite',
-    'redis',                 // Redis
-    'aioredis',
-    'pymongo',               // MongoDB
-    'motor',                 // Async MongoDB
-    'cassandra',             // Cassandra
-    'elasticsearch',         // Elasticsearch
-    'py2neo',                // Neo4j
-    'neo4j'
-  ]
-
-  // Query builders
-  queryBuilders: [
-    'knex',
-    'kysely',
-    '@databases/pg',
-    '@databases/mysql',
-    'slonik'
-  ]
-
-  // File patterns
-  filePatterns: [
-    '**/*model*.{ts,js,py}',
-    '**/*schema*.{ts,js,py}',
-    '**/*entity*.{ts,js,py}',
-    '**/*repository*.{ts,js,py}',
-    '**/models/**',
-    '**/schemas/**',
-    '**/entities/**',
-    '**/repositories/**',
-    '**/migrations/**',
-    '**/db/**',
-    '**/database/**',
-    '**/persistence/**'
-  ]
-
-  // Code patterns (via tree-sitter)
-  codePatterns: [
-    // TypeORM
-    '@Entity', '@Column', '@PrimaryGeneratedColumn',
-    '@ManyToOne', '@OneToMany', '@ManyToMany',
-
-    // Prisma
-    'PrismaClient', '@prisma/client',
-
-    // Mongoose
-    'Schema(', 'model(',
-
-    // SQLAlchemy
-    'declarative_base', 'Base.metadata', 'db.Model',
-    'Column(', 'relationship(',
-
-    // Django
-    'models.Model', 'models.CharField',
-
-    // Generic patterns
-    'class.*Model', 'class.*Entity', 'class.*Schema',
-    'CREATE TABLE', 'ALTER TABLE', 'SELECT', 'INSERT', 'UPDATE', 'DELETE'
-  ]
-}
-```
-
-**Output Structure:**
-```json
-{
-  "layer": "data",
-  "files": [
-    {
-      "filePath": "src/models/user.py",
-      "language": "python",
-      "databases": ["postgresql"],
-      "models": [...],
-      "queries": [...],
-      "functions": [...],
-      "classes": [...],
-      "imports": [...],
-      "exports": [...],
-      "calls": [...]
-    }
-  ],
-  "dependencies": [
-    {
-      "source": "src/models/user.py",
-      "target": "src/models/organization.py",
-      "importedNames": ["Organization"],
-      "type": "internal"
-    }
-  ],
-  "crossLayerDependencies": [
-    {
-      "source": "src/models/user.py",
-      "target": "src/utils/encryption.ts",
-      "targetLayer": "service",
-      "importedNames": ["hashPassword"],
-      "type": "uses"
-    }
-  ],
-  "databases": {
-    "postgresql": {
-      "driver": "psycopg2",
-      "orm": "sqlalchemy",
-      "files": ["src/models/user.py", "src/models/organization.py"],
-      "totalModels": 12
-    },
-    "redis": {
-      "driver": "redis",
-      "orm": null,
-      "files": ["src/cache/session.py"],
-      "totalModels": 0
-    }
-  },
-  "summary": {
-    "totalFiles": 15,
-    "totalModels": 12,
-    "totalQueries": 234,
-    "databaseTypes": ["postgresql", "redis"],
-    "orms": ["sqlalchemy"]
-  }
-}
-```
-
 #### 2. API Layer (`api-layer/`)
-**Purpose:** All files that define API routes, endpoints, or GraphQL schemas
+**Purpose:** Files that define API routes, endpoints, or GraphQL schemas
 
-**Output Files:**
-- `summary.json`: Endpoint metadata, file list, metrics (pretty-printed)
-- `chunk-*.json`: Full file analysis for files in this layer (minified)
+**Detection Patterns:** (See `packages/core/src/analyzer/patterns/api-layer.json`)
+- **Frameworks:** Express, NestJS, FastAPI, Flask, Django, Next.js, Hono, Elysia, etc.
+- **Decorators:** `@Get`, `@Post`, `@app.route`, `@api_view`, etc.
+- **File patterns:** `**/routes/**`, `**/controllers/**`, `**/api/**`, etc.
 
 **Enhanced Features:**
 - ✅ Extracts endpoint details (method, path, handler)
 - ✅ Detects REST, GraphQL, tRPC, gRPC APIs
 - ✅ Identifies framework used
-- ✅ Groups endpoints by resource
 - ✅ Counts HTTP methods (GET, POST, PUT, DELETE)
 
-**Detection Rules:**
-```typescript
-interface APILayerDetection {
-  // TypeScript/JavaScript frameworks
-  tsJsFrameworks: [
-    'express',
-    '@nestjs/common',
-    '@nestjs/core',
-    'fastify',
-    '@fastify/cors',
-    'koa',
-    '@koa/router',
-    'hapi',
-    '@hapi/hapi',
-    'restify',
-    'polka',
-    'micro',
-    'next',                  // Next.js API routes
-    'next/server',
-    'remix',                 // Remix loaders/actions
-    '@trpc/server',          // tRPC
-    'elysia',
-    'hono'
-  ]
-
-  // Python frameworks
-  pythonFrameworks: [
-    'fastapi',
-    'flask',
-    'django',
-    'django.urls',
-    'django.views',
-    'starlette',
-    'starlette.routing',
-    'tornado',
-    'tornado.web',
-    'aiohttp',
-    'aiohttp.web',
-    'sanic',
-    'falcon',
-    'bottle',
-    'cherrypy',
-    'pyramid'
-  ]
-
-  // GraphQL frameworks
-  graphqlFrameworks: [
-    'graphql',
-    'apollo-server',
-    '@apollo/server',
-    'apollo-server-express',
-    'express-graphql',
-    'graphql-yoga',
-    'type-graphql',
-    'nexus',
-    'pothos',                // Pothos GraphQL
-    'strawberry',            // Python GraphQL
-    'graphene',              // Python GraphQL
-    'ariadne'                // Python GraphQL
-  ]
-
-  // REST/HTTP decorators (via tree-sitter)
-  httpDecorators: [
-    // NestJS
-    '@Get', '@Post', '@Put', '@Delete', '@Patch',
-    '@Controller', '@ApiTags', '@ApiOperation',
-
-    // FastAPI/Flask
-    '@app.route', '@app.get', '@app.post', '@app.put', '@app.delete',
-    '@router.get', '@router.post',
-
-    // Django
-    '@api_view', '@action',
-
-    // TypeScript route builders
-    'router.get(', 'router.post(', 'router.put(', 'router.delete(',
-    'app.get(', 'app.post(', 'app.use(',
-
-    // tRPC
-    '.query(', '.mutation(',
-
-    // Hono
-    'app.route('
-  ]
-
-  // GraphQL decorators/patterns
-  graphqlPatterns: [
-    '@Query', '@Mutation', '@Resolver', '@Field',
-    '@ObjectType', '@InputType',
-    'GraphQLObjectType', 'GraphQLSchema',
-    'type Query', 'type Mutation',
-    'buildSchema('
-  ]
-
-  // File patterns
-  filePatterns: [
-    '**/routes/**',
-    '**/routers/**',
-    '**/controllers/**',
-    '**/handlers/**',
-    '**/api/**',
-    '**/endpoints/**',
-    '**/views/**',           // Django views
-    '**/*route*.{ts,js,py}',
-    '**/*router*.{ts,js,py}',
-    '**/*controller*.{ts,js,py}',
-    '**/*handler*.{ts,js,py}',
-    '**/*endpoint*.{ts,js,py}',
-    '**/*view*.{ts,js,py}',
-    '**/app/api/**',         // Next.js app router
-    '**/pages/api/**',       // Next.js pages router
-    '*.graphql',
-    '*.gql'
-  ]
-
-  // RPC/gRPC patterns
-  rpcPatterns: [
-    'grpc',
-    '@grpc/grpc-js',
-    'grpc-tools',
-    '@trpc/server',
-    'json-rpc',
-    '*.proto'                // Protocol buffers
-  ]
-}
-```
-
-**Output Structure:**
-```json
-{
-  "layer": "api",
-  "files": [
-    {
-      "filePath": "src/api/users/routes.py",
-      "language": "python",
-      "framework": "fastapi",
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/api/users/{user_id}",
-          "handler": "get_user",
-          "location": {...}
-        },
-        {
-          "method": "POST",
-          "path": "/api/users",
-          "handler": "create_user",
-          "location": {...}
-        }
-      ],
-      "functions": [...],
-      "classes": [...],
-      "imports": [...],
-      "exports": [...],
-      "calls": [...]
-    }
-  ],
-  "summary": {
-    "totalEndpoints": 45,
-    "frameworks": ["fastapi"],
-    "methods": {
-      "GET": 20,
-      "POST": 15,
-      "PUT": 5,
-      "DELETE": 5
-    }
-  }
-}
-```
-
 #### 3. External Layer (`external-layer/`)
-**Purpose:** All files that interact with external services and APIs
+**Purpose:** Files that interact with external services and APIs
 
-**Output Files:**
-- `summary.json`: External services metadata, message systems, file list, metrics (pretty-printed)
-- `chunk-*.json`: Full file analysis for files in this layer (minified)
+**Detection Patterns:** (See `packages/core/src/analyzer/patterns/external-layer.json`)
+- **HTTP Clients:** axios, fetch, requests, httpx, etc.
+- **Cloud SDKs:** AWS SDK, Google Cloud, Azure, etc.
+- **Payment:** Stripe, PayPal, Square, etc.
+- **AI:** OpenAI, Anthropic, Cohere, HuggingFace, etc.
+- **Message Queues:** RabbitMQ, Kafka, SQS, Celery, Bull, etc.
+- **File patterns:** `**/integrations/**`, `**/clients/**`, etc.
 
 **Enhanced Features:**
 - ✅ Categorizes external services by type (payment, messaging, cloud, AI, etc.)
-- ✅ Detects message queue systems (RabbitMQ, Kafka, SQS, Celery)
+- ✅ Detects message queue systems
 - ✅ Identifies HTTP clients and SDKs
-- ✅ Maps services to files
-- ✅ Tracks cloud providers (AWS, GCP, Azure)
-
-**Detection Rules:**
-```typescript
-interface ExternalLayerDetection {
-  // TypeScript/JavaScript HTTP clients
-  tsJsHttpClients: [
-    'axios',
-    'fetch',                     // Native fetch
-    'node-fetch',
-    'undici',
-    'got',
-    'superagent',
-    'request',                   // Deprecated but still used
-    'needle',
-    'bent',
-    'ky',
-    'wretch'
-  ]
-
-  // Python HTTP clients
-  pythonHttpClients: [
-    'requests',
-    'httpx',
-    'aiohttp',
-    'urllib',
-    'urllib3',
-    'urllib.request',
-    'http.client',
-    'httplib2'
-  ]
-
-  // Cloud Provider SDKs
-  awsSdks: [
-    '@aws-sdk/*',                // AWS SDK v3 (modular)
-    'aws-sdk',                   // AWS SDK v2
-    '@aws-sdk/client-s3',
-    '@aws-sdk/client-dynamodb',
-    '@aws-sdk/client-lambda',
-    '@aws-sdk/client-sqs',
-    '@aws-sdk/client-sns',
-    'boto3',                     // Python AWS
-    'aioboto3'                   // Async Python AWS
-  ]
-
-  gcpSdks: [
-    '@google-cloud/*',
-    '@google-cloud/storage',
-    '@google-cloud/pubsub',
-    '@google-cloud/firestore',
-    'google-cloud-storage',      // Python
-    'google-cloud-pubsub',
-    'google-cloud-firestore'
-  ]
-
-  azureSdks: [
-    '@azure/*',
-    '@azure/storage-blob',
-    '@azure/cosmos',
-    '@azure/service-bus',
-    'azure-storage-blob',        // Python
-    'azure-cosmos',
-    'azure-servicebus'
-  ]
-
-  // Payment processors
-  paymentSdks: [
-    'stripe',
-    '@stripe/stripe-js',
-    'paypal-rest-sdk',
-    '@paypal/checkout-server-sdk',
-    'braintree',
-    'square',
-    'adyen'
-  ]
-
-  // Communication/Messaging
-  communicationSdks: [
-    'twilio',
-    '@twilio/conversations',
-    'sendgrid',
-    '@sendgrid/mail',
-    'nodemailer',
-    'mailgun-js',
-    'postmark',
-    '@slack/web-api',            // Slack
-    '@slack/bolt',
-    'discord.js',                // Discord
-    'telegraf',                  // Telegram
-    'whatsapp-web.js'
-  ]
-
-  // AI/ML Services
-  aiSdks: [
-    'openai',
-    '@anthropic-ai/sdk',
-    'anthropic',                 // Python
-    'cohere-ai',
-    '@google-ai/generativelanguage',
-    'replicate',
-    'huggingface',
-    '@huggingface/inference'
-  ]
-
-  // Authentication/Identity
-  authSdks: [
-    'auth0',
-    '@auth0/auth0-react',
-    'passport',
-    'passport-google-oauth20',
-    'firebase-admin',
-    'firebase/auth',
-    '@supabase/supabase-js',
-    '@clerk/nextjs',
-    'next-auth',
-    '@okta/okta-auth-js'
-  ]
-
-  // Analytics/Monitoring
-  analyticsSdks: [
-    '@segment/analytics-node',
-    'mixpanel',
-    'amplitude-js',
-    '@sentry/node',
-    '@sentry/browser',
-    '@datadog/browser-rum',
-    'newrelic',
-    'bugsnag',
-    'rollbar'
-  ]
-
-  // Storage/CDN
-  storageSdks: [
-    'cloudinary',
-    '@cloudinary/url-gen',
-    '@uploadcare/upload-client',
-    'dropbox',
-    'box-node-sdk',
-    'onedrive-api'
-  ]
-
-  // Search
-  searchSdks: [
-    '@elastic/elasticsearch',
-    'algoliasearch',
-    '@algolia/client-search',
-    'typesense',
-    'meilisearch'
-  ]
-
-  // CRM/Sales
-  crmSdks: [
-    'salesforce',
-    'jsforce',
-    '@hubspot/api-client',
-    'intercom-client',
-    'zendesk-node-api'
-  ]
-
-  // Social Media
-  socialSdks: [
-    'twitter-api-v2',
-    'facebook-nodejs-sdk',
-    'instagram-private-api',
-    'linkedin-api',
-    'pinterest-api'
-  ]
-
-  // Message Queues / Event Systems
-  messagingImports: [
-    // RabbitMQ
-    'amqplib',                   // Node.js RabbitMQ
-    'amqp',
-    'rabbitmq',
-    'pika',                      // Python RabbitMQ
-    'aio-pika',                  // Async Python RabbitMQ
-
-    // Kafka
-    'kafkajs',                   // Node.js Kafka
-    'node-rdkafka',
-    'kafka-python',              // Python Kafka
-    'confluent-kafka',
-    'aiokafka',                  // Async Python Kafka
-
-    // Redis Pub/Sub & Queues
-    'bull',                      // Redis-based queue (Node)
-    'bee-queue',
-    'bullmq',
-    'kue',
-
-    // AWS Messaging
-    '@aws-sdk/client-sqs',       // AWS SQS
-    '@aws-sdk/client-sns',       // AWS SNS
-    '@aws-sdk/client-eventbridge',
-
-    // Python Task Queues
-    'celery',                    // Celery
-    'rq',                        // Redis Queue
-    'huey',
-
-    // Google Pub/Sub
-    '@google-cloud/pubsub',
-    'google-cloud-pubsub',
-
-    // Azure
-    '@azure/service-bus',
-    'azure-servicebus',
-
-    // NATS
-    'nats',
-    'nats.py'
-  ]
-
-  // Code patterns (via tree-sitter)
-  codePatterns: [
-    // HTTP calls
-    'axios.get(', 'axios.post(', 'axios.put(', 'axios.delete(',
-    'fetch(',
-    'requests.get(', 'requests.post(',
-    'httpx.get(', 'httpx.post(',
-    'aiohttp.ClientSession',
-
-    // Common SDK initialization
-    'new S3Client(',
-    'Stripe(',
-    'OpenAI(',
-    'new Anthropic(',
-    'SendGridClient(',
-    'TwilioClient('
-  ]
-
-  // File patterns
-  filePatterns: [
-    '**/integrations/**',
-    '**/external/**',
-    '**/clients/**',
-    '**/services/external/**',
-    '**/third-party/**',
-    '**/*client*.{ts,js,py}',
-    '**/*integration*.{ts,js,py}',
-    '**/*sdk*.{ts,js,py}'
-  ]
-}
-```
-
-**Output Structure:**
-```json
-{
-  "layer": "external",
-  "files": [
-    {
-      "filePath": "src/integrations/stripe.ts",
-      "language": "typescript",
-      "externalServices": [
-        {
-          "name": "stripe",
-          "type": "payment",
-          "sdk": "@stripe/stripe-js"
-        }
-      ],
-      "functions": [...],
-      "classes": [...],
-      "imports": [...],
-      "exports": [...],
-      "calls": [...]
-    }
-  ],
-  "externalServices": {
-    "payment": ["stripe", "paypal"],
-    "messaging": ["twilio", "sendgrid"],
-    "cloud": ["aws-s3", "aws-sqs"],
-    "ai": ["openai", "anthropic"],
-    "analytics": ["segment", "mixpanel"]
-  },
-  "messageSystems": {
-    "rabbitmq": {
-      "library": "amqplib",
-      "files": ["src/messaging/publisher.ts", "src/messaging/consumer.ts"],
-      "type": "message-queue"
-    },
-    "kafka": {
-      "library": "kafkajs",
-      "files": ["src/events/producer.ts"],
-      "type": "event-stream"
-    },
-    "redis-queue": {
-      "library": "bull",
-      "files": ["src/jobs/queue.ts"],
-      "type": "task-queue"
-    }
-  },
-  "summary": {
-    "totalFiles": 23,
-    "totalExternalServices": 8,
-    "totalMessageSystems": 3,
-    "serviceTypes": ["payment", "messaging", "cloud", "ai", "analytics"],
-    "messagingTypes": ["message-queue", "event-stream", "task-queue"]
-  }
-}
-```
+- ✅ Extracts HTTP calls with full details (method, URL, client type)
+- ✅ Tracks cloud providers
 
 #### 4. Service Layer (`service-layer/`)
 **Purpose:** Business logic, utilities, and files not in other layers
 
-**Output Files:**
-- `summary.json`: File list, metrics (pretty-printed)
-- `chunk-*.json`: Full file analysis for files in this layer (minified)
-
-**Detection Rules:**
-```typescript
-interface ServiceLayerDetection {
-  // Default layer for files that don't match data/api/external
-  isDefault: true
-
-  // File patterns (common business logic locations)
-  filePatterns: [
-    '**/services/**',
-    '**/business/**',
-    '**/logic/**',
-    '**/domain/**',
-    '**/utils/**',
-    '**/helpers/**',
-    '**/lib/**'
-  ]
-}
-```
-
-**Output Structure:**
-```json
-{
-  "layer": "service",
-  "files": [
-    {
-      "filePath": "src/services/user-service.ts",
-      "language": "typescript",
-      "functions": [...],
-      "classes": [...],
-      "imports": [...],
-      "exports": [...],
-      "calls": [...]
-    }
-  ],
-  "summary": {
-    "totalFiles": 89,
-    "totalFunctions": 234,
-    "totalClasses": 45
-  }
-}
-```
+**Detection:** Default layer for files that don't match data/api/external
 
 ---
 
 ## Cross-Layer Dependencies
 
-### Tracking Layer Relationships
+### How They Work
 
-Each layer file includes **two types of dependencies**:
+The analyzer tracks **import statements** between files in different layers within the same service:
 
-#### 1. Internal Dependencies (same layer)
-Dependencies between files within the same layer:
+```typescript
+// Example:
+// task-controller.ts (in api-layer) imports:
+import { TaskService } from '../business/task-service.js'  // service-layer
+import { CreateTaskInput } from '../data/models.js'         // data-layer
 
-```json
+// These become cross-layer dependencies:
 {
-  "layer": "api",
-  "dependencies": [
-    {
-      "source": "src/api/users/routes.ts",
-      "target": "src/api/users/validators.ts",
-      "importedNames": ["validateUserInput"],
-      "type": "internal"
-    }
-  ]
-}
-```
-
-#### 2. Cross-Layer Dependencies
-Dependencies from this layer to other layers:
-
-```json
-{
-  "layer": "api",
   "crossLayerDependencies": [
     {
-      "source": "src/api/users/routes.ts",
-      "target": "src/services/user-service.ts",
+      "source": "/path/to/task-controller.ts",
+      "target": "/path/to/task-service.ts",
       "targetLayer": "service",
-      "importedNames": ["UserService"],
+      "importedNames": ["TaskService"],
       "type": "uses",
       "direction": "api -> service"
     },
     {
-      "source": "src/api/users/routes.ts",
-      "target": "src/models/user.py",
+      "source": "/path/to/task-controller.ts",
+      "target": "/path/to/models.ts",
       "targetLayer": "data",
-      "importedNames": ["User"],
+      "importedNames": ["CreateTaskInput"],
       "type": "uses",
       "direction": "api -> data"
     }
@@ -1054,61 +273,46 @@ Dependencies from this layer to other layers:
 }
 ```
 
+### Key Implementation Detail
+
+**Cross-layer dependencies use absolute file paths** resolved from relative imports:
+
+```typescript
+// Import in code:
+import { User } from './models/user.js'
+
+// Resolved to absolute path:
+{
+  source: "/full/path/to/controller.ts",
+  target: "/full/path/to/models/user.ts"  // ← Absolute path!
+}
+```
+
+This is handled by `buildDependencyGraph()` in `dependency-graph.ts`, which:
+1. Skips external packages (non-relative imports)
+2. Resolves relative paths to absolute paths
+3. Handles `.js` extensions (TypeScript ESM convention)
+4. Tries multiple extensions (`.ts`, `.tsx`, `.js`, `.jsx`)
+5. Handles index files
+
 ### Typical Dependency Flows
 
 **Clean Architecture Pattern:**
 ```
-External Layer ──uses──> Service Layer ──uses──> Data Layer
-     ↓                        ↓                       ↓
-   (calls)               (orchestrates)           (queries)
-     ↓                        ↓                       ↓
-API Layer ────uses────> Service Layer ──uses──> Data Layer
+API Layer ──uses──> Service Layer ──uses──> Data Layer
 ```
 
-**Common Flow Examples:**
-
+**Common Flows:**
 1. **API → Service → Data** (Clean)
-   ```
-   routes.ts (API) → user-service.ts (Service) → user.model.ts (Data)
-   ```
-
 2. **API → Data** (Direct - potential code smell)
-   ```
-   routes.ts (API) → user.model.ts (Data)
-   ```
-
 3. **External → Service → Data** (Clean)
-   ```
-   stripe-client.ts (External) → payment-service.ts (Service) → payment.model.ts (Data)
-   ```
 
-### Why Track Cross-Layer Dependencies?
+### Architecture Violations
 
-1. **Architecture Validation**: Detect violations of layered architecture (e.g., Data layer calling API layer)
-2. **Impact Analysis**: Understand what breaks when you change a file
-3. **Diagram Generation**: Create accurate flow diagrams showing data flow
-4. **Code Smells**: Identify anti-patterns like:
-   - API layer directly accessing database (skipping service layer)
-   - Data layer importing from API layer (reversed dependency)
-   - Circular dependencies between layers
-
-### Global Dependency Graph
-
-The root `metadata.json` includes a **cross-layer dependency summary**:
+The analyzer detects violations of layered architecture:
 
 ```json
 {
-  "metadata": {...},
-  "services": [...],
-  "layers": {...},
-  "crossLayerDependencies": {
-    "api -> service": 45,
-    "api -> data": 12,        // Potential code smell
-    "service -> data": 78,
-    "service -> external": 34,
-    "external -> service": 5,
-    "data -> service": 2      // Architecture violation!
-  },
   "violations": [
     {
       "type": "reversed-dependency",
@@ -1116,9 +320,9 @@ The root `metadata.json` includes a **cross-layer dependency summary**:
       "to": "service",
       "files": [
         {
-          "source": "src/models/user.py",
-          "target": "src/services/notification.ts",
-          "reason": "Data layer should not depend on service layer"
+          "source": "/path/to/model.ts",
+          "target": "/path/to/service.ts",
+          "reason": "data layer should not depend on service layer"
         }
       ]
     }
@@ -1126,186 +330,229 @@ The root `metadata.json` includes a **cross-layer dependency summary**:
 }
 ```
 
+**Allowed Directions:**
+- `api -> service`
+- `api -> data`
+- `api -> external`
+- `service -> data`
+- `service -> external`
+- `external -> service`
+- `external -> data`
+
+**Violations (reversed dependencies):**
+- `data -> *` (data layer should not depend on other layers)
+- `service -> api`
+
+---
+
+## Cross-Service Dependencies
+
+### How They Work
+
+The analyzer tracks **both HTTP calls and imports** between services:
+
+#### 1. HTTP-Based Dependencies
+
+```typescript
+// email-service-client.ts in api-service:
+await fetch(`${this.config.baseUrl}/api/email/send-template`, {
+  method: 'POST',
+  // ...
+})
+
+// Detected as cross-service HTTP call:
+{
+  "crossServiceDependencies": {
+    "api-service -> email-service": 2  // Count of HTTP calls
+  }
+}
+```
+
+HTTP calls are detected by:
+1. Finding `fetch()`, `axios.*()`, and other HTTP client calls
+2. Extracting URL and HTTP method
+3. Matching URL patterns to service names
+4. Counting dependencies per service pair
+
+#### 2. Import-Based Dependencies
+
+```typescript
+// If services share code (monorepo):
+import { SharedType } from '@company/shared-lib'
+
+// Detected as cross-service import dependency
+```
+
+### URL Matching Logic
+
+The analyzer matches HTTP URLs to services using heuristics:
+
+```typescript
+// URL patterns that indicate email-service:
+`http://localhost:3001/api/email/*`     // Port-based
+`http://email-service/api/*`            // Service name in host
+`*/api/email/*`                         // Path-based
+
+// Matches to: email-service
+```
+
 ---
 
 ## Service Detection
 
-### Service Detection Heuristics
+### Detection Methods
 
-The analyzer automatically detects all services in the codebase:
+The analyzer uses multiple heuristics to detect services:
 
-#### 1. Monorepo Structure Detection
-```typescript
-interface MonorepoPatterns {
-  // Package managers
-  packageFiles: [
-    'package.json',      // Node.js
-    'pyproject.toml',    // Python
-    'Cargo.toml',        // Rust
-    'go.mod'             // Go
-  ]
-
-  // Common monorepo directories
-  serviceDirs: [
-    'packages/*',
-    'services/*',
-    'apps/*',
-    'microservices/*'
-  ]
-
-  // Lerna/Nx/Turborepo
-  monorepoConfigs: [
-    'lerna.json',
-    'nx.json',
-    'turbo.json',
-    'pnpm-workspace.yaml'
-  ]
-}
+#### 1. Monorepo Structure
 ```
+my-project/
+├── packages/
+│   ├── api-gateway/     ← Service
+│   └── worker/          ← Service
+├── pnpm-workspace.yaml
+```
+
+Looks for:
+- `packages/`, `services/`, `apps/`, `microservices/` directories
+- Monorepo config files: `pnpm-workspace.yaml`, `lerna.json`, `nx.json`, `turbo.json`
+- `package.json` in each subdirectory
 
 #### 2. Entry Point Detection
+```
+my-project/
+├── src/
+│   ├── api/
+│   │   └── index.ts     ← Entry point (API service)
+│   └── worker/
+│       └── main.ts      ← Entry point (Worker service)
+```
+
+Looks for files named: `index.ts`, `main.py`, `server.ts`, `app.py`, etc.
+
+#### 3. Docker Compose
+```yaml
+# docker-compose.yml
+services:
+  api-service:     ← Service
+    build: ./api
+  worker-service:  ← Service
+    build: ./worker
+```
+
+Parses `docker-compose.yml` to find service names and directories.
+
+#### 4. Single Service (Monolith)
+If no multi-service structure is detected, treats entire codebase as one service.
+
+### Service Type Classification
+
+**Pattern-Driven Detection** (See `packages/core/src/analyzer/patterns/service-detection.json`)
+
+Services are classified into types based on dependencies and file patterns:
+
+| Type | How Detected | Examples |
+|------|-------------|----------|
+| **frontend** | React, Vue, Next.js, Angular in `package.json` | Next.js app, React SPA |
+| **api-server** | Express, NestJS, FastAPI, Flask dependencies | REST API, GraphQL server |
+| **worker** | Celery, Bull, RQ, BullMQ dependencies | Background jobs, task queues |
+| **library** | `package.json` has `main`, `exports`, `types` fields | Shared utilities, SDK |
+| **unknown** | Doesn't match above patterns | Generic service |
+
+**Detection Priority:**
+1. Frontend (checked first - may have `api/` folders)
+2. API Server
+3. Worker
+4. Library
+5. Unknown (fallback)
+
+### Framework Detection
+
+**Dynamic from Patterns** (No hardcoded lists!)
+
+The `detectFramework()` function now reads from `service-detection.json`:
+
 ```typescript
-interface EntryPointDetection {
-  // Multiple main files indicate multiple services
-  entryPoints: [
-    'main.py',
-    'index.ts',
-    'index.js',
-    'app.py',
-    'server.ts',
-    '__main__.py'
-  ]
-
-  // Server startup patterns (via tree-sitter)
-  serverPatterns: [
-    'app.listen(',
-    'uvicorn.run(',
-    'app.run(',
-    'fastapi.FastAPI(',
-    'express()'
-  ]
-}
+// Automatically detects ALL frameworks in the pattern file:
+const allFrameworks = [
+  ...patterns.serviceDetection.apiServer.frameworks.typescript,
+  ...patterns.serviceDetection.frontend.frameworks.typescript,
+  ...patterns.serviceDetection.worker.frameworks.typescript,
+];
 ```
 
-#### 3. Docker/Container Detection
-```typescript
-interface ContainerDetection {
-  // Docker compose
-  dockerCompose: 'docker-compose.yml' | 'docker-compose.yaml'
-
-  // Multiple Dockerfiles
-  dockerfiles: [
-    'Dockerfile',
-    'Dockerfile.*',
-    '*/Dockerfile'
-  ]
-
-  // Kubernetes
-  k8sPatterns: [
-    'k8s/**/*.yaml',
-    'deployment.yaml',
-    'service.yaml'
-  ]
-}
-```
-
-#### 4. Service Naming Strategy
-```typescript
-function detectServiceName(rootDir: string): string {
-  // Priority order:
-  // 1. package.json "name" field
-  // 2. Directory name
-  // 3. Docker compose service name
-  // 4. Main file prefix (e.g., "api-server.ts" → "api-server")
-
-  // Examples:
-  // packages/api-gateway → "api-gateway"
-  // services/workers → "workers"
-  // apps/frontend → "frontend"
-}
-```
-
-### Service Output Structure
-
-```json
-{
-  "service": "api-gateway",
-  "rootPath": "services/api-gateway",
-  "entryPoint": "src/main.ts",
-  "type": "api-server",
-  "framework": "fastapi",
-  "port": 8000,
-  "dependencies": ["core-service", "worker-service"],
-  "layers": {
-    "data": { /* data-layer.json content */ },
-    "api": { /* api-layer.json content */ },
-    "service": { /* service-layer.json content */ },
-    "external": { /* external-layer.json content */ }
-  }
-}
-```
+**Priority System** ensures correct detection:
+- **Meta-frameworks** (Next.js, Nuxt, NestJS) detected before base frameworks (React, Vue)
+- Prevents false positives (Next.js project detected as React)
 
 ---
 
-## Root Metadata File
+## Pattern-Driven Detection
 
-**File:** `.specmind/analysis/metadata.json`
+### Configuration Files
+
+All detection patterns are externalized to JSON files for easy maintenance:
+
+```
+packages/core/src/analyzer/patterns/
+├── data-layer.json           # Data layer patterns
+├── api-layer.json            # API layer patterns
+├── external-layer.json       # External layer patterns
+├── service-detection.json    # Service type & framework patterns
+└── databases.json            # Database type mappings
+```
+
+### Benefits
+
+1. **Single Source of Truth** - No duplication
+2. **Easy Updates** - Add new frameworks without code changes
+3. **Community Contributions** - Users can submit PRs with new patterns
+4. **Language Separation** - TypeScript vs Python patterns clearly separated
+5. **Testable** - Easy to test pattern matching
+
+### Example: service-detection.json
 
 ```json
 {
-  "analyzedAt": "2025-01-23T16:30:00Z",
-  "rootPath": "/path/to/project",
-  "architecture": "microservices" | "monolith",
-  "services": [
-    {
-      "name": "api-gateway",
-      "path": "services/api-gateway",
-      "type": "api-server",
-      "filesAnalyzed": 45,
-      "layers": ["data", "api", "service", "external"]
-    },
-    {
-      "name": "worker-service",
-      "path": "services/workers",
-      "type": "worker",
-      "filesAnalyzed": 23,
-      "layers": ["data", "service", "external"]
-    }
+  "entryPoints": [
+    "main.py", "index.ts", "server.ts", "app.py"
   ],
-  "layers": {
-    "data": {
-      "filesAnalyzed": 34,
-      "databases": ["postgresql", "redis"],
-      "totalModels": 28
-    },
-    "api": {
-      "filesAnalyzed": 56,
-      "totalEndpoints": 89,
-      "frameworks": ["fastapi", "express"]
-    },
-    "service": {
-      "filesAnalyzed": 123,
-      "totalFunctions": 456,
-      "totalClasses": 89
-    },
-    "external": {
-      "filesAnalyzed": 45,
-      "services": ["stripe", "sendgrid", "aws-s3"]
+  "frontend": {
+    "frameworks": {
+      "typescript": ["react", "next", "vue", "svelte", ...],
+      "python": []
     }
   },
-  "totals": {
-    "filesAnalyzed": 258,
-    "totalFunctions": 1234,
-    "totalClasses": 234,
-    "totalCalls": 5678,
-    "languages": ["typescript", "python"]
+  "apiServer": {
+    "frameworks": {
+      "typescript": ["express", "@nestjs/core", "fastify", ...],
+      "python": ["fastapi", "flask", "django", ...]
+    }
+  },
+  "worker": {
+    "frameworks": {
+      "typescript": ["bull", "bullmq", ...],
+      "python": ["celery", "rq", ...]
+    }
   }
 }
 ```
 
 ---
 
-## CLI Interface
+## Supported Languages
+
+| Language | Version | Support Level | Rationale |
+|----------|---------|---------------|-----------|
+| **TypeScript** | 5.x | ✅ Full | Most popular for modern web apps |
+| **JavaScript** | ES2020+ | ✅ Full | Legacy codebases, Node.js backends |
+| **Python** | 3.8+ | ✅ Full | FastAPI/Django/Flask APIs, ML services |
+
+**Future Support:** Go, Java, C#, Rust, Ruby
+
+---
+
+## CLI Usage
 
 ### Command
 
@@ -1318,11 +565,11 @@ specmind analyze [options]
 ```typescript
 interface AnalyzeOptions {
   path?: string           // Path to analyze (default: current directory)
-  outputDir?: string      // Output directory (default: '.specmind/analysis')
+  outputDir?: string      // Output directory (default: '.specmind/system')
 }
 ```
 
-### Usage Examples
+### Examples
 
 ```bash
 # Analyze current directory
@@ -1332,723 +579,136 @@ specmind analyze
 specmind analyze --path ./src
 
 # Custom output directory
-specmind analyze --output-dir ./docs/architecture
-
-# Analyze from project root
-cd /path/to/project
-specmind analyze
-```
-
-### Output Behavior
-
-**Every `analyze` command produces:**
-```
-.specmind/analysis/
-├── metadata.json                    # Always generated
-├── services/{service}/              # One or more services
-│   ├── metadata.json
-│   └── {layer}.json                 # One or more layers per service
-└── layers/{layer}.json              # Cross-service view
-```
-
-**No flags needed** - the structure is determined by what's detected in your codebase.
-
----
-
-## Implementation Strategy
-
-### Detection Configuration Files
-
-**All detection patterns are stored in separate JSON/YAML configuration files** for easy maintenance and updates.
-
-#### Configuration Structure
-
-```
-packages/core/src/analyzer/patterns/
-├── data-layer.json         # Data layer detection patterns
-├── api-layer.json          # API layer detection patterns
-├── external-layer.json     # External layer detection patterns
-└── databases.json          # Database type mappings
-```
-
-#### Example: `data-layer.json`
-
-```json
-{
-  "orms": {
-    "typescript": [
-      "prisma",
-      "@prisma/client",
-      "typeorm",
-      "mikro-orm",
-      "@mikro-orm/core",
-      "sequelize",
-      "mongoose",
-      "drizzle-orm",
-      "kysely"
-    ],
-    "python": [
-      "sqlalchemy",
-      "sqlalchemy.orm",
-      "django.db",
-      "django.db.models",
-      "tortoise",
-      "peewee",
-      "mongoengine"
-    ]
-  },
-  "drivers": {
-    "postgresql": {
-      "typescript": ["pg", "pg-promise", "postgres"],
-      "python": ["psycopg2", "psycopg", "asyncpg"]
-    },
-    "mysql": {
-      "typescript": ["mysql", "mysql2"],
-      "python": ["pymysql", "aiomysql", "mysqlclient"]
-    },
-    "redis": {
-      "typescript": ["redis", "ioredis", "@redis/client"],
-      "python": ["redis", "aioredis"]
-    },
-    "mongodb": {
-      "typescript": ["mongodb", "mongoose"],
-      "python": ["pymongo", "motor"]
-    }
-  },
-  "filePatterns": [
-    "**/*model*.{ts,js,py}",
-    "**/*schema*.{ts,js,py}",
-    "**/models/**",
-    "**/schemas/**",
-    "**/entities/**",
-    "**/migrations/**"
-  ],
-  "codePatterns": [
-    "@Entity",
-    "@Column",
-    "declarative_base",
-    "models.Model",
-    "Schema("
-  ]
-}
-```
-
-#### Example: `databases.json`
-
-```json
-{
-  "postgresql": {
-    "drivers": ["pg", "pg-promise", "postgres", "psycopg2", "psycopg", "asyncpg"],
-    "orms": ["typeorm", "prisma", "sequelize", "sqlalchemy"],
-    "color": "#336791",
-    "icon": "[(PostgreSQL)]"
-  },
-  "mysql": {
-    "drivers": ["mysql", "mysql2", "pymysql", "aiomysql"],
-    "orms": ["typeorm", "sequelize", "sqlalchemy"],
-    "color": "#4479A1",
-    "icon": "[(MySQL)]"
-  },
-  "redis": {
-    "drivers": ["redis", "ioredis", "@redis/client", "aioredis"],
-    "orms": [],
-    "color": "#DC382D",
-    "icon": "[(Redis)]"
-  },
-  "mongodb": {
-    "drivers": ["mongodb", "pymongo", "motor"],
-    "orms": ["mongoose", "mongoengine"],
-    "color": "#47A248",
-    "icon": "[(MongoDB)]"
-  }
-}
-```
-
-#### Example: `external-layer.json`
-
-```json
-{
-  "httpClients": {
-    "typescript": ["axios", "fetch", "node-fetch", "got", "ky"],
-    "python": ["requests", "httpx", "aiohttp"]
-  },
-  "services": {
-    "payment": {
-      "stripe": ["stripe", "@stripe/stripe-js"],
-      "paypal": ["paypal-rest-sdk", "@paypal/checkout-server-sdk"],
-      "square": ["square"],
-      "braintree": ["braintree"]
-    },
-    "cloud": {
-      "aws": ["@aws-sdk/*", "aws-sdk", "boto3", "aioboto3"],
-      "gcp": ["@google-cloud/*", "google-cloud-*"],
-      "azure": ["@azure/*", "azure-*"]
-    },
-    "ai": {
-      "openai": ["openai"],
-      "anthropic": ["@anthropic-ai/sdk", "anthropic"],
-      "cohere": ["cohere-ai"],
-      "huggingface": ["@huggingface/inference"]
-    },
-    "messaging": {
-      "twilio": ["twilio"],
-      "sendgrid": ["sendgrid", "@sendgrid/mail"],
-      "slack": ["@slack/web-api", "@slack/bolt"]
-    }
-  },
-  "messageQueues": {
-    "rabbitmq": {
-      "typescript": ["amqplib", "amqp"],
-      "python": ["pika", "aio-pika"],
-      "type": "message-queue"
-    },
-    "kafka": {
-      "typescript": ["kafkajs", "node-rdkafka"],
-      "python": ["kafka-python", "confluent-kafka", "aiokafka"],
-      "type": "event-stream"
-    },
-    "celery": {
-      "python": ["celery"],
-      "type": "task-queue"
-    },
-    "bull": {
-      "typescript": ["bull", "bullmq"],
-      "type": "task-queue"
-    }
-  }
-}
-```
-
-### Benefits of Configuration Files
-
-1. **Easy Updates**: Add new frameworks without code changes
-2. **Community Contributions**: Users can submit PRs with new patterns
-3. **Versioning**: Track pattern changes in git
-4. **Language Separation**: Easy to see TypeScript vs Python patterns
-5. **Documentation**: Config files serve as documentation
-6. **Testing**: Easy to test pattern matching with fixtures
-7. **Extensibility**: Users can override/extend patterns locally
-
-### Loading Configuration
-
-```typescript
-// File: packages/core/src/analyzer/pattern-loader.ts
-
-import dataLayerPatterns from './patterns/data-layer.json'
-import apiLayerPatterns from './patterns/api-layer.json'
-import externalLayerPatterns from './patterns/external-layer.json'
-import databaseMappings from './patterns/databases.json'
-
-export interface PatternConfig {
-  data: typeof dataLayerPatterns
-  api: typeof apiLayerPatterns
-  external: typeof externalLayerPatterns
-  databases: typeof databaseMappings
-}
-
-export function loadPatterns(): PatternConfig {
-  return {
-    data: dataLayerPatterns,
-    api: apiLayerPatterns,
-    external: externalLayerPatterns,
-    databases: databaseMappings
-  }
-}
-
-// Allow custom patterns (future feature)
-export function loadPatternsWithOverrides(customPath?: string): PatternConfig {
-  const defaults = loadPatterns()
-
-  if (customPath && existsSync(customPath)) {
-    const custom = JSON.parse(readFileSync(customPath, 'utf8'))
-    return deepMerge(defaults, custom)
-  }
-
-  return defaults
-}
-```
-
-### Usage in Layer Detector
-
-```typescript
-// File: packages/core/src/analyzer/layer-detector.ts
-
-import { loadPatterns } from './pattern-loader.js'
-
-const patterns = loadPatterns()
-
-export function detectLayers(analysis: FileAnalysis): LayerDetectionResult {
-  const layers: Layer[] = []
-
-  // Data layer detection using config
-  if (hasDataLayerPatterns(analysis, patterns.data)) {
-    layers.push('data')
-  }
-
-  // API layer detection using config
-  if (hasAPILayerPatterns(analysis, patterns.api)) {
-    layers.push('api')
-  }
-
-  // External layer detection using config
-  if (hasExternalLayerPatterns(analysis, patterns.external)) {
-    layers.push('external')
-  }
-
-  // Default to service layer
-  if (layers.length === 0) {
-    layers.push('service')
-  }
-
-  return { layers, confidence: 1.0, reasons: [] }
-}
-
-function hasDataLayerPatterns(analysis: FileAnalysis, config: any): boolean {
-  // Check ORMs
-  const allOrms = [...config.orms.typescript, ...config.orms.python]
-  if (analysis.imports.some(imp => allOrms.includes(imp.source))) {
-    return true
-  }
-
-  // Check drivers
-  const allDrivers = Object.values(config.drivers)
-    .flatMap((db: any) => [...db.typescript, ...db.python])
-  if (analysis.imports.some(imp => allDrivers.includes(imp.source))) {
-    return true
-  }
-
-  return false
-}
-```
-
-### Future: User-Customizable Patterns
-
-Allow users to extend patterns via `.specmind/patterns.json`:
-
-```json
-{
-  "data": {
-    "orms": {
-      "typescript": ["my-custom-orm"]
-    }
-  },
-  "external": {
-    "services": {
-      "custom": {
-        "my-internal-api": ["@company/api-client"]
-      }
-    }
-  }
-}
+specmind analyze --output ./docs/architecture
 ```
 
 ---
 
-### Core Implementation
+## How Analysis Works
 
-The analyze command will be completely rewritten to output the split structure by default.
+### High-Level Flow
 
-```typescript
-// File: packages/core/src/analyzer/layer-detector.ts
+```
+1. File Discovery
+   └── Find all TypeScript, JavaScript, Python files
 
-export type Layer = 'data' | 'api' | 'service' | 'external'
+2. Service Detection
+   └── Detect monorepo, Docker Compose, or single service
 
-export interface LayerDetectionResult {
-  layers: Layer[]  // A file can belong to multiple layers
-  confidence: number
-  reasons: string[]
-}
+3. File Analysis (Tree-sitter parsing)
+   ├── Extract functions, classes, imports, exports
+   ├── Extract API endpoints (routes, decorators)
+   ├── Extract HTTP calls (fetch, axios, requests)
+   └── Extract database usage (ORMs, drivers)
 
-export function detectLayers(analysis: FileAnalysis): LayerDetectionResult {
-  const layers: Layer[] = []
-  const reasons: string[] = []
+4. Layer Classification
+   └── Assign each file to layers based on patterns
 
-  // Check data layer
-  if (hasDataLayerPatterns(analysis)) {
-    layers.push('data')
-    reasons.push('Contains ORM imports or model definitions')
-  }
+5. Dependency Graph Building
+   ├── Build import dependency graph (absolute paths)
+   └── Extract HTTP call dependencies
 
-  // Check API layer
-  if (hasAPILayerPatterns(analysis)) {
-    layers.push('api')
-    reasons.push('Contains route decorators or API definitions')
-  }
+6. Cross-Layer Analysis
+   ├── Identify dependencies between layers
+   ├── Detect architecture violations
+   └── Calculate dependency summaries
 
-  // Check external layer
-  if (hasExternalLayerPatterns(analysis)) {
-    layers.push('external')
-    reasons.push('Contains HTTP client or SDK imports')
-  }
+7. Cross-Service Analysis
+   ├── Match HTTP URLs to services
+   ├── Count service-to-service dependencies
+   └── Track both HTTP and import dependencies
 
-  // Default to service layer
-  if (layers.length === 0) {
-    layers.push('service')
-    reasons.push('Business logic or utility file')
-  }
-
-  return {
-    layers,
-    confidence: calculateConfidence(layers, analysis),
-    reasons
-  }
-}
+8. Chunking & Output
+   ├── Split large layers into ~20K token chunks
+   ├── Write pretty-printed summaries
+   ├── Write minified chunks
+   └── Write metadata files
 ```
 
-### Service Detection Logic
+### Key Components
 
-```typescript
-// File: packages/core/src/analyzer/service-detector.ts
+**Packages:**
+- `@specmind/core` - Analysis engine
+  - `parser.ts` - Tree-sitter wrapper
+  - `file-analyzer.ts` - Analyzes individual files
+  - `service-detector.ts` - Detects services
+  - `layer-detector.ts` - Classifies files into layers
+  - `dependency-graph.ts` - Builds dependency graph (absolute path resolution!)
+  - `split-analyzer.ts` - Orchestrates analysis and chunking
+  - `patterns/*.json` - Detection pattern configuration
 
-export interface Service {
-  name: string
-  rootPath: string
-  entryPoint?: string
-  type: 'api-server' | 'worker' | 'frontend' | 'library' | 'unknown'
-  framework?: string
-  files: string[]  // Absolute paths
-}
-
-export function detectServices(rootPath: string, allFiles: string[]): Service[] {
-  const services: Service[] = []
-
-  // 1. Check for monorepo structure
-  const monorepoServices = detectMonorepoServices(rootPath, allFiles)
-  if (monorepoServices.length > 0) {
-    return monorepoServices
-  }
-
-  // 2. Check for multiple entry points
-  const entryPointServices = detectByEntryPoints(rootPath, allFiles)
-  if (entryPointServices.length > 1) {
-    return entryPointServices
-  }
-
-  // 3. Check Docker compose
-  const dockerServices = detectDockerComposeServices(rootPath)
-  if (dockerServices.length > 0) {
-    return dockerServices
-  }
-
-  // 4. Default: Single service (monolith)
-  return [{
-    name: path.basename(rootPath),
-    rootPath,
-    type: 'unknown',
-    files: allFiles
-  }]
-}
-```
-
-### Output Generator (CLI Logic)
-
-```typescript
-// File: packages/cli/src/commands/analyze.ts
-
-export async function analyzeCommand(options: AnalyzeOptions) {
-  const allFiles = getAllFiles(options.path)
-  const analyses = await analyzeAllFiles(allFiles)
-  const outputDir = options.outputDir || '.specmind/analysis'
-
-  // 1. Detect services
-  const services = detectServices(options.path, allFiles)
-  const isMultiService = services.length > 1
-
-  // 2. For each service, split by layers
-  for (const service of services) {
-    const serviceAnalyses = analyses.filter(a =>
-      service.files.includes(a.filePath)
-    )
-
-    const layers = splitByLayers(serviceAnalyses)
-    await writeServiceLayers(outputDir, service.name, layers)
-  }
-
-  // 3. Create cross-service layer view
-  const globalLayers = splitByLayers(analyses)
-  await writeGlobalLayers(outputDir, globalLayers)
-
-  // 4. Write metadata
-  await writeMetadata(outputDir, {
-    services,
-    architecture: isMultiService ? 'microservices' : 'monolith',
-    analyzedAt: new Date().toISOString()
-  })
-
-  console.log(`✅ Analysis complete: ${outputDir}`)
-  console.log(`   Services: ${services.length}`)
-  console.log(`   Files: ${analyses.length}`)
-}
-
-interface LayerOutput {
-  files: FileAnalysis[]
-  dependencies: ModuleDependency[]           // Same-layer dependencies
-  crossLayerDependencies: CrossLayerDependency[]  // Cross-layer dependencies
-  summary: LayerSummary
-}
-
-interface CrossLayerDependency {
-  source: string
-  target: string
-  targetLayer: Layer
-  importedNames: string[]
-  type: 'uses'
-  direction: string  // e.g., "api -> service"
-}
-
-function splitByLayers(
-  analyses: FileAnalysis[],
-  allDependencies: ModuleDependency[]
-): Record<Layer, LayerOutput> {
-
-  // 1. Categorize files into layers
-  const fileLayerMap = new Map<string, Layer[]>()
-  for (const analysis of analyses) {
-    const detection = detectLayers(analysis)
-    fileLayerMap.set(analysis.filePath, detection.layers)
-  }
-
-  // 2. Build layer outputs
-  const layers: Record<Layer, LayerOutput> = {
-    data: { files: [], dependencies: [], crossLayerDependencies: [], summary: {} },
-    api: { files: [], dependencies: [], crossLayerDependencies: [], summary: {} },
-    service: { files: [], dependencies: [], crossLayerDependencies: [], summary: {} },
-    external: { files: [], dependencies: [], crossLayerDependencies: [], summary: {} }
-  }
-
-  // 3. Assign files to layers
-  for (const analysis of analyses) {
-    const fileLayers = fileLayerMap.get(analysis.filePath) || []
-    for (const layer of fileLayers) {
-      layers[layer].files.push(analysis)
-    }
-  }
-
-  // 4. Categorize dependencies
-  for (const dep of allDependencies) {
-    const sourceLayers = fileLayerMap.get(dep.source) || []
-    const targetLayers = fileLayerMap.get(dep.target) || []
-
-    for (const sourceLayer of sourceLayers) {
-      // Check if same layer or cross-layer
-      if (targetLayers.includes(sourceLayer)) {
-        // Internal dependency (same layer)
-        layers[sourceLayer].dependencies.push(dep)
-      } else {
-        // Cross-layer dependency
-        for (const targetLayer of targetLayers) {
-          layers[sourceLayer].crossLayerDependencies.push({
-            source: dep.source,
-            target: dep.target,
-            targetLayer,
-            importedNames: dep.importedNames,
-            type: 'uses',
-            direction: `${sourceLayer} -> ${targetLayer}`
-          })
-        }
-      }
-    }
-  }
-
-  return layers
-}
-```
+- `@specmind/cli` - CLI interface
+  - `commands/analyze.ts` - Analyze command implementation
 
 ---
 
-## File Structure After Implementation
+## What's Different from Original Spec
 
-```
-packages/
-├── core/
-│   └── src/
-│       └── analyzer/
-│           ├── layer-detector.ts       # NEW: Layer detection logic
-│           ├── service-detector.ts     # NEW: Service detection logic
-│           └── ...
-└── cli/
-    └── src/
-        └── commands/
-            └── analyze.ts              # COMPLETELY REWRITTEN: Always output split structure
-```
+### ✅ Implemented
 
----
+1. **Pattern-driven detection** - All patterns in JSON files (not hardcoded)
+2. **Absolute path resolution** - Cross-layer dependencies use resolved absolute paths
+3. **HTTP call tracking** - Detects and matches HTTP calls to services
+4. **Service type classification** - frontend, api-server, worker, library
+5. **Framework detection** - Dynamically from patterns, with priority system
+6. **Architecture violations** - Detects reversed dependencies
 
-## Testing Strategy
+### ❌ Removed from Original Spec
 
-### Unit Tests
+1. **Diagram generation** - No longer generated in code
+   - Diagrams were generating in `split-analyzer.ts` (removed ~400 lines)
+   - AI now generates diagrams from analyzed data
+   - Removed: `generateServiceArchitectureDiagram()`, `generateSequenceDiagram()`, etc.
 
-```typescript
-// packages/core/src/__tests__/layer-detector.test.ts
-describe('detectLayers', () => {
-  it('should detect data layer from ORM imports', () => {
-    const analysis = {
-      imports: [{ source: '@prisma/client', ... }],
-      // ...
-    }
-    const result = detectLayers(analysis)
-    expect(result.layers).toContain('data')
-  })
+2. **Diagram output files** - No `.sm` files
+   - Removed: `sequence-diagram.sm`, `architecture-diagram.sm`
+   - AI generates diagrams on-demand from JSON data
 
-  it('should detect API layer from route decorators', () => {
-    const analysis = {
-      functions: [{ name: 'getUser', decorators: ['@Get'] }],
-      // ...
-    }
-    const result = detectLayers(analysis)
-    expect(result.layers).toContain('api')
-  })
-})
+3. **Database colors/icons** - Removed from `databases.json`
+   - No longer needed since diagrams are AI-generated
+   - Colors/styling handled by AI
 
-// packages/core/src/__tests__/service-detector.test.ts
-describe('detectServices', () => {
-  it('should detect monorepo services', () => {
-    // Mock file structure with packages/*/package.json
-    const services = detectServices('/root', files)
-    expect(services).toHaveLength(3)
-    expect(services[0].name).toBe('api-gateway')
-  })
+### 🔄 Changed
 
-  it('should detect single service for monolith', () => {
-    const services = detectServices('/root', files)
-    expect(services).toHaveLength(1)
-  })
-})
-```
-
-### Integration Tests
-
-```bash
-# Test monolith project
-cd test-fixtures/monolith
-specmind analyze
-# Verify:
-#   .specmind/analysis/metadata.json exists
-#   .specmind/analysis/services/monolith/*.json exists
-#   .specmind/analysis/layers/*.json exists
-
-# Test multi-service project
-cd test-fixtures/microservices
-specmind analyze
-# Verify:
-#   .specmind/analysis/metadata.json shows architecture: "microservices"
-#   .specmind/analysis/services/api-gateway/*.json exists
-#   .specmind/analysis/services/worker/*.json exists
-#   .specmind/analysis/layers/*.json contains cross-service data
-
-# Test custom output directory
-specmind analyze --output-dir ./custom
-# Verify: ./custom/metadata.json exists
-```
-
----
-
-## Future Enhancements
-
-### 1. Smart Layer Assignment
-- Use ML/heuristics to improve layer detection accuracy
-- Support custom layer definitions via config
-
-### 2. Dependency Graph
-- Show dependencies between services
-- Show dependencies between layers
-
-### 3. Visual Output
-- Generate Mermaid diagrams per service
-- Generate system-level service diagram
-- Generate layer interaction diagrams
-
-### 4. Incremental Analysis
-- Only re-analyze changed services
-- Cache analysis results
-- Git-aware analysis (only changed files)
+1. **Output location** - Changed from `.specmind/analysis/` to `.specmind/system/`
+2. **Service detection** - Now uses `service-detection.json` patterns
+3. **Framework detection** - Now reads from patterns, no hardcoded lists
 
 ---
 
 ## Success Metrics
 
-1. **Context Window Fit**: Each output file < 50KB (fits in Claude/GPT context)
-2. **Accurate Detection**: >90% accuracy for layer/service detection on sample projects
-3. **Performance**: Analysis time < 10s for projects with 1000+ files
-4. **Usability**: Clear directory structure, no configuration needed
+1. **Context Window Fit**: Each chunk file ≤ 20K tokens (~80KB), well within LLM limits
+2. **Accurate Detection**: Correct service and layer classification
+3. **Performance**: Analysis < 10s for 1000+ files
+4. **Usability**: Clear structure, no configuration needed
 
 ---
 
-## Implementation Notes
+## Testing
 
-- Files can belong to multiple layers (e.g., a controller that also makes external API calls)
-- Service detection should be conservative (prefer monolith over false multi-service detection)
-- Layer detection should be aggressive (better to over-categorize than under-categorize)
-- Always provide a `metadata.json` for easy discovery of split structure
-- Empty layers are still created (with empty `files: []` array) for consistency
----
+### Unit Tests
 
-## Feature Summary
+```bash
+pnpm --filter=@specmind/core test
+```
 
-### ✅ Implemented
+Tests cover:
+- Service detection (monorepo, monolith, Docker Compose)
+- Layer detection (data, API, service, external)
+- Dependency graph building (absolute path resolution)
+- Pattern loading
+- Cross-layer dependency tracking
 
-#### Multi-Service Detection
-- Monorepo structure detection (packages/, services/, apps/)
-- Entry point detection (main.py, index.ts, package.json)
-- Docker compose parsing
-- Service-specific output directories
+### Integration Tests
 
-#### Layer Detection with Enhanced Features
+```bash
+# Run analyze on example projects
+pnpm --filter=specmind analyze --path examples/task-management
+```
 
-**Data Layer**
-- 27 ORMs detected (Prisma, TypeORM, SQLAlchemy, Mongoose, etc.)
-- 28 database drivers detected (PostgreSQL, MySQL, Redis, MongoDB, etc.)
-- Database type identification per file
-- ORM-to-database mapping
-- Model/schema file detection
-
-**API Layer**
-- 32 frameworks detected (Express, NestJS, FastAPI, Flask, etc.)
-- Endpoint extraction (method, path, handler, location)
-- REST, GraphQL, tRPC, gRPC support
-- HTTP method counting (GET, POST, PUT, DELETE)
-
-**External Layer**
-- 100+ SDKs/packages detected
-- Service categorization (payment, messaging, cloud, AI, analytics, etc.)
-- Message queue detection (RabbitMQ, Kafka, SQS, Celery, Bull, etc.)
-- Cloud provider tracking (AWS, GCP, Azure)
-
-**Service Layer**
-- Default for business logic
-- Catches all non-categorized files
-
-#### Cross-Layer Dependencies
-- Internal dependencies (same layer)
-- Cross-layer dependencies with direction tracking
-- Architecture violation detection
-- Dependency flow analysis
-
----
-
-## Detection Coverage
-
-| Category | Count | Examples |
-|----------|-------|----------|
-| **ORMs** | 27 | Prisma, TypeORM, SQLAlchemy, Mongoose, Drizzle |
-| **Database Drivers** | 28 | pg, mysql2, psycopg2, redis, mongodb |
-| **API Frameworks** | 32 | Express, NestJS, FastAPI, Flask, Next.js |
-| **HTTP Clients** | 18 | axios, fetch, requests, httpx |
-| **Cloud SDKs** | 18 | AWS SDK, Google Cloud, Azure |
-| **Payment SDKs** | 7 | Stripe, PayPal, Braintree, Square |
-| **AI SDKs** | 8 | OpenAI, Anthropic, Cohere, HuggingFace |
-| **Message Queues** | 25 | RabbitMQ, Kafka, SQS, Celery, Bull |
-| **Auth SDKs** | 10 | Auth0, Firebase, Supabase, NextAuth |
-| **Analytics** | 9 | Segment, Mixpanel, Sentry, Datadog |
-
-**Total Packages/Tools: 180+**
-
----
-
-## Out of Scope (Future)
-
-- Configuration/secrets detection
-- Authentication pattern analysis
-- Frontend framework detection
-- Deployment/infrastructure detection
-- LLM-enhanced detection
+Verifies:
+- Correct service detection
+- Proper layer classification
+- Accurate dependency tracking
+- Valid output structure

@@ -42,11 +42,10 @@ describe('pattern-loader', () => {
       expect(patterns.external.services.ai.openai).toContain('openai');
     });
 
-    it('should load database mappings with colors', () => {
+    it('should load database mappings', () => {
       const patterns = loadPatterns();
 
       expect(patterns.databases.postgresql).toBeDefined();
-      expect(patterns.databases.postgresql.color).toBe('#336791');
       expect(patterns.databases.postgresql.drivers).toContain('pg');
       expect(patterns.databases.postgresql.orms).toContain('typeorm');
     });

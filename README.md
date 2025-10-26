@@ -380,20 +380,18 @@ For large codebases, SpecMind automatically splits analysis into services and la
 
 ```
 .specmind/
-├── system.sm                    # Root system architecture
+├── system.sm                    # AI-generated system architecture documentation
 ├── features/                    # Feature specifications
 │   ├── user-auth.sm
 │   └── payment-flow.sm
 └── system/                      # Split analysis output (chunked)
     ├── metadata.json            # Root metadata with cross-service dependencies
-    ├── sequence-diagram.sm      # Cross-service interactions
     └── services/                # Per-service layer analysis
         ├── api-gateway/
         │   ├── metadata.json        # Service metadata with cross-layer dependencies
-        │   ├── architecture-diagram.sm  # Function call graph for this service
         │   ├── data-layer/
         │   │   ├── summary.json # Layer summary (pretty-printed, <50KB)
-        │   │   ├── chunk-0.json # File analysis (minified, ≤256KB)
+        │   │   ├── chunk-0.json # File analysis (minified, ~20K tokens)
         │   │   └── chunk-1.json # Additional chunks as needed
         │   ├── api-layer/
         │   │   ├── summary.json
@@ -404,22 +402,22 @@ For large codebases, SpecMind automatically splits analysis into services and la
         │       └── ...
         └── worker-service/
             ├── metadata.json
-            ├── architecture-diagram.sm
             └── ...
 ```
 
 **Benefits:**
-- Chunked files (≤256KB) fit in LLM context windows for optimal analysis
-- **Per-service architecture diagrams** show function call graphs with layer grouping
-- **Cross-service sequence diagrams** show service interactions and dependencies
-- Function-level detail with arrows showing actual code dependencies
+- Chunked files (~20K tokens, ~80KB) fit within LLM context windows (well under 25K limit)
+- **AI-generated system.sm** with three diagram types:
+  - System Architecture - Global view with brand colors for databases/external services
+  - Per-Service Architecture - One diagram per service showing all classes/methods by layer
+  - Cross-Service Flows - Sequence diagrams showing complete request/response cycles
 - Summary files provide quick layer overview without loading full data
 - Organized by architectural concerns (data/api/service/external)
 - Supports both monorepo (multiple services) and monolith (single service)
 - Three-level dependency hierarchy (cross-service, cross-layer, same-layer)
 - Detects 180+ frameworks, ORMs, databases, and SDKs
 - Minified chunks maximize data density while keeping summaries readable
-- Database nodes styled with brand colors (PostgreSQL blue, MongoDB green, Redis red, etc.)
+- Token-based chunking ensures all chunks can be read by AI without hitting context limits
 
 See [ANALYSIS_SPLIT_SPEC.md](./docs/ANALYSIS_SPLIT_SPEC.md) for the complete specification.
 
@@ -464,7 +462,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [x] .sm file format parser (@specmind/format)
 - [x] VS Code extension (syntax highlighting + preview)
 - [x] Slash commands for AI assistants
-- [x] Architecture diagram generation
+- [x] AI-generated architecture diagrams (System, Per-Service, Cross-Service Flows)
 - [x] LLM-powered documentation generation
 - [x] TypeScript, JavaScript, Python language support
 - [x] CLI integration

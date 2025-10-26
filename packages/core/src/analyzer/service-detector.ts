@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, dirname } from 'path';
+import { loadPatterns, type PatternConfig } from './pattern-loader.js';
 
 /**
  * Service detection result
@@ -18,22 +19,24 @@ export interface Service {
  * Detect all services in a codebase (monorepo or monolith)
  */
 export function detectServices(rootPath: string, allFiles: string[]): Service[] {
+  const patterns = loadPatterns();
+
   // 1. Check for monorepo structure
-  const monorepoServices = detectMonorepoServices(rootPath, allFiles);
+  const monorepoServices = detectMonorepoServices(rootPath, allFiles, patterns);
   if (monorepoServices.length > 0) {
     console.log(`Detected ${monorepoServices.length} services in monorepo`);
     return monorepoServices;
   }
 
   // 2. Check for multiple entry points (multi-service monolith)
-  const entryPointServices = detectByEntryPoints(rootPath, allFiles);
+  const entryPointServices = detectByEntryPoints(rootPath, allFiles, patterns);
   if (entryPointServices.length > 1) {
     console.log(`Detected ${entryPointServices.length} services by entry points`);
     return entryPointServices;
   }
 
   // 3. Check Docker compose
-  const dockerServices = detectDockerComposeServices(rootPath, allFiles);
+  const dockerServices = detectDockerComposeServices(rootPath, allFiles, patterns);
   if (dockerServices.length > 0) {
     console.log(`Detected ${dockerServices.length} services from Docker Compose`);
     return dockerServices;
@@ -44,8 +47,8 @@ export function detectServices(rootPath: string, allFiles: string[]): Service[] 
   return [{
     name: getServiceName(rootPath),
     rootPath,
-    type: detectServiceType(rootPath, allFiles),
-    framework: detectFramework(rootPath, allFiles),
+    type: detectServiceType(rootPath, allFiles, patterns),
+    framework: detectFramework(rootPath, allFiles, patterns),
     files: allFiles,
   }];
 }
@@ -53,9 +56,9 @@ export function detectServices(rootPath: string, allFiles: string[]): Service[] 
 /**
  * Detect monorepo structure (packages/, services/, apps/)
  */
-function detectMonorepoServices(rootPath: string, allFiles: string[]): Service[] {
+function detectMonorepoServices(rootPath: string, allFiles: string[], patterns: PatternConfig): Service[] {
   const services: Service[] = [];
-  const monorepoPatterns = ['packages', 'services', 'apps', 'microservices'];
+  const monorepoPatterns = patterns.serviceDetection.monorepoPatterns;
 
   // Check for monorepo config files
   const hasMonorepoConfig =
@@ -106,8 +109,8 @@ function detectMonorepoServices(rootPath: string, allFiles: string[]): Service[]
             services.push({
               name: entry,
               rootPath: servicePath,
-              type: detectServiceType(servicePath, serviceFiles),
-              framework: detectFramework(servicePath, serviceFiles),
+              type: detectServiceType(servicePath, serviceFiles, patterns),
+              framework: detectFramework(servicePath, serviceFiles, patterns),
               files: serviceFiles,
             });
           }
@@ -124,20 +127,10 @@ function detectMonorepoServices(rootPath: string, allFiles: string[]): Service[]
 /**
  * Detect services by multiple entry points
  */
-function detectByEntryPoints(_rootPath: string, allFiles: string[]): Service[] {
-  const entryPointPatterns = [
-    'main.py',
-    'index.ts',
-    'index.js',
-    'app.py',
-    'server.ts',
-    'server.js',
-    '__main__.py',
-  ];
-
+function detectByEntryPoints(_rootPath: string, allFiles: string[], patterns: PatternConfig): Service[] {
   const entryPoints = allFiles.filter(file => {
     const baseName = basename(file);
-    return entryPointPatterns.includes(baseName);
+    return patterns.serviceDetection.entryPoints.includes(baseName);
   });
 
   if (entryPoints.length <= 1) {
@@ -154,12 +147,17 @@ function detectByEntryPoints(_rootPath: string, allFiles: string[]): Service[] {
 
   const services: Service[] = [];
   for (const [dir, files] of serviceMap.entries()) {
-    const name = basename(dir);
+    // If the directory is a common source directory (src, lib, app), use the parent directory for detection and name
+    const dirName = basename(dir);
+    const isSrcDir = patterns.serviceDetection.commonSourceDirectories.includes(dirName);
+    const serviceRoot = isSrcDir ? dirname(dir) : dir;
+    const name = isSrcDir ? basename(dirname(dir)) : dirName;
+
     services.push({
       name,
       rootPath: dir,
       entryPoint: entryPoints.find(e => dirname(e) === dir),
-      type: detectServiceType(dir, files),
+      type: detectServiceType(serviceRoot, files, patterns),
       files,
     });
   }
@@ -170,7 +168,7 @@ function detectByEntryPoints(_rootPath: string, allFiles: string[]): Service[] {
 /**
  * Detect services from Docker Compose file
  */
-function detectDockerComposeServices(rootPath: string, allFiles: string[]): Service[] {
+function detectDockerComposeServices(rootPath: string, allFiles: string[], patterns: PatternConfig): Service[] {
   const composeFiles = [
     'docker-compose.yml',
     'docker-compose.yaml',
@@ -217,7 +215,7 @@ function detectDockerComposeServices(rootPath: string, allFiles: string[]): Serv
             services.push({
               name: serviceName,
               rootPath: servicePath,
-              type: detectServiceType(servicePath, serviceFiles),
+              type: detectServiceType(servicePath, serviceFiles, patterns),
               files: serviceFiles,
             });
           }
@@ -242,41 +240,21 @@ function detectDockerComposeServices(rootPath: string, allFiles: string[]): Serv
  */
 function detectServiceType(
   servicePath: string,
-  files: string[]
+  files: string[],
+  patterns: PatternConfig
 ): 'api-server' | 'worker' | 'frontend' | 'library' | 'unknown' {
   const hasPackageJson = existsSync(join(servicePath, 'package.json'));
 
-  // Check for API frameworks
-  const apiIndicators = [
-    'routes', 'routers', 'controllers', 'api', 'endpoints',
-    'server.ts', 'server.js', 'app.py', 'main.py'
-  ];
-
-  const hasApiIndicators = files.some(f =>
-    apiIndicators.some(indicator => f.includes(indicator))
-  );
-
-  if (hasApiIndicators) {
-    return 'api-server';
-  }
-
-  // Check for worker/background job patterns
-  const workerIndicators = ['worker', 'jobs', 'tasks', 'queue', 'celery'];
-  const hasWorkerIndicators = files.some(f =>
-    workerIndicators.some(indicator => f.includes(indicator))
-  );
-
-  if (hasWorkerIndicators) {
-    return 'worker';
-  }
-
-  // Check for frontend
+  // Check for frontend FIRST (before API indicators, since frontend may have "api" folders)
   if (hasPackageJson) {
     try {
       const pkg = JSON.parse(readFileSync(join(servicePath, 'package.json'), 'utf-8'));
       const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 
-      const frontendFrameworks = ['react', 'vue', 'next', 'nuxt', 'angular', 'svelte'];
+      const frontendFrameworks = [
+        ...patterns.serviceDetection.frontend.frameworks.typescript,
+        ...patterns.serviceDetection.frontend.frameworks.python
+      ];
       const isFrontend = frontendFrameworks.some(fw => deps[fw]);
 
       if (isFrontend) {
@@ -287,11 +265,33 @@ function detectServiceType(
     }
   }
 
+  // Check for API frameworks
+  const hasApiIndicators = files.some(f =>
+    patterns.serviceDetection.apiServer.fileIndicators.some(indicator => f.includes(indicator))
+  );
+
+  if (hasApiIndicators) {
+    return 'api-server';
+  }
+
+  // Check for worker/background job patterns
+  const hasWorkerIndicators = files.some(f =>
+    patterns.serviceDetection.worker.fileIndicators.some(indicator => f.includes(indicator))
+  );
+
+  if (hasWorkerIndicators) {
+    return 'worker';
+  }
+
   // Check if it's a library (has package.json with "main" or "exports")
   if (hasPackageJson) {
     try {
       const pkg = JSON.parse(readFileSync(join(servicePath, 'package.json'), 'utf-8'));
-      if (pkg.main || pkg.exports) {
+      const hasLibraryIndicators = patterns.serviceDetection.library.packageJsonIndicators.some(
+        indicator => pkg[indicator]
+      );
+
+      if (hasLibraryIndicators) {
         return 'library';
       }
     } catch (error) {
@@ -305,29 +305,33 @@ function detectServiceType(
 /**
  * Detect framework used by service
  */
-function detectFramework(servicePath: string, _files: string[]): string | undefined {
+function detectFramework(servicePath: string, _files: string[], patterns: PatternConfig): string | undefined {
   const packageJsonPath = join(servicePath, 'package.json');
   if (existsSync(packageJsonPath)) {
     try {
       const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 
-      // Check for common frameworks
-      const frameworks = [
-        'express',
-        '@nestjs/core',
-        'fastify',
-        'koa',
-        'next',
-        'nuxt',
-        'react',
-        'vue',
-        'angular',
-        'svelte',
+      // Check TypeScript/JavaScript frameworks from patterns
+      // Priority order: meta-frameworks first, then specific frameworks, then base frameworks
+      // This ensures Next.js is detected before React, Nuxt before Vue, etc.
+      const metaFrameworks = patterns.serviceDetection.metaFrameworks;
+      const allFrameworks = [
+        ...patterns.serviceDetection.apiServer.frameworks.typescript,
+        ...patterns.serviceDetection.frontend.frameworks.typescript,
+        ...patterns.serviceDetection.worker.frameworks.typescript,
       ];
 
-      for (const fw of frameworks) {
+      // Check meta-frameworks first
+      for (const fw of metaFrameworks) {
         if (deps[fw]) {
+          return fw;
+        }
+      }
+
+      // Then check all other frameworks
+      for (const fw of allFrameworks) {
+        if (deps[fw] && !metaFrameworks.includes(fw)) {
           return fw;
         }
       }
@@ -336,12 +340,17 @@ function detectFramework(servicePath: string, _files: string[]): string | undefi
     }
   }
 
-  // Check Python frameworks
+  // Check Python frameworks from patterns
+  const pythonFrameworks = [
+    ...patterns.serviceDetection.apiServer.frameworks.python,
+    ...patterns.serviceDetection.frontend.frameworks.python,
+    ...patterns.serviceDetection.worker.frameworks.python,
+  ];
+
   const requirementsPath = join(servicePath, 'requirements.txt');
   if (existsSync(requirementsPath)) {
     try {
       const content = readFileSync(requirementsPath, 'utf-8');
-      const pythonFrameworks = ['fastapi', 'flask', 'django', 'starlette', 'tornado'];
 
       for (const fw of pythonFrameworks) {
         if (content.includes(fw)) {
@@ -358,7 +367,6 @@ function detectFramework(servicePath: string, _files: string[]): string | undefi
   if (existsSync(pyprojectPath)) {
     try {
       const content = readFileSync(pyprojectPath, 'utf-8');
-      const pythonFrameworks = ['fastapi', 'flask', 'django', 'starlette', 'tornado'];
 
       for (const fw of pythonFrameworks) {
         if (content.includes(fw)) {

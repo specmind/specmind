@@ -50,8 +50,38 @@ export interface ExternalLayerPatterns {
 export interface DatabaseMapping {
   drivers: string[];
   orms: string[];
-  color: string;
-  icon: string;
+}
+
+export interface ServiceDetectionPatterns {
+  monorepoPatterns: string[];
+  metaFrameworks: string[];
+  entryPoints: string[];
+  commonSourceDirectories: string[];
+  frontend: {
+    frameworks: {
+      typescript: string[];
+      python: string[];
+    };
+    buildTools: string[];
+    fileIndicators: string[];
+  };
+  apiServer: {
+    frameworks: {
+      typescript: string[];
+      python: string[];
+    };
+    fileIndicators: string[];
+  };
+  worker: {
+    frameworks: {
+      typescript: string[];
+      python: string[];
+    };
+    fileIndicators: string[];
+  };
+  library: {
+    packageJsonIndicators: string[];
+  };
 }
 
 export interface PatternConfig {
@@ -59,6 +89,7 @@ export interface PatternConfig {
   api: APILayerPatterns;
   external: ExternalLayerPatterns;
   databases: Record<string, DatabaseMapping>;
+  serviceDetection: ServiceDetectionPatterns;
 }
 
 /**
@@ -83,11 +114,16 @@ export function loadPatterns(): PatternConfig {
     readFileSync(join(patternsDir, 'databases.json'), 'utf-8')
   ) as Record<string, DatabaseMapping>;
 
+  const serviceDetection = JSON.parse(
+    readFileSync(join(patternsDir, 'service-detection.json'), 'utf-8')
+  ) as ServiceDetectionPatterns;
+
   return {
     data: dataLayer,
     api: apiLayer,
     external: externalLayer,
-    databases
+    databases,
+    serviceDetection
   };
 }
 

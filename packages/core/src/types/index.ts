@@ -132,6 +132,20 @@ export const CallExpressionSchema = z.object({
 export type CallExpression = z.infer<typeof CallExpressionSchema>
 
 /**
+ * HTTP/External service call
+ */
+export const HttpCallSchema = z.object({
+  callerName: z.string(), // Function making the HTTP call
+  callerQualifiedName: z.string(),
+  method: z.string(), // GET, POST, etc.
+  url: z.string(), // URL pattern or template string
+  location: SourceLocationSchema,
+  clientType: z.enum(['fetch', 'axios', 'http', 'unknown']).default('unknown'),
+})
+
+export type HttpCall = z.infer<typeof HttpCallSchema>
+
+/**
  * File analysis result
  */
 export const FileAnalysisSchema = z.object({
@@ -142,6 +156,7 @@ export const FileAnalysisSchema = z.object({
   imports: z.array(ImportStatementSchema).default([]),
   exports: z.array(ExportStatementSchema).default([]),
   calls: z.array(CallExpressionSchema).default([]),
+  httpCalls: z.array(HttpCallSchema).default([]),
 })
 
 export type FileAnalysis = z.infer<typeof FileAnalysisSchema>

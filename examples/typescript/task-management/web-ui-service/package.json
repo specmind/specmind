@@ -1,0 +1,19 @@
+{
+  "name": "task-management-web-ui",
+  "version": "1.0.0",
+  "description": "Task Management Web UI - Example for SpecMind",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.6.3"
+  }
+}
