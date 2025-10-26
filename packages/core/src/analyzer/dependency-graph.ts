@@ -1,5 +1,6 @@
 import { resolve, dirname } from 'path'
 import type { FileAnalysis, ModuleDependency } from '../types/index.js'
+import { getLanguageConfig } from './language-config.js'
 
 /**
  * Build module dependency graph from file analyses
@@ -20,9 +21,9 @@ export function buildDependencyGraph(files: FileAnalysis[]): ModuleDependency[] 
         continue
       }
 
-      // Resolve relative import to absolute path
+      // Resolve relative import to absolute path using language-specific resolution
       const fileDir = dirname(file.filePath)
-      const resolvedPath = resolveImportPath(fileDir, importSource, filePaths)
+      const resolvedPath = resolveImportPath(fileDir, importSource, file.language, filePaths)
 
       if (resolvedPath) {
         dependencies.push({
@@ -39,24 +40,27 @@ export function buildDependencyGraph(files: FileAnalysis[]): ModuleDependency[] 
 
 /**
  * Resolve a relative import path to an absolute file path
- * Handles .js, .ts, .tsx extensions and index files
+ * Uses language-specific module resolution configuration
  */
 function resolveImportPath(
   fromDir: string,
   importPath: string,
+  language: 'typescript' | 'javascript' | 'python',
   existingFiles: Set<string>
 ): string | null {
-  // Remove .js extension if present (TS files import with .js for ESM)
+  const config = getLanguageConfig(language)
+  const { extensions, indexFiles } = config.moduleResolution
+
+  // Remove any extension that matches the language's extensions
   let cleanPath = importPath
-  if (cleanPath.endsWith('.js')) {
-    cleanPath = cleanPath.slice(0, -3)
-  } else if (cleanPath.endsWith('.jsx')) {
-    cleanPath = cleanPath.slice(0, -4)
+  for (const ext of extensions) {
+    if (cleanPath.endsWith(ext)) {
+      cleanPath = cleanPath.slice(0, -ext.length)
+      break
+    }
   }
 
   // Try different extensions
-  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts']
-
   for (const ext of extensions) {
     const candidatePath = resolve(fromDir, cleanPath + ext)
     if (existingFiles.has(candidatePath)) {
@@ -70,9 +74,9 @@ function resolveImportPath(
     return asIsPath
   }
 
-  // Try index files
-  for (const ext of extensions) {
-    const indexPath = resolve(fromDir, cleanPath, `index${ext}`)
+  // Try index files for directory imports
+  for (const indexFile of indexFiles) {
+    const indexPath = resolve(fromDir, cleanPath, indexFile)
     if (existingFiles.has(indexPath)) {
       return indexPath
     }
@@ -83,43 +87,22 @@ function resolveImportPath(
 }
 
 /**
- * Normalize import path to match file path
- * './types' -> 'types.ts', './utils' -> 'utils.ts', etc.
- */
-function normalizeImportPath(importPath: string): string[] {
-  // Remove leading ./ or ../
-  const cleaned = importPath.replace(/^\.\//, '').replace(/^\.\.\//, '')
-
-  // Return possible file variations (could be .ts, .tsx, .js, .jsx)
-  return [
-    `${cleaned}.ts`,
-    `${cleaned}.tsx`,
-    `${cleaned}.js`,
-    `${cleaned}.jsx`,
-    cleaned, // Already has extension
-  ]
-}
-
-/**
  * Find entry points (files that are not imported by anyone)
  */
 export function findEntryPoints(
   files: FileAnalysis[],
   dependencies: ModuleDependency[]
 ): string[] {
-  // Build set of all possible imported file names
+  // Build set of all imported file paths (targets)
   const importedFiles = new Set<string>()
   for (const dep of dependencies) {
-    const possiblePaths = normalizeImportPath(dep.target)
-    possiblePaths.forEach((path) => importedFiles.add(path))
+    importedFiles.add(dep.target)
   }
 
-  const allFiles = new Set(files.map((file) => file.filePath))
   const entryPoints: string[] = []
-
-  for (const file of allFiles) {
-    if (!importedFiles.has(file)) {
-      entryPoints.push(file)
+  for (const file of files) {
+    if (!importedFiles.has(file.filePath)) {
+      entryPoints.push(file.filePath)
     }
   }
 

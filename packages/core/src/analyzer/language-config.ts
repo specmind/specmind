@@ -7,6 +7,14 @@ export interface LanguageConfig {
   name: SupportedLanguage
   fileExtensions: string[]
 
+  // Module resolution configuration
+  moduleResolution: {
+    // Extensions to try when resolving imports (in order of priority)
+    extensions: string[]
+    // Index file names to try for directory imports
+    indexFiles: string[]
+  }
+
   // AST node types for different language constructs
   functionNodeTypes: string[]
   classNodeTypes: string[]
@@ -27,6 +35,11 @@ export interface LanguageConfig {
 export const TYPESCRIPT_CONFIG: LanguageConfig = {
   name: 'typescript',
   fileExtensions: ['.ts', '.tsx'],
+
+  moduleResolution: {
+    extensions: ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx'],
+    indexFiles: ['index.ts', 'index.tsx', 'index.mts', 'index.cts', 'index.js', 'index.jsx'],
+  },
 
   functionNodeTypes: [
     'function_declaration',
@@ -83,6 +96,11 @@ export const JAVASCRIPT_CONFIG: LanguageConfig = {
   name: 'javascript',
   fileExtensions: ['.js', '.jsx'],
 
+  moduleResolution: {
+    extensions: ['.js', '.jsx', '.mjs', '.cjs'],
+    indexFiles: ['index.js', 'index.jsx', 'index.mjs', 'index.cjs'],
+  },
+
   functionNodeTypes: [
     'function_declaration',
     'arrow_function',
@@ -115,6 +133,11 @@ export const JAVASCRIPT_CONFIG: LanguageConfig = {
 export const PYTHON_CONFIG: LanguageConfig = {
   name: 'python',
   fileExtensions: ['.py', '.pyi'],
+
+  moduleResolution: {
+    extensions: ['.py', '.pyi'],
+    indexFiles: ['__init__.py', '__init__.pyi'],
+  },
 
   functionNodeTypes: ['function_definition'],
 
