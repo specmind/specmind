@@ -208,21 +208,22 @@ export class SpecMindPreviewPanel {
                 padding: 0;
                 margin: 20px 0;
                 position: relative;
-                overflow: hidden;
+                overflow: visible;
                 height: 600px;
                 box-sizing: border-box;
 
                 /* Break free from all parent constraints */
-                width: 100vw;
-                margin-left: -20px;
+                width: calc(100vw - 40px);
+                max-width: 100%;
             }
             .section-content .mermaid-container {
                 /* Account for section-content margin-left: 10px */
-                margin-left: -30px;
+                margin-left: -10px;
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
                 height: 100%;
+                overflow: hidden;
             }
             .mermaid-container .mermaid-diagram svg {
                 display: block;
@@ -241,10 +242,16 @@ export class SpecMindPreviewPanel {
                 z-index: 9999;
                 background: var(--vscode-editor-background);
             }
+            body.fullscreen-mode .mermaid-container:not(.fullscreen) {
+                display: none;
+            }
             .mermaid-container.fullscreen .diagram-controls {
                 position: fixed;
                 top: 20px;
-                right: 20px;
+                right: 10px;
+                left: auto;
+                max-width: calc(100vw - 20px);
+                z-index: 10001;
             }
             .mermaid-container.fullscreen .mermaid-diagram {
                 width: 100% !important;
@@ -397,8 +404,8 @@ export class SpecMindPreviewPanel {
                     maxZoom: 10,
                     zoomScaleSensitivity: 0.3,
                     dblClickZoomEnabled: true,
-                    mouseWheelZoomEnabled: true,
-                    preventMouseEventsDefault: true,
+                    mouseWheelZoomEnabled: false,
+                    preventMouseEventsDefault: false,
                     contain: false,
                     beforePan: function() {
                         return true;
