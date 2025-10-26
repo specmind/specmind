@@ -241,10 +241,14 @@ export class SpecMindPreviewPanel {
                 z-index: 9999;
                 background: var(--vscode-editor-background);
             }
+            body.fullscreen-mode .mermaid-container:not(.fullscreen) {
+                display: none;
+            }
             .mermaid-container.fullscreen .diagram-controls {
                 position: fixed;
                 top: 20px;
                 right: 20px;
+                z-index: 10001;
             }
             .mermaid-container.fullscreen .mermaid-diagram {
                 width: 100% !important;
@@ -397,8 +401,8 @@ export class SpecMindPreviewPanel {
                     maxZoom: 10,
                     zoomScaleSensitivity: 0.3,
                     dblClickZoomEnabled: true,
-                    mouseWheelZoomEnabled: true,
-                    preventMouseEventsDefault: true,
+                    mouseWheelZoomEnabled: false,
+                    preventMouseEventsDefault: false,
                     contain: false,
                     beforePan: function() {
                         return true;
