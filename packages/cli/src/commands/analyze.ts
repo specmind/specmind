@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
-import { join, relative } from 'path'
+import { join, relative, resolve } from 'path'
 import ignore from 'ignore'
 import {
   analyzeFile,
@@ -31,7 +31,8 @@ export interface AnalyzeOptions {
  */
 function findAllGitignores(startDir: string): Array<{ path: string; dir: string }> {
   const gitignores: Array<{ path: string; dir: string }> = []
-  let currentDir = startDir
+  // Convert to absolute path to ensure proper root detection
+  let currentDir = resolve(startDir)
 
   while (true) {
     const gitignorePath = join(currentDir, '.gitignore')
@@ -39,8 +40,8 @@ function findAllGitignores(startDir: string): Array<{ path: string; dir: string 
       gitignores.unshift({ path: gitignorePath, dir: currentDir })
     }
 
-    const parentDir = join(currentDir, '..')
-    // Reached root directory
+    const parentDir = resolve(currentDir, '..')
+    // Reached root directory (on both Unix and Windows)
     if (parentDir === currentDir) {
       break
     }
@@ -121,7 +122,11 @@ function getAllFiles(dir: string): string[] {
 
 export async function analyzeCommand(options: AnalyzeOptions = {}) {
   try {
-    const targetPath = options.path || process.cwd()
+    // Resolve paths to absolute paths (support both relative and absolute)
+    const targetPath = resolve(options.path || process.cwd())
+    const outputDir = options.output
+      ? resolve(options.output)
+      : join(targetPath, '.specmind/system')
 
     // Find all source files
     const files = getAllFiles(targetPath)
@@ -152,7 +157,6 @@ export async function analyzeCommand(options: AnalyzeOptions = {}) {
     const dependencies = buildDependencyGraph(analyses)
 
     // Perform split analysis
-    const outputDir = options.output || join(targetPath, '.specmind/system')
     await performSplitAnalysis(targetPath, analyses, dependencies, outputDir)
   } catch (error) {
     console.error('Error analyzing codebase:', error instanceof Error ? error.message : error)

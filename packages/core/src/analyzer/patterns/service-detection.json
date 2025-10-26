@@ -1,0 +1,144 @@
+{
+  "entryPoints": [
+    "main.py",
+    "index.ts",
+    "index.tsx",
+    "index.js",
+    "index.jsx",
+    "app.py",
+    "server.ts",
+    "server.js",
+    "main.ts",
+    "main.tsx",
+    "__main__.py"
+  ],
+  "commonSourceDirectories": [
+    "src",
+    "lib",
+    "app"
+  ],
+  "frontend": {
+    "frameworks": {
+      "typescript": [
+        "react",
+        "react-dom",
+        "next",
+        "nuxt",
+        "@angular/core",
+        "angular",
+        "vue",
+        "@vue/core",
+        "svelte",
+        "@sveltejs/kit",
+        "solid-js",
+        "preact",
+        "qwik",
+        "@builder.io/qwik"
+      ],
+      "python": []
+    },
+    "buildTools": [
+      "vite",
+      "webpack",
+      "parcel",
+      "rollup",
+      "esbuild",
+      "@vitejs/plugin-react",
+      "create-react-app",
+      "create-next-app"
+    ],
+    "fileIndicators": [
+      "**/pages/**",
+      "**/app/**",
+      "**/components/**",
+      "**/views/**",
+      "**/*component*.{ts,tsx,js,jsx}",
+      "**/*page*.{ts,tsx,js,jsx}",
+      "**/public/**",
+      "**/static/**"
+    ]
+  },
+  "apiServer": {
+    "frameworks": {
+      "typescript": [
+        "express",
+        "@nestjs/common",
+        "@nestjs/core",
+        "fastify",
+        "@fastify/cors",
+        "koa",
+        "@koa/router",
+        "hapi",
+        "@hapi/hapi",
+        "restify",
+        "polka",
+        "micro",
+        "@trpc/server",
+        "elysia",
+        "hono"
+      ],
+      "python": [
+        "fastapi",
+        "flask",
+        "django",
+        "starlette",
+        "tornado",
+        "aiohttp",
+        "sanic",
+        "falcon",
+        "bottle",
+        "cherrypy",
+        "pyramid"
+      ]
+    },
+    "fileIndicators": [
+      "routes",
+      "routers",
+      "controllers",
+      "api",
+      "endpoints",
+      "server.ts",
+      "server.js",
+      "app.py",
+      "main.py"
+    ]
+  },
+  "worker": {
+    "frameworks": {
+      "typescript": [
+        "bull",
+        "bullmq",
+        "bee-queue",
+        "kue",
+        "agenda",
+        "bree"
+      ],
+      "python": [
+        "celery",
+        "rq",
+        "dramatiq",
+        "huey",
+        "taskiq"
+      ]
+    },
+    "fileIndicators": [
+      "worker",
+      "workers",
+      "jobs",
+      "tasks",
+      "queue",
+      "queues",
+      "celery",
+      "background"
+    ]
+  },
+  "library": {
+    "packageJsonIndicators": [
+      "main",
+      "module",
+      "exports",
+      "types",
+      "typings"
+    ]
+  }
+}

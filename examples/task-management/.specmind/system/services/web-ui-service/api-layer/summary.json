@@ -1,0 +1,21 @@
+{
+  "layer": "api",
+  "totalFiles": 1,
+  "totalChunks": 1,
+  "chunkManifest": [
+    {
+      "chunkIndex": 0,
+      "fileCount": 1,
+      "files": [
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/infrastructure/router.ts"
+      ]
+    }
+  ],
+  "summary": {
+    "totalFiles": 1,
+    "totalEndpoints": 0,
+    "frameworks": [],
+    "methods": {}
+  },
+  "crossLayerDependencies": []
+}

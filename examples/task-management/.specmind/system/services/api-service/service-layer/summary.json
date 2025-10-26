@@ -1,0 +1,109 @@
+{
+  "layer": "service",
+  "totalFiles": 4,
+  "totalChunks": 1,
+  "chunkManifest": [
+    {
+      "chunkIndex": 0,
+      "fileCount": 4,
+      "files": [
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/notification-service.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-service.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-validator.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/infrastructure/database.ts"
+      ]
+    }
+  ],
+  "summary": {
+    "totalFiles": 4,
+    "totalFunctions": 21,
+    "totalClasses": 6
+  },
+  "crossLayerDependencies": [
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/notification-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/models.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "Task"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/notification-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/models.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "User"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/notification-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/infrastructure/email-service-client.ts",
+      "targetLayer": "external",
+      "importedNames": [
+        "EmailServiceClient"
+      ],
+      "type": "uses",
+      "direction": "service -> external"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/notification-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/user-repository-postgres.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "UserRepositoryPostgres"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/task-repository.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "TaskRepository"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/user-repository.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "UserRepository"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-service.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/models.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "Task",
+        "CreateTaskInput",
+        "UpdateTaskInput",
+        "TaskStatus"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/business/task-validator.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/api-service/src/data/models.ts",
+      "targetLayer": "data",
+      "importedNames": [
+        "CreateTaskInput",
+        "UpdateTaskInput",
+        "TaskPriority"
+      ],
+      "type": "uses",
+      "direction": "service -> data"
+    }
+  ]
+}

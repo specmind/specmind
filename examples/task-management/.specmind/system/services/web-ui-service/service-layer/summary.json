@@ -1,0 +1,66 @@
+{
+  "layer": "service",
+  "totalFiles": 10,
+  "totalChunks": 2,
+  "chunkManifest": [
+    {
+      "chunkIndex": 0,
+      "fileCount": 7,
+      "files": [
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/business/form-validator.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/business/task-store.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/data/cache-manager.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/data/types.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/index.tsx",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/infrastructure/local-storage.ts",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/presentation/App.tsx"
+      ]
+    },
+    {
+      "chunkIndex": 1,
+      "fileCount": 3,
+      "files": [
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/presentation/Dashboard.tsx",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/presentation/TaskForm.tsx",
+        "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/presentation/TaskList.tsx"
+      ]
+    }
+  ],
+  "summary": {
+    "totalFiles": 10,
+    "totalFunctions": 57,
+    "totalClasses": 18
+  },
+  "crossLayerDependencies": [
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/business/task-store.ts",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/data/api-client.ts",
+      "targetLayer": "external",
+      "importedNames": [
+        "ApiClient"
+      ],
+      "type": "uses",
+      "direction": "service -> external"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/index.tsx",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/infrastructure/http-client.ts",
+      "targetLayer": "external",
+      "importedNames": [
+        "createHttpClient"
+      ],
+      "type": "uses",
+      "direction": "service -> external"
+    },
+    {
+      "source": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/index.tsx",
+      "target": "/Users/musheghgevorgyan/repos/specmind/examples/task-management/web-ui-service/src/data/api-client.ts",
+      "targetLayer": "external",
+      "importedNames": [
+        "ApiClient"
+      ],
+      "type": "uses",
+      "direction": "service -> external"
+    }
+  ]
+}
