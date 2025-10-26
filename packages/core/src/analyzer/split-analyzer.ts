@@ -14,33 +14,42 @@ import type {
 } from '../types/index.js';
 import { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './layer-detector.js';
 import { detectServices } from './service-detector.js';
-import { loadPatterns, type PatternConfig } from './pattern-loader.js';
+import { loadPatterns } from './pattern-loader.js';
 
 /**
- * Maximum chunk size in bytes (256KB minified)
+ * Maximum chunk size in tokens (20K tokens with buffer for 25K Claude limit)
+ * Rough estimate: 1 token ≈ 4 characters
  */
-const MAX_CHUNK_SIZE = 256 * 1024;
+const MAX_CHUNK_TOKENS = 20000;
+const CHARS_PER_TOKEN = 4;
+
+/**
+ * Estimate token count from text
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / CHARS_PER_TOKEN);
+}
 
 /**
  * Chunk file analyses into smaller files
  */
 function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency[]): {
   chunks: { files: FileAnalysis[], dependencies: ModuleDependency[] }[];
-  manifest: { chunkIndex: number; fileCount: number; files: string[] }[];
+  manifest: { chunkIndex: number; fileCount: number; files: string[] }[] ;
 } {
   const chunks: { files: FileAnalysis[], dependencies: ModuleDependency[] }[] = [];
   const manifest: { chunkIndex: number; fileCount: number; files: string[] }[] = [];
 
   let currentChunk: FileAnalysis[] = [];
-  let currentSize = 0;
+  let currentTokens = 0;
 
   for (const file of files) {
-    // Estimate size by serializing (minified = no spaces)
+    // Estimate token count by serializing (minified = no spaces)
     const fileJson = JSON.stringify(file);
-    const fileSize = Buffer.from(fileJson).length;
+    const fileTokens = estimateTokens(fileJson);
 
     // If adding this file would exceed limit, start new chunk
-    if (currentChunk.length > 0 && currentSize + fileSize > MAX_CHUNK_SIZE) {
+    if (currentChunk.length > 0 && currentTokens + fileTokens > MAX_CHUNK_TOKENS) {
       // Finalize current chunk
       const chunkDeps = dependencies.filter(dep =>
         currentChunk.some(f => f.filePath === dep.source) &&
@@ -56,11 +65,11 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
 
       // Start new chunk
       currentChunk = [];
-      currentSize = 0;
+      currentTokens = 0;
     }
 
     currentChunk.push(file);
-    currentSize += fileSize;
+    currentTokens += fileTokens;
   }
 
   // Add final chunk if not empty
@@ -82,254 +91,94 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
 }
 
 /**
- * Generate architecture diagram for a single service showing methods and their calls
+ * Extract HTTP-based cross-service dependencies
+ * Maps HTTP calls to target services based on URL patterns
  */
-function generateServiceArchitectureDiagram(
-  serviceName: string,
-  serviceAnalyses: FileAnalysis[],
-  serviceDeps: ModuleDependency[],
-  layers: Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>,
-  patterns: PatternConfig
-): string {
-  const lines: string[] = [];
+function extractHttpDependencies(
+  analyses: FileAnalysis[],
+  services: ReturnType<typeof detectServices>
+): ModuleDependency[] {
+  const httpDeps: ModuleDependency[] = [];
 
-  lines.push(`# ${serviceName} - Architecture Diagram`);
-  lines.push('');
-  lines.push('```mermaid');
-  lines.push('graph TB');
-  lines.push('');
+  for (const analysis of analyses) {
+    const sourceService = services.find(s => s.files.includes(analysis.filePath));
+    if (!sourceService) continue;
 
-  // Create a map of file path to layer
-  const fileToLayer = new Map<string, Layer>();
-  for (const [layerName, layerData] of Object.entries(layers)) {
-    for (const file of layerData.files) {
-      fileToLayer.set(file.filePath, layerName as Layer);
-    }
-  }
+    // Skip if httpCalls doesn't exist (for backward compatibility with tests)
+    if (!analysis.httpCalls) continue;
 
-  // Generate nodes for functions grouped by layer
-  const functionIds = new Map<string, string>();
-  let nodeCounter = 0;
+    for (const httpCall of analysis.httpCalls) {
+      // Try to match URL to a target service
+      const targetService = matchUrlToService(httpCall.url, services);
 
-  for (const [layerName, layerData] of Object.entries(layers)) {
-    if (layerData.files.length === 0) continue;
-
-    lines.push(`  subgraph ${layerName}_layer["${layerName.toUpperCase()} Layer"]`);
-
-    // Add function nodes for this layer
-    for (const file of layerData.files) {
-      for (const func of file.functions) {
-        const nodeId = `fn_${nodeCounter++}`;
-        functionIds.set(`${file.filePath}::${func.name}`, nodeId);
-
-        // Clean function name for display
-        const displayName = func.name.length > 30 ? func.name.substring(0, 27) + '...' : func.name;
-        lines.push(`    ${nodeId}["${displayName}"]`);
-      }
-
-      // Add class methods
-      for (const cls of file.classes) {
-        for (const method of cls.methods) {
-          const nodeId = `fn_${nodeCounter++}`;
-          functionIds.set(`${file.filePath}::${cls.name}.${method.name}`, nodeId);
-
-          const displayName = `${cls.name}.${method.name}`.length > 30
-            ? `${cls.name}.${method.name}`.substring(0, 27) + '...'
-            : `${cls.name}.${method.name}`;
-          lines.push(`    ${nodeId}["${displayName}"]`);
-        }
-      }
-    }
-
-    lines.push('  end');
-    lines.push('');
-  }
-
-  // Add call relationships between functions
-  lines.push('  %% Function calls');
-  for (const file of serviceAnalyses) {
-    for (const call of file.calls) {
-      // Find source function
-      let sourceFuncName: string | null = null;
-      for (const func of file.functions) {
-        if (call.location.startLine >= func.location.startLine &&
-            call.location.startLine <= func.location.endLine) {
-          sourceFuncName = `${file.filePath}::${func.name}`;
-          break;
-        }
-      }
-
-      if (!sourceFuncName) {
-        // Check if call is within a class method
-        for (const cls of file.classes) {
-          for (const method of cls.methods) {
-            if (call.location.startLine >= method.location.startLine &&
-                call.location.startLine <= method.location.endLine) {
-              sourceFuncName = `${file.filePath}::${cls.name}.${method.name}`;
-              break;
-            }
-          }
-          if (sourceFuncName) break;
-        }
-      }
-
-      if (!sourceFuncName) continue;
-
-      // Find target function in dependencies
-      for (const dep of serviceDeps) {
-        if (dep.source === file.filePath && dep.importedNames.includes(call.calleeName)) {
-          // Find the target file
-          const targetFile = serviceAnalyses.find(f => f.filePath === dep.target);
-          if (!targetFile) continue;
-
-          // Check if it's a function
-          const targetFunc = targetFile.functions.find(f => f.name === call.calleeName);
-          if (targetFunc) {
-            const targetFuncName = `${targetFile.filePath}::${targetFunc.name}`;
-            const sourceId = functionIds.get(sourceFuncName);
-            const targetId = functionIds.get(targetFuncName);
-
-            if (sourceId && targetId) {
-              lines.push(`  ${sourceId} --> ${targetId}`);
-            }
-          }
-
-          // Check if it's a class method
-          for (const cls of targetFile.classes) {
-            const method = cls.methods.find(m => m.name === call.calleeName);
-            if (method) {
-              const targetFuncName = `${targetFile.filePath}::${cls.name}.${method.name}`;
-              const sourceId = functionIds.get(sourceFuncName);
-              const targetId = functionIds.get(targetFuncName);
-
-              if (sourceId && targetId) {
-                lines.push(`  ${sourceId} --> ${targetId}`);
-              }
-            }
-          }
-        }
+      if (targetService && targetService.name !== sourceService.name) {
+        // Found a cross-service HTTP call!
+        httpDeps.push({
+          source: analysis.filePath,
+          target: targetService.name, // Use service name as target
+          importedNames: [httpCall.method], // Store HTTP method
+        });
       }
     }
   }
 
-  lines.push('');
-
-  // Add databases
-  if (layers.data) {
-    const dataLayer = layers.data as DataLayerAnalysis;
-    if (dataLayer.databases && Object.keys(dataLayer.databases).length > 0) {
-      lines.push('  %% Databases');
-      for (const dbType of Object.keys(dataLayer.databases)) {
-        const dbConfig = patterns.databases[dbType];
-        if (dbConfig) {
-          const dbId = `DB_${dbType}`.replace(/[^a-zA-Z0-9]/g, '_');
-          lines.push(`  ${dbId}${dbConfig.icon}`);
-          lines.push(`  style ${dbId} fill:${dbConfig.color},stroke:#333,stroke-width:2px,color:#fff`);
-        }
-      }
-      lines.push('');
-    }
-  }
-
-  // Add external services
-  if (layers.external) {
-    const externalLayer = layers.external as ExternalLayerAnalysis;
-    if (externalLayer.externalServices && Object.keys(externalLayer.externalServices).length > 0) {
-      lines.push('  %% External Services');
-      for (const extServices of Object.values(externalLayer.externalServices)) {
-        for (const svcName of extServices) {
-          const svcId = `EXT_${svcName}`.replace(/[^a-zA-Z0-9]/g, '_');
-          lines.push(`  ${svcId}["${svcName}"]`);
-          lines.push(`  style ${svcId} fill:#f9f,stroke:#333,stroke-width:2px`);
-        }
-      }
-      lines.push('');
-    }
-  }
-
-  lines.push('```');
-
-  return lines.join('\n');
+  return httpDeps;
 }
 
 /**
- * Generate sequence diagram showing cross-service interactions
+ * Match a URL pattern to a target service
+ * Looks for service name in URL or infers from service type and URL patterns
  */
-function generateSequenceDiagram(
-  services: ReturnType<typeof detectServices>,
-  dependencies: ModuleDependency[]
-): string {
-  const lines: string[] = [];
+function matchUrlToService(
+  url: string,
+  services: ReturnType<typeof detectServices>
+): typeof services[0] | null {
+  const urlLower = url.toLowerCase();
 
-  lines.push('# Cross-Service Interaction Diagram');
-  lines.push('');
-  lines.push('```mermaid');
-  lines.push('sequenceDiagram');
-  lines.push('  participant Client');
-
-  // Add service participants
+  // First, try direct service name matching
   for (const service of services) {
-    const serviceName = service.name.replace(/[^a-zA-Z0-9]/g, '_');
-    lines.push(`  participant ${serviceName} as ${service.name}`);
-  }
+    const serviceName = service.name.toLowerCase();
+    const serviceBaseName = serviceName.split('-')[0]; // e.g., "email" from "email-service"
 
-  lines.push('');
-  lines.push('  %% Cross-service interactions');
-
-  if (services.length === 1) {
-    // Single service - show simple flow
-    const serviceId = services[0]?.name.replace(/[^a-zA-Z0-9]/g, '_');
-    if (serviceId) {
-      lines.push(`  Client->>+${serviceId}: Request`);
-      lines.push(`  ${serviceId}-->>-Client: Response`);
-    }
-  } else {
-    // Multi-service - show cross-service calls
-    const firstServiceId = services[0]?.name.replace(/[^a-zA-Z0-9]/g, '_');
-    if (firstServiceId) {
-      lines.push(`  Client->>+${firstServiceId}: Request`);
-    }
-
-    // Find cross-service dependencies
-    const crossServiceDeps = dependencies.filter(dep => {
-      const sourceService = services.find(s => s.files.includes(dep.source));
-      const targetService = services.find(s => s.files.includes(dep.target));
-      return sourceService && targetService && sourceService.name !== targetService.name;
-    });
-
-    // Group by source/target service pairs
-    const servicePairs = new Map<string, number>();
-    for (const dep of crossServiceDeps) {
-      const sourceService = services.find(s => s.files.includes(dep.source));
-      const targetService = services.find(s => s.files.includes(dep.target));
-      if (sourceService && targetService) {
-        const key = `${sourceService.name} -> ${targetService.name}`;
-        servicePairs.set(key, (servicePairs.get(key) || 0) + 1);
-      }
-    }
-
-    // Show interactions between services
-    for (const [pair, count] of servicePairs.entries()) {
-      const parts = pair.split(' -> ');
-      const source = parts[0];
-      const target = parts[1];
-      if (source && target) {
-        const sourceId = source.replace(/[^a-zA-Z0-9]/g, '_');
-        const targetId = target.replace(/[^a-zA-Z0-9]/g, '_');
-        lines.push(`  ${sourceId}->>+${targetId}: Call (${count} dependencies)`);
-        lines.push(`  ${targetId}-->>-${sourceId}: Response`);
-      }
-    }
-
-    if (firstServiceId) {
-      lines.push(`  ${firstServiceId}-->>-Client: Response`);
+    // Check if service name appears in URL
+    // e.g., "http://email-service:3000/api/send" -> matches "email-service"
+    // e.g., "${baseUrl}/api/email/send-template" -> matches "email"
+    if (
+      urlLower.includes(serviceName) ||
+      urlLower.includes(`/${serviceName}/`) ||
+      urlLower.includes(`/api/${serviceBaseName}/`)
+    ) {
+      return service;
     }
   }
 
-  lines.push('```');
+  // If no direct match, infer from URL pattern and service types
+  // Generic API paths like /api/tasks, /api/users likely target the main API service
+  if (urlLower.startsWith('/api/') || urlLower.includes('`/api/')) {
+    // Find services of type "api-server" (excluding frontend services)
+    const apiServers = services.filter(s => s.type === 'api-server');
 
-  return lines.join('\n');
+    // If there's only one API server, it's likely the target
+    if (apiServers.length === 1) {
+      return apiServers[0]!;
+    }
+
+    // If multiple API servers, prefer the one with "api" in its name
+    const apiService = apiServers.find(s => s.name.toLowerCase().includes('api'));
+    if (apiService) {
+      return apiService;
+    }
+
+    // Fallback to first API server
+    if (apiServers.length > 0) {
+      return apiServers[0]!;
+    }
+  }
+
+  return null;
 }
+
+// Sequence diagram generation removed - diagrams will be generated via AI prompt
 
 /**
  * Perform split analysis on a codebase
@@ -455,31 +304,31 @@ export async function performSplitAnalysis(
       'utf-8'
     );
 
-    // Generate service architecture diagram
-    const serviceDiagram = generateServiceArchitectureDiagram(
-      service.name,
-      serviceAnalyses,
-      serviceDeps,
-      layers,
-      patterns
-    );
-    writeFileSync(join(serviceDir, 'architecture-diagram.sm'), serviceDiagram, 'utf-8');
-    console.log(`  ✓ architecture-diagram.sm`);
 
     serviceMetadata.push(metadata);
   }
 
   // 4. Calculate cross-service dependencies (files from different services)
+  // This includes both import/export dependencies and HTTP call dependencies
   const crossServiceDeps = dependencies.filter(dep => {
     const sourceService = services.find(s => s.files.includes(dep.source));
     const targetService = services.find(s => s.files.includes(dep.target));
     return sourceService && targetService && sourceService.name !== targetService.name;
   });
 
+  // Extract HTTP-based cross-service dependencies
+  const httpDependencies = extractHttpDependencies(analyses, services);
+
+  // Merge HTTP dependencies with regular dependencies for the summary
+  const allCrossServiceDeps = [...crossServiceDeps, ...httpDependencies];
+
   const crossServiceSummary: Record<string, number> = {};
-  for (const dep of crossServiceDeps) {
+  for (const dep of allCrossServiceDeps) {
     const sourceService = services.find(s => s.files.includes(dep.source))?.name || 'unknown';
-    const targetService = services.find(s => s.files.includes(dep.target))?.name || 'unknown';
+    // For HTTP deps, target is already a service name; for regular deps, it's a file path
+    const targetService = dep.target.includes('/')
+      ? services.find(s => s.files.includes(dep.target))?.name || 'unknown'
+      : dep.target; // Already a service name from HTTP deps
     const key = `${sourceService} -> ${targetService}`;
     crossServiceSummary[key] = (crossServiceSummary[key] || 0) + 1;
   }
@@ -538,12 +387,6 @@ export async function performSplitAnalysis(
     'utf-8'
   );
 
-  // 7. Generate cross-service sequence diagram
-  console.log('\nGenerating cross-service sequence diagram...');
-
-  const sequenceDiagram = generateSequenceDiagram(services, dependencies);
-  writeFileSync(join(outputDir, 'sequence-diagram.sm'), sequenceDiagram, 'utf-8');
-  console.log('  ✓ sequence-diagram.sm');
 
   console.log(`\n✅ Split analysis complete: ${outputDir}`);
   console.log(`   Services: ${services.length}`);
