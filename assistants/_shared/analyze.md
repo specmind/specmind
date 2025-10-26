@@ -6,13 +6,6 @@ This prompt template contains the core logic for the `/analyze` command that ana
 
 1. **Run the analysis tool:**
 
-   **For local development (testing unreleased changes):**
-   ```bash
-   # From the specmind repository root
-   node packages/cli/dist/index.js analyze --path <project-path>
-   ```
-
-   **For published version:**
    ```bash
    npx specmind analyze
    ```
