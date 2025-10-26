@@ -208,21 +208,22 @@ export class SpecMindPreviewPanel {
                 padding: 0;
                 margin: 20px 0;
                 position: relative;
-                overflow: hidden;
+                overflow: visible;
                 height: 600px;
                 box-sizing: border-box;
 
                 /* Break free from all parent constraints */
-                width: 100vw;
-                margin-left: -20px;
+                width: calc(100vw - 40px);
+                max-width: 100%;
             }
             .section-content .mermaid-container {
                 /* Account for section-content margin-left: 10px */
-                margin-left: -30px;
+                margin-left: -10px;
             }
             .mermaid-container .mermaid-diagram {
                 width: 100%;
                 height: 100%;
+                overflow: hidden;
             }
             .mermaid-container .mermaid-diagram svg {
                 display: block;
@@ -247,7 +248,9 @@ export class SpecMindPreviewPanel {
             .mermaid-container.fullscreen .diagram-controls {
                 position: fixed;
                 top: 20px;
-                right: 20px;
+                right: 10px;
+                left: auto;
+                max-width: calc(100vw - 20px);
                 z-index: 10001;
             }
             .mermaid-container.fullscreen .mermaid-diagram {
