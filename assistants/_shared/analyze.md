@@ -27,6 +27,9 @@ Analyzes a codebase and creates system architecture documentation.
 
 4. **Generate `.specmind/system.sm`** with these sections:
 
+   **IMPORTANT: File must start with H1 title:**
+   - **# {Project Name} System Architecture** - Use project/repo name as main title (e.g., "Task Manager System Architecture")
+
    **Global:**
    - **## Overview** - System description
    - **## System Architecture** - Mermaid graph showing services, databases, external systems
