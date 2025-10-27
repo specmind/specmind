@@ -33,48 +33,31 @@ SpecMind automatically generates, evolves, and validates architecture designs as
 
 ### Core Workflow
 
-```bash
-# 1. Initialize - Analyze existing codebase
-/analyze
+**1. `/analyze` - Understand your system**
 
-# 2. Design - Plan new feature architecture
-/design User Authentication
+Analyzes your codebase and generates **`.specmind/system.sm`** containing:
+- System-wide architecture diagram (services, databases, external integrations)
+- Cross-service flow diagrams (sequence diagrams showing request/response cycles)
+- Per-service architecture diagrams (classes/methods organized by layer)
+- Technology stack and architecture violations
 
-# 3. Implement - Build with architectural context
-/implement User Authentication
-```
+**2. `/design <feature>` - Plan before you code**
 
-Each feature gets a `.sm` file containing:
-- **Markdown documentation** - Any structure you want (customize as needed)
-- **Two Mermaid diagrams** - Architecture visualization:
-  1. Component/Dependency graph (structural view)
-  2. Sequence diagram (behavioral/flow view)
+Creates **`.specmind/features/{feature-name}.sm`** showing how the feature will update your system:
+- Overview, Requirements, and Design Decisions
+- System Architecture Updates (new/modified/removed services with color-coded changes)
+- Cross-Service Flows Updates (new or modified sequence diagrams)
+- Service Architecture Updates (affected classes/methods by layer)
+- Integration Points and Summary
 
-The default prompts suggest sections like Overview, Requirements, Architecture, Design Decisions, Integration Points, and Notes - but you can customize these to fit your workflow.
+**3. `/implement <feature>` - Build with context**
 
----
+Implements the feature following its `.sm` specification, then:
+- Updates **`.specmind/system.sm`** with actual changes (removes color coding)
+- Updates the feature `.sm` file if implementation diverged from design
+- Appends entry to **`.specmind/system.changelog`** documenting what changed
 
-## Features
-
-### 🎯 Spec-Driven Development
-- `/analyze` - Analyzes your codebase and generates initial architecture
-- `/design` - Creates feature specs with diagrams before coding
-- `/implement` - Implements code aligned with architecture
-
-### 📊 Architecture as Code
-- `.sm` files - Text-based, human-readable specifications
-- Markdown + Mermaid.js - Documentation and diagrams in one
-- Git-friendly - Version control for your architecture
-- One file per feature - Complete context in a single place
-- Flexible structure - Customize sections to fit your needs
-
-### 🔍 Code Analysis
-- Tree-sitter powered parsing - Fast and accurate
-- Extract components, relationships, dependencies automatically
-- Supports TypeScript, JavaScript, and Python (see Language Support section below for details)
-- Respects `.gitignore` - Automatically excludes ignored files and directories
-- `.specmindignore` support - Tool-specific exclusions for files you want in git but not in analysis
-- **Split analysis** - Automatically splits large codebases into services and architectural layers for LLM-friendly analysis
+All `.sm` files use Markdown + Mermaid diagrams and can be viewed with the SpecMind VS Code extension.
 
 ---
 
