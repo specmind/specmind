@@ -32,13 +32,16 @@ This prompt template contains the core logic for the `/implement <feature-name>`
 
 6. **Update system.sm** based on the actual implementation:
    - Read the current `.specmind/system.sm` file
-   - Update **both diagrams** (Component/Dependency graph AND Sequence diagram) to reflect the implemented changes
+   - Update these sections as needed:
+     - **## System Architecture** - Add/modify/remove services, databases, external systems
+     - **## Cross-Service Flows** - Add new flows or update existing ones affected by this feature
+     - **## {service-name} Service** - Update affected service architectures
    - Apply the architectural changes documented in the feature .sm file:
      - Add new components (that were marked green in feature design)
      - Modify existing components (that were marked yellow in feature design)
      - Remove deprecated components (that were marked red in feature design)
    - Remove color coding from system.sm diagrams (system.sm shows current state, not changes)
-   - Update any relevant documentation sections in system.sm
+   - Update **## Summary** section if new services/technologies were added
 
 7. **Append to system.changelog**:
    - Create `.specmind/system.changelog` if it doesn't exist

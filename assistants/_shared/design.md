@@ -34,39 +34,35 @@ This prompt template contains the core logic for the `/design <feature-name>` co
    - Technology stack and frameworks
    - Integration points
 
-4. **Generate TWO Mermaid diagrams showing the SYSTEM with this feature integrated:**
+4. **Generate Mermaid diagrams showing how system.sm will be updated:**
 
-   **Important:** Show the relevant portions of the existing system architecture WITH the new feature integrated. Use color coding to highlight what changes.
+   **Color Coding for all diagrams:**
+   - 🟢 **Green (#4c5a2b fill, #3d4722 stroke)**: New components/services/flows
+   - 🟠 **Orange (#d97706 fill, #b45309 stroke)**: Modified components/services
+   - 🔴 **Red (#701f1c fill, #5a1916 stroke)**: Removed/deprecated components
+   - ⚪ **Default**: Unchanged components (use standard colors)
 
-   **Color Coding for Changes:**
-   - 🟢 **Green (#90EE90 fill, #2E7D4E stroke)**: New components/interactions added by this feature
-   - 🔴 **Red (#FFB6C1 fill, #8B0000 stroke)**: Components/interactions to be removed/deprecated
-   - 🟡 **Yellow (#FFEB99 fill, #CC9900 stroke)**: Existing components that will be modified
-   - ⚪ **Default/Gray**: Existing components that remain unchanged (use standard colors)
+   **System Architecture Diagram (graph TB):**
+   - Show global system with this feature integrated
+   - Include services, databases, external systems affected by this feature
+   - Color-code: new services (green), modified services (orange), removed services (red)
+   - Show new communication patterns between services
+   - Use style statements: `style NewService fill:#4c5a2b,stroke:#3d4722,stroke-width:2px`
 
-   **Diagram 1 - System Component/Dependency Graph:**
-   - Show relevant portions of the existing system architecture
-   - Add the new feature's components (in green)
-   - Show dependencies between new and existing components
-   - Mark any components to be removed (in red)
-   - Mark any existing components that will be modified (in yellow)
-   - Use `graph TD` or `graph LR` format
-   - Apply color styling using Mermaid `style` statements
-   - Example:
-     ```
-     style NewAuthService fill:#90EE90,stroke:#2E7D4E,stroke-width:2px
-     style APIGateway fill:#FFEB99,stroke:#CC9900,stroke-width:2px
-     style OldAuthModule fill:#FFB6C1,stroke:#8B0000,stroke-width:2px
-     ```
+   **Cross-Service Flow Diagrams (sequenceDiagram):**
+   - Create diagrams for new flows or show updates to existing flows
+   - One diagram per flow affected by this feature
+   - Show complete request/response cycle through services
+   - Include HTTP methods, paths, and key operations
+   - Use clear naming to indicate new vs existing participants
 
-   **Diagram 2 - System Sequence Diagram:**
-   - Show a typical flow through the system including this feature
-   - Pick the most common user interaction or data flow
-   - Show how new and existing components interact over time
-   - Use `sequenceDiagram` format
-   - Include key steps: entry point → new components → existing components → response
-   - Note: Sequence diagrams don't support node styling, so use clear naming to indicate new vs existing participants
-   - Example: `NewAuthService` (clearly named as new), `ExistingUserDB` (clearly named as existing)
+   **Service Architecture Diagrams (graph TB):**
+   - For each affected service, show updated architecture
+   - Organize by layers vertically: API → Service → Data → External (top to bottom)
+   - Use subgraphs for each layer to ensure vertical stacking
+   - Color-code: new classes (green), modified classes (orange), removed classes (red)
+   - Show method signatures and calls between layers
+   - Escape angle brackets: `#lt;` `#gt;`
 
 5. **Extract and organize requirements** from the user's description:
    - Parse the user's input for explicit requirements (OAuth2, Google/GitHub providers, session management, etc.)
@@ -80,37 +76,54 @@ This prompt template contains the core logic for the `/design <feature-name>` co
 
 6. **Generate markdown documentation:**
 
+   **IMPORTANT: File must start with H1 title:**
+   - **# {Feature Name}** - Use the extracted feature name as the main title at the top
+
    **Recommended sections** (customize as needed):
 
-   - **Overview**:
+   - **## Overview**:
      - What the feature does and why it's needed
      - Core value proposition
      - How it fits into the broader product vision
 
-   - **Requirements**:
+   - **## Requirements**:
      - Functional requirements (what users can do)
      - Technical requirements (technologies, APIs, integrations)
      - Non-functional requirements (performance targets, security needs)
      - If user provided detailed description, organize extracted requirements here
 
-   - **System Component Architecture**:
-     - First Mermaid diagram (component/dependency graph with color-coded changes)
-     - Brief explanation of major components
-     - **Architectural Impact - Components:**
-       - **Added**: List all new components (shown in green)
-       - **Modified**: List all existing components that will change (shown in yellow)
-       - **Removed**: List all components to be removed/deprecated (shown in red)
-       - **Dependencies**: Describe new dependencies created
+   - **## System Architecture Updates**:
+     - Show how the global System Architecture diagram will change
+     - Mermaid diagram with color-coded changes:
+       - 🟢 Green: New services, databases, or external integrations
+       - 🟠 Orange: Modified services
+       - 🔴 Red: Removed services/components
+     - **Impact:**
+       - **Services**: List new/modified/removed services
+       - **Data Stores**: List new databases or caches
+       - **External Integrations**: List new third-party services
+       - **Communication Patterns**: Describe new inter-service communication
 
-   - **System Interaction Flow**:
-     - Second Mermaid diagram (sequence diagram showing feature flow through system)
-     - Walk through a typical user interaction
-     - **Architectural Impact - Interactions:**
-       - **Added**: List all new interactions/API calls
-       - **Modified**: List all existing interactions that will change
-       - **Removed**: List all interactions to be removed/deprecated
+   - **## Cross-Service Flows Updates**:
+     - Sequence diagrams showing new or updated flows
+     - One diagram per affected flow (e.g., "Create Task Flow", "Update Task Flow")
+     - Show complete request/response cycle with color-coded changes
+     - **Impact:**
+       - **New Flows**: List flows to be added
+       - **Modified Flows**: List existing flows that will change
+       - **Removed Flows**: List flows to be deprecated
 
-   - **Design Decisions**:
+   - **## Service Architecture Updates**:
+     - Show which services will be modified or created
+     - For each affected service, show updated architecture diagram with:
+       - Classes/methods organized by layer (API, Service, Data, External)
+       - Color-coded changes (green=new, orange=modified, red=removed)
+     - **Impact:**
+       - **New Services**: List services to be created
+       - **Modified Services**: List services to be updated with changes
+       - **Affected Layers**: Describe changes per layer
+
+   - **## Design Decisions**:
      - **For each major decision, explain:**
        - What options were considered
        - Which option was chosen and why
@@ -122,7 +135,7 @@ This prompt template contains the core logic for the `/design <feature-name>` co
        - Security approaches (authentication method, authorization pattern)
        - Scalability strategies (caching, load balancing, database sharding)
 
-   - **Integration Points**:
+   - **## Integration Points**:
      - **Explicitly identify:**
        - Which existing components/services this feature will interact with
        - What APIs or interfaces will be used
@@ -134,18 +147,18 @@ This prompt template contains the core logic for the `/design <feature-name>` co
        - Data format and protocol
        - Error handling and fallback strategies
 
-   - **Notes**:
+   - **## Summary**:
+     - High-level recap of the feature design
+     - Key technologies and patterns used
+     - Main architectural changes
      - Implementation considerations
-     - Potential gotchas or challenges
-     - Performance optimization opportunities
-     - Security warnings
-     - Future enhancement possibilities
+     - Potential challenges and mitigation strategies
 
    Feel free to add, remove, or modify sections to fit your documentation needs.
 
-7. **Create or update** `.specmind/features/{slugified-name}.sm`
+7. **Create** `.specmind/features/{slugified-name}.sm` with all sections and diagrams
 
-8. **Propose architectural changes** to `system.sm` if the feature impacts system-level architecture
+8. **Note**: The diagrams in this feature spec show PROPOSED changes to system.sm with color coding. During `/implement`, these changes will be applied to system.sm with colors removed.
 
 ## Expected Output
 
