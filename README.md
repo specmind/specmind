@@ -122,7 +122,7 @@ Search "SpecMind" in VS Code extensions marketplace for visual .sm file renderin
 **In Windsurf** (slash commands):
 
 ```
-/specmind-analyze
+/analyze
 ```
 
 The AI will analyze your codebase and create `.specmind/system.sm` with your architecture.
@@ -136,7 +136,7 @@ Claude Code:
 
 Windsurf:
 ```
-/specmind-design Real-time Notifications
+/design Real-time Notifications
 ```
 
 You can provide either:
@@ -164,7 +164,7 @@ Claude Code:
 
 Windsurf:
 ```
-/specmind-implement Real-time Notifications
+/implement Real-time Notifications
 ```
 
 The AI uses the `.sm` file as context to implement code that aligns with your architecture.
@@ -178,7 +178,7 @@ SpecMind uses slash commands that are specific to each AI coding assistant. Here
 | AI Assistant | Status | Implementation Method | Commands |
 |--------------|--------|----------------------|----------|
 | **Claude Code** | ✅ Supported | `.claude/commands/` invoking `npx specmind` | `/analyze`, `/design`, `/implement` |
-| **Windsurf** | ✅ Supported | `.windsurf/workflows/` Cascade workflows with shared prompts | `/specmind-analyze`, `/specmind-design`, `/specmind-implement` |
+| **Windsurf** | ✅ Supported | `.windsurf/workflows/` Cascade workflows with shared prompts | `/analyze`, `/design`, `/implement` |
 | **Cursor** | 🚧 Coming Soon | `.cursorrules` + bash invocation | Planned |
 | **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
 
