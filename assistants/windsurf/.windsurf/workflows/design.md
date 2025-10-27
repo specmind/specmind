@@ -1,11 +1,11 @@
-# SpecMind Design
+---
+description: Design a new feature - create feature specification in .specmind/features/
+---
 
-Design a new feature with architecture specification and Mermaid diagrams.
+You are implementing the `/design` command for SpecMind.
 
-## Steps
-
-### Design Feature Specification
-
-Follow the instructions below to design a feature specification with architecture diagrams.
+**Your task:** Follow the instructions in the shared prompt template to design a feature.
 
 {{file:../_shared/design.md}}
+
+Execute the steps above to create a complete feature specification file.

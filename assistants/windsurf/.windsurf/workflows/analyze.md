@@ -1,11 +1,7 @@
-# SpecMind Analyze
+---
+description: Analyze codebase and create system architecture documentation
+---
 
-Analyze your codebase and generate system architecture documentation with Mermaid diagrams.
-
-## Steps
-
-### Run Analysis and Generate Documentation
-
-Follow the instructions below to analyze the codebase and create comprehensive system architecture documentation.
+You are implementing the `/analyze` command for SpecMind.
 
 {{file:../_shared/analyze.md}}

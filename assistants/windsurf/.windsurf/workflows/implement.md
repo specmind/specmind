@@ -1,11 +1,11 @@
-# SpecMind Implement
+---
+description: Implement a feature based on its .sm specification file
+---
 
-Implement a feature based on its specification.
+You are implementing the `/implement` command for SpecMind.
 
-## Steps
-
-### Implement Feature from Specification
-
-Follow the instructions below to implement a feature based on its .sm specification file.
+**Your task:** Follow the instructions in the shared prompt template to implement a feature.
 
 {{file:../_shared/implement.md}}
+
+Execute the steps above to implement the feature according to its specification.
