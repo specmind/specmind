@@ -72,7 +72,23 @@ Analyzes a codebase and creates system architecture documentation.
    **Per-Service Architecture (graph TB):**
    - ONE diagram per service
    - Show ALL classes/methods from chunk files
-   - Organize by layers (API, Service, Data, External)
+   - Organize by layers vertically: API → Service → Data → External (top to bottom)
+   - Use subgraphs for each layer to ensure vertical stacking:
+     ```mermaid
+     graph TB
+       subgraph API["API Layer"]
+         ...
+       end
+       subgraph Service["Service Layer"]
+         ...
+       end
+       subgraph Data["Data Layer"]
+         ...
+       end
+       subgraph External["External Layer"]
+         ...
+       end
+     ```
    - Escape angle brackets: `#lt;` `#gt;`
    - Use double quotes for labels: `TC["ClassName..."]`
    - Show method calls between layers

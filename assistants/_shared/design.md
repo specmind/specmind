@@ -58,7 +58,8 @@ This prompt template contains the core logic for the `/design <feature-name>` co
 
    **Service Architecture Diagrams (graph TB):**
    - For each affected service, show updated architecture
-   - Organize by layers: API, Service, Data, External
+   - Organize by layers vertically: API → Service → Data → External (top to bottom)
+   - Use subgraphs for each layer to ensure vertical stacking
    - Color-code: new classes (green), modified classes (orange), removed classes (red)
    - Show method signatures and calls between layers
    - Escape angle brackets: `#lt;` `#gt;`
