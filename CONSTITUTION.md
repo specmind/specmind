@@ -193,7 +193,7 @@ format → (no internal dependencies)
 3. **Setup command copies files to project:**
    - `claude-code`: Copies `assistants/claude-code/.claude/` → `.claude/`
    - `cursor`: Copies `assistants/cursor/.cursorrules` → `.cursorrules`
-   - `windsurf`: Copies `assistants/windsurf/cascade/` → `.cascade/`
+   - `windsurf`: Copies `assistants/windsurf/.windsurf/` → `.windsurf/`
    - `copilot`: Copies `assistants/copilot/instructions/` → `.github/copilot/`
 
 4. **Start using slash commands** in your AI assistant
@@ -213,8 +213,8 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 
 **Supported AI Assistants:**
 - ✅ **Claude Code** - Supported (via `.claude/commands/`)
+- ✅ **Windsurf** - Supported (via `.windsurf/workflows/` Cascade workflows)
 - 🚧 **Cursor** - Coming Soon (via `.cursorrules` + custom commands)
-- 🚧 **Windsurf** - Coming Soon (via Cascade commands)
 - 🚧 **GitHub Copilot** - Coming Soon (via `#file` references)
 
 **Core Commands:**

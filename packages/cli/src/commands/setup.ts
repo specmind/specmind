@@ -28,7 +28,7 @@ const ASSISTANT_CONFIGS = {
   windsurf: {
     source: '.windsurf',
     dest: '.windsurf',
-    description: 'Windsurf Cascade rules'
+    description: 'Windsurf Cascade workflows'
   },
   copilot: {
     source: 'instructions',
