@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { getEncoding } from 'js-tiktoken';
 import type {
   FileAnalysis,
   ModuleDependency,
@@ -17,17 +18,29 @@ import { detectServices } from './service-detector.js';
 import { loadPatterns } from './pattern-loader.js';
 
 /**
- * Maximum chunk size in tokens (20K tokens with buffer for 25K Claude limit)
- * Rough estimate: 1 token ≈ 4 characters
+ * Maximum chunk size in tokens
+ *
+ * Conservative limit of 18K tokens (7K buffer for Claude's 25K Read tool limit)
+ *
+ * Note: We use tiktoken's cl100k_base encoding as a universal approximation.
+ * While different LLM providers (Claude, GPT-4, Gemini) use different tokenizers,
+ * tiktoken provides a reasonably accurate estimate that works across providers.
+ * The large safety margin accounts for tokenization differences.
  */
-const MAX_CHUNK_TOKENS = 20000;
-const CHARS_PER_TOKEN = 4;
+const MAX_CHUNK_TOKENS = 18000;
+
+// Initialize tokenizer (lazily loaded on first use)
+let tokenizer: ReturnType<typeof getEncoding> | null = null;
 
 /**
- * Estimate token count from text
+ * Count tokens using tiktoken (provider-agnostic approximation)
  */
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / CHARS_PER_TOKEN);
+function countTokens(text: string): number {
+  if (!tokenizer) {
+    tokenizer = getEncoding('cl100k_base');
+  }
+  const tokens = tokenizer.encode(text);
+  return tokens.length;
 }
 
 /**
@@ -44,9 +57,9 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
   let currentTokens = 0;
 
   for (const file of files) {
-    // Estimate token count by serializing (minified = no spaces)
+    // Count tokens accurately using tiktoken
     const fileJson = JSON.stringify(file);
-    const fileTokens = estimateTokens(fileJson);
+    const fileTokens = countTokens(fileJson);
 
     // If adding this file would exceed limit, start new chunk
     if (currentChunk.length > 0 && currentTokens + fileTokens > MAX_CHUNK_TOKENS) {
