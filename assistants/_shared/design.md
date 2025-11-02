@@ -62,7 +62,7 @@ This prompt template contains the core logic for the `/design <feature-name>` co
    - Use subgraphs for each layer to ensure vertical stacking
    - Color-code: new classes (green), modified classes (orange), removed classes (red)
    - Show method signatures and calls between layers
-   - Escape angle brackets: `#lt;` `#gt;`
+   - **IMPORTANT**: Use actual angle brackets `<` and `>` in Mermaid diagrams - they don't need escaping. Only use HTML entities like `&lt;` if you're writing raw markdown text outside code blocks.
 
 5. **Extract and organize requirements** from the user's description:
    - Parse the user's input for explicit requirements (OAuth2, Google/GitHub providers, session management, etc.)
