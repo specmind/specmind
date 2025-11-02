@@ -89,7 +89,7 @@ Analyzes a codebase and creates system architecture documentation.
          ...
        end
      ```
-   - Escape angle brackets: `#lt;` `#gt;`
+   - **IMPORTANT**: Use actual angle brackets `<` and `>` in Mermaid diagrams - they don't need escaping
    - Use double quotes for labels: `TC["ClassName..."]`
    - Show method calls between layers
    - NO fill colors (dark mode)
