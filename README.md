@@ -374,9 +374,11 @@ For large codebases, SpecMind automatically splits analysis into services and la
         ├── api-gateway/
         │   ├── metadata.json        # Service metadata with cross-layer dependencies
         │   ├── data-layer/
-        │   │   ├── summary.json # Layer summary with entities array (optional)
-        │   │   ├── chunk-0.json # File analysis (minified, ~20K tokens)
-        │   │   └── chunk-1.json # Additional chunks as needed
+        │   │   ├── summary.json         # Layer summary with entity metadata (optional)
+        │   │   ├── chunk-0.json         # File analysis (minified, ~18K tokens)
+        │   │   ├── chunk-1.json         # Additional chunks as needed
+        │   │   ├── entities-chunk-0.json # Entity data (minified, ~18K tokens)
+        │   │   └── entities-chunk-1.json # Additional entity chunks as needed
         │   ├── api-layer/
         │   │   ├── summary.json
         │   │   └── chunk-0.json
@@ -390,19 +392,20 @@ For large codebases, SpecMind automatically splits analysis into services and la
 ```
 
 **Benefits:**
-- Chunked files (~20K tokens, ~80KB) fit within LLM context windows (well under 25K limit)
+- Chunked files (~18K tokens, ~72KB) fit within LLM context windows (well under 25K limit)
 - **AI-generated system.sm** with four diagram types:
   - System Architecture - Global view with brand colors for databases/external services
   - Per-Service Architecture - One diagram per service showing all classes/methods by layer
   - Cross-Service Flows - Sequence diagrams showing complete request/response cycles
-  - **Entity-Relationship (ER) Diagrams** - Database schema from data layer summary
+  - **Entity-Relationship (ER) Diagrams** - Database schema from entity chunk files
 - Summary files provide quick layer overview without loading full data
 - Organized by architectural concerns (data/api/service/external)
 - Supports both monorepo (multiple services) and monolith (single service)
 - Three-level dependency hierarchy (cross-service, cross-layer, same-layer)
 - Detects 180+ frameworks, ORMs, databases, and SDKs
 - **Pattern-driven entity detection** - Uses ORM import patterns, then tree-sitter for AST parsing
-- Entity metadata stored in data layer summary (not separate file)
+- **Entity chunking** - Large entity datasets split into separate files to prevent token limit errors
+- Entity metadata (totalEntities, totalEntityChunks, entityChunkManifest) stored in summary.json
 - Minified chunks maximize data density while keeping summaries readable
 - Token-based chunking ensures all chunks can be read by AI without hitting context limits
 
