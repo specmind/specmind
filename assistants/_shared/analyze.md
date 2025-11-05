@@ -47,6 +47,8 @@ Analyzes a codebase and creates system architecture documentation.
    - **## {service-name} Service** - Overview
    - **### Architecture** - Mermaid graph showing classes/methods by layer
    - **### Architectural Layers** - Describe data, api, service, external layers
+   - **### Data Models** (Optional) - ONLY if entities exist in `.specmind/system/services/{service}/data-layer/summary.json`
+     - Generate ONE ER diagram per service showing ALL entities (see step 5 for diagram requirements)
    - **### Technology Stack** - Technologies used
    - **### Architecture Violations** - If any
 
@@ -55,7 +57,16 @@ Analyzes a codebase and creates system architecture documentation.
 
 5. **Diagram Requirements:**
 
-   **System Architecture (graph TB):**
+   **System Architecture (flowchart TB):**
+   - **CRITICAL**: Start with ELK layout config:
+     ```mermaid
+     ---
+     config:
+       layout: elk
+     ---
+     flowchart TB
+       ...
+     ```
    - Show ALL detected services with type/framework
    - Include databases from `metadata.json` → `layers.data.databases` array
    - Include external services detected in `external-layer/summary.json`
@@ -69,13 +80,17 @@ Analyzes a codebase and creates system architecture documentation.
    - Include HTTP method/path and method signatures
    - Show database operations (INSERT, UPDATE, SELECT, DELETE)
 
-   **Per-Service Architecture (graph TB):**
+   **Per-Service Architecture (flowchart TB):**
    - ONE diagram per service
    - Show ALL classes/methods from chunk files
    - Organize by layers vertically: API → Service → Data → External (top to bottom)
    - Use subgraphs for each layer to ensure vertical stacking:
      ```mermaid
-     graph TB
+     ---
+     config:
+       layout: elk
+     ---
+     flowchart TB
        subgraph API["API Layer"]
          ...
        end
@@ -89,9 +104,33 @@ Analyzes a codebase and creates system architecture documentation.
          ...
        end
      ```
+   - **CRITICAL**: Always include the ELK layout config (the 4 lines above `flowchart TB`) for better diagram readability
    - **IMPORTANT**: Use actual angle brackets `<` and `>` in Mermaid diagrams - they don't need escaping
    - Use double quotes for labels: `TC["ClassName..."]`
    - Show method calls between layers
+   - NO fill colors (dark mode)
+
+   **Entity Relationship Diagrams (erDiagram):**
+   - **CRITICAL**: Start with ELK layout config:
+     ```mermaid
+     ---
+     config:
+       layout: elk
+     ---
+     erDiagram
+       ...
+     ```
+   - ONE diagram per service (only if entities exist in data-layer/summary.json)
+   - Read entities from `.specmind/system/services/{service}/data-layer/summary.json`
+   - Show ALL entities with all fields
+   - Include field type markers: PK (primary key), UK (unique key), FK (foreign key)
+   - Show relationships using Mermaid notation:
+     - `||--o{` for oneToMany (one has many)
+     - `}o--||` for manyToOne (many belong to one)
+     - `}o--o{` for manyToMany (many to many)
+     - `||--||` for oneToOne (one to one)
+   - Add relationship labels: `User ||--o{ Task : "has many"`
+   - Map field types to Mermaid types (string, int, boolean, date, timestamp, uuid, json)
    - NO fill colors (dark mode)
 
 6. **Create directory:**

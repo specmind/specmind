@@ -301,9 +301,12 @@ export type LayerAnalysis = z.infer<typeof LayerAnalysisSchema>
 export const DataLayerAnalysisSchema = LayerAnalysisSchema.extend({
   layer: z.literal('data'),
   databases: z.record(DatabaseDetectionSchema).optional(),
+  // Entities are stored as raw objects (Entity[] from entity types)
+  entities: z.array(z.any()).optional(),
   summary: z.object({
     totalFiles: z.number(),
     totalModels: z.number().optional(),
+    totalEntities: z.number().optional(),
     totalQueries: z.number().optional(),
     databaseTypes: z.array(z.string()).optional(),
     orms: z.array(z.string()).optional(),
@@ -412,3 +415,6 @@ export const SplitAnalysisMetadataSchema = z.object({
 })
 
 export type SplitAnalysisMetadata = z.infer<typeof SplitAnalysisMetadataSchema>
+
+// Re-export entity types
+export * from './entity.js'

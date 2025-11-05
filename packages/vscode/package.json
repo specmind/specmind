@@ -128,7 +128,7 @@
   },
   "dependencies": {
     "@specmind/format": "workspace:^",
-    "mermaid": "^10.6.1"
+    "mermaid": "^11.12.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

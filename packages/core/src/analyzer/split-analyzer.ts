@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { getEncoding } from 'js-tiktoken';
 import type {
@@ -16,6 +16,8 @@ import type {
 import { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './layer-detector.js';
 import { detectServices } from './service-detector.js';
 import { loadPatterns } from './pattern-loader.js';
+import { shouldExtractEntities, extractEntities } from './extractors/entities.js';
+import type { Entity } from '../types/entity.js';
 
 /**
  * Maximum chunk size in tokens
@@ -233,7 +235,7 @@ export async function performSplitAnalysis(
     );
 
     // Split service by layers
-    const layers = splitByLayers(serviceAnalyses, serviceDeps, fileLayerMap, patterns);
+    const layers = await splitByLayers(serviceAnalyses, serviceDeps, fileLayerMap, patterns);
 
     // Collect cross-layer dependencies
     for (const layer of Object.values(layers)) {
@@ -268,7 +270,12 @@ export async function performSplitAnalysis(
         crossLayerDependencies: layerData.crossLayerDependencies,
         // Layer-specific data
         ...(layerName === 'data' && (layerData as DataLayerAnalysis).databases
-          ? { databases: (layerData as DataLayerAnalysis).databases }
+          ? {
+              databases: (layerData as DataLayerAnalysis).databases,
+              ...(((layerData as DataLayerAnalysis).entities && (layerData as DataLayerAnalysis).entities!.length > 0)
+                ? { entities: (layerData as DataLayerAnalysis).entities }
+                : {})
+            }
           : {}),
         ...(layerName === 'api' && (layerData as APILayerAnalysis).endpoints
           ? { endpoints: (layerData as APILayerAnalysis).endpoints }
@@ -347,7 +354,7 @@ export async function performSplitAnalysis(
   }
 
   // 5. Generate cross-layer dependency summary and detect violations
-  const globalLayers = splitByLayers(analyses, dependencies, fileLayerMap, patterns);
+  const globalLayers = await splitByLayers(analyses, dependencies, fileLayerMap, patterns);
   const { summary: crossLayerSummary, violations } = analyzeCrossLayerDependencies(globalLayers);
 
   // 6. Write root metadata with cross-service dependencies
@@ -414,18 +421,20 @@ export async function performSplitAnalysis(
 /**
  * Split analyses by layers
  */
-function splitByLayers(
+async function splitByLayers(
   analyses: FileAnalysis[],
   dependencies: ModuleDependency[],
   fileLayerMap: Map<string, Layer[]>,
   patterns: ReturnType<typeof loadPatterns>
-): Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis> {
+): Promise<Record<Layer, LayerAnalysis | DataLayerAnalysis | APILayerAnalysis | ExternalLayerAnalysis>> {
   const layers: any = {
-    data: { layer: 'data', files: [], dependencies: [], crossLayerDependencies: [], summary: { totalFiles: 0 }, databases: {} },
+    data: { layer: 'data', files: [], dependencies: [], crossLayerDependencies: [], summary: { totalFiles: 0 }, databases: {}, entities: [] },
     api: { layer: 'api', files: [], dependencies: [], crossLayerDependencies: [], summary: { totalFiles: 0 } },
     service: { layer: 'service', files: [], dependencies: [], crossLayerDependencies: [], summary: { totalFiles: 0 } },
     external: { layer: 'external', files: [], dependencies: [], crossLayerDependencies: [], summary: { totalFiles: 0 }, externalServices: {}, messageSystems: {} },
   };
+
+  const entityExtractionTasks: Promise<Entity[]>[] = [];
 
   // Assign files to layers
   for (const analysis of analyses) {
@@ -449,6 +458,23 @@ function splitByLayers(
           }
           layers.data.databases[dbType.type].files.push(analysis.filePath);
           layers.data.databases[dbType.type].totalModels += analysis.classes.length;
+        }
+
+        // Extract entities if file has ORM patterns
+        if (shouldExtractEntities(analysis)) {
+          const task = (async () => {
+            try {
+              const sourceCode = readFileSync(analysis.filePath, 'utf-8');
+              const language = analysis.language as 'typescript' | 'javascript' | 'python';
+              const serviceName = 'default'; // Will be set properly by caller
+              return await extractEntities(sourceCode, analysis.filePath, language, serviceName);
+            } catch (error) {
+              // Silently skip entity extraction errors for individual files
+              console.error(`Failed to extract entities from ${analysis.filePath}:`, error);
+              return [];
+            }
+          })();
+          entityExtractionTasks.push(task);
         }
       } else if (layer === 'external') {
         const services = detectExternalServices(analysis, patterns);
@@ -503,10 +529,17 @@ function splitByLayers(
     }
   }
 
+  // Wait for all entity extraction tasks to complete
+  const allEntities = await Promise.all(entityExtractionTasks);
+  for (const entities of allEntities) {
+    layers.data.entities.push(...entities);
+  }
+
   // Calculate summaries
   layers.data.summary = {
     totalFiles: layers.data.files.length,
     totalModels: Object.values(layers.data.databases).reduce((sum: number, db: any) => sum + db.totalModels, 0),
+    totalEntities: layers.data.entities.length,
     totalQueries: 0, // TODO: detect queries
     databaseTypes: Object.keys(layers.data.databases),
     orms: [...new Set(Object.values(layers.data.databases).map((db: any) => db.orm).filter(Boolean))],

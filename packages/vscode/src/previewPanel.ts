@@ -344,12 +344,21 @@ export class SpecMindPreviewPanel {
             ${renderedContent}
         </div>
 
-        <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <!-- Load svg-pan-zoom library (non-module) -->
         <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-        <script nonce="${nonce}">
-            // Initialize Mermaid
+
+        <!-- Load Mermaid v11 with ELK layout support -->
+        <script type="module" nonce="${nonce}">
+            // Import Mermaid v11 and ELK layout as ES modules
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+            import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0/dist/mermaid-layout-elk.esm.min.mjs';
+
+            // Register ELK layout loader
+            await mermaid.registerLayoutLoaders(elkLayouts);
+
+            // Initialize Mermaid with ELK support
             mermaid.initialize({
-                startOnLoad: true,
+                startOnLoad: false,
                 theme: 'dark',
                 securityLevel: 'loose'
             });
