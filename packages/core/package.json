@@ -1,6 +1,6 @@
 {
   "name": "@specmind/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Core code analysis and architecture generation for SpecMind using tree-sitter",
   "type": "module",
   "main": "./dist/index.js",
