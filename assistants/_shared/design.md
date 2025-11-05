@@ -33,138 +33,182 @@ This prompt template contains the core logic for the `/design <feature-name>` co
    - Existing components and services
    - Technology stack and frameworks
    - Integration points
+   - **Existing data models** - Check system.sm for entity information:
+     - Read `.specmind/system.sm` and look for "### Data Models" sections under each service
+     - If ER diagrams exist, understand existing database schema from the diagrams
+     - Consider entity relationships when designing features that touch data layer
+     - Reference existing entities in your design to maintain consistency
 
-4. **Generate Mermaid diagrams showing how system.sm will be updated:**
-
-   **Color Coding for all diagrams:**
-   - 🟢 **Green (#4c5a2b fill, #3d4722 stroke)**: New components/services/flows
-   - 🟠 **Orange (#d97706 fill, #b45309 stroke)**: Modified components/services
-   - 🔴 **Red (#701f1c fill, #5a1916 stroke)**: Removed/deprecated components
-   - ⚪ **Default**: Unchanged components (use standard colors)
-
-   **System Architecture Diagram (graph TB):**
-   - Show global system with this feature integrated
-   - Include services, databases, external systems affected by this feature
-   - Color-code: new services (green), modified services (orange), removed services (red)
-   - Show new communication patterns between services
-   - Use style statements: `style NewService fill:#4c5a2b,stroke:#3d4722,stroke-width:2px`
-
-   **Cross-Service Flow Diagrams (sequenceDiagram):**
-   - Create diagrams for new flows or show updates to existing flows
-   - One diagram per flow affected by this feature
-   - Show complete request/response cycle through services
-   - Include HTTP methods, paths, and key operations
-   - Use clear naming to indicate new vs existing participants
-
-   **Service Architecture Diagrams (graph TB):**
-   - For each affected service, show updated architecture
-   - Organize by layers vertically: API → Service → Data → External (top to bottom)
-   - Use subgraphs for each layer to ensure vertical stacking
-   - Color-code: new classes (green), modified classes (orange), removed classes (red)
-   - Show method signatures and calls between layers
-   - **IMPORTANT**: Use actual angle brackets `<` and `>` in Mermaid diagrams - they don't need escaping. Only use HTML entities like `&lt;` if you're writing raw markdown text outside code blocks.
-
-5. **Extract and organize requirements** from the user's description:
-   - Parse the user's input for explicit requirements (OAuth2, Google/GitHub providers, session management, etc.)
-   - Infer implicit requirements from the feature type (e.g., auth needs security, real-time needs WebSockets)
-   - Categorize requirements:
-     - **Functional**: What the feature must do (user stories, capabilities)
-     - **Technical**: How it should be built (technologies, patterns, constraints)
-     - **Non-functional**: Performance, security, scalability, UX considerations
-   - If user provided use cases, extract and document them
-   - If user mentioned technical details, incorporate them into the design
-
-6. **Generate markdown documentation:**
+4. **Generate `.specmind/features/{slugified-name}.sm`** with these sections:
 
    **IMPORTANT: File must start with H1 title:**
-   - **# {Feature Name}** - Use the extracted feature name as the main title at the top
+   - **# {Feature Name}** - Use the extracted feature name as the main title
 
-   **Recommended sections** (customize as needed):
+   **Required sections:**
 
-   - **## Overview**:
-     - What the feature does and why it's needed
+   - **## Overview**
+     - Brief description: What the feature does and why it's needed
      - Core value proposition
      - How it fits into the broader product vision
 
-   - **## Requirements**:
-     - Functional requirements (what users can do)
-     - Technical requirements (technologies, APIs, integrations)
-     - Non-functional requirements (performance targets, security needs)
-     - If user provided detailed description, organize extracted requirements here
+   - **## Requirements**
+     - **### Functional Requirements** - What users can do with this feature
+       - Parse user's input for explicit functional requirements
+       - Infer implicit requirements from feature type (e.g., auth needs user login/logout)
+       - Document as user stories or capabilities
+     - **### Technical Requirements** - Technologies, APIs, integrations needed
+       - Extract technical details from user's description (OAuth2, specific providers, etc.)
+       - Specify technologies, frameworks, libraries to be used
+       - Document API integrations and data dependencies
+     - **### Non-Functional Requirements** - Performance, security, scalability targets
+       - Infer from feature type (e.g., auth needs security, real-time needs low latency)
+       - Document performance targets, security needs, scalability considerations
+       - Include UX and accessibility requirements
 
-   - **## System Architecture Updates**:
-     - Show how the global System Architecture diagram will change
-     - Mermaid diagram with color-coded changes:
-       - 🟢 Green: New services, databases, or external integrations
-       - 🟠 Orange: Modified services
-       - 🔴 Red: Removed services/components
-     - **Impact:**
-       - **Services**: List new/modified/removed services
+   - **## System Architecture**
+     - Brief description: How this feature affects the global system architecture
+     - Mermaid flowchart TB diagram with color-coded changes:
+       - **CRITICAL**: Start with ELK layout config:
+         ```mermaid
+         ---
+         config:
+           layout: elk
+         ---
+         flowchart TB
+           ...
+         ```
+       - Show global system with this feature integrated
+       - Include services, databases, external systems affected by this feature
+       - **Color coding:**
+         - 🟢 Green (#4c5a2b fill, #3d4722 stroke): New services, databases, external integrations
+         - 🟠 Orange (#d97706 fill, #b45309 stroke): Modified services
+         - 🔴 Red (#701f1c fill, #5a1916 stroke): Removed services/components
+         - ⚪ Default: Unchanged components (use standard colors)
+       - Use style statements: `style NewService fill:#4c5a2b,stroke:#3d4722,stroke-width:2px`
+       - Show new communication patterns between services
+     - **### Impact**
+       - **Services**: List new/modified/removed services with brief explanation
        - **Data Stores**: List new databases or caches
        - **External Integrations**: List new third-party services
        - **Communication Patterns**: Describe new inter-service communication
 
-   - **## Cross-Service Flows Updates**:
-     - Sequence diagrams showing new or updated flows
-     - One diagram per affected flow (e.g., "Create Task Flow", "Update Task Flow")
-     - Show complete request/response cycle with color-coded changes
-     - **Impact:**
-       - **New Flows**: List flows to be added
-       - **Modified Flows**: List existing flows that will change
-       - **Removed Flows**: List flows to be deprecated
+   - **## Cross-Service Flows** (if applicable)
+     - Include subsections for NEW flows, MODIFIED flows, and REMOVED flows
+     - **### {Flow Name} Flow** (one subsection per affected flow)
+       - **Status indicator**: Start with 🟢 NEW, 🟠 MODIFIED, or 🔴 REMOVED emoji
+       - Mermaid sequenceDiagram:
+         - Show complete request/response cycle through services
+         - Include HTTP methods, paths, and key operations
+         - For MODIFIED flows: use participant aliases to indicate changes:
+           - `participant NewService as "NewService (NEW)"`
+           - `participant ModifiedService as "ModifiedService (MODIFIED)"`
+         - For REMOVED flows: note "This flow will be deprecated" in Summary
+         - Sequence diagrams don't need ELK config (only for flowchart types)
+       - **#### Summary**: Brief description of what this flow does and what's changing
+       - **#### Participants**: List services involved, marking NEW/MODIFIED/REMOVED participants
+       - **#### Key Operations**: Main operations, highlighting new or changed steps
+     - Repeat for each new or modified flow
 
-   - **## Service Architecture Updates**:
-     - Show which services will be modified or created
-     - For each affected service, show updated architecture diagram with:
-       - Classes/methods organized by layer (API, Service, Data, External)
-       - Color-coded changes (green=new, orange=modified, red=removed)
-     - **Impact:**
-       - **New Services**: List services to be created
-       - **Modified Services**: List services to be updated with changes
-       - **Affected Layers**: Describe changes per layer
+   - **## Service Changes** (one subsection per affected service)
+     - **### {service-name} Service**
+       - Brief description: How this service is affected by the feature
+       - Mermaid flowchart TB diagram with color-coded changes:
+         - **CRITICAL**: Start with ELK layout config (see System Architecture example above)
+         - Organize by layers vertically: API → Service → Data → External (top to bottom)
+         - Use subgraphs for each layer to ensure vertical stacking
+         - **Color coding:**
+           - 🟢 Green: New classes/methods
+           - 🟠 Orange: Modified classes/methods
+           - 🔴 Red: Removed classes/methods
+         - Show method signatures and calls between layers
+         - **IMPORTANT**: Use actual angle brackets `<` and `>` in Mermaid diagrams - they don't need escaping
+       - **#### Affected Layers**
+         - **API Layer**: List new/modified/removed endpoints with method signatures
+         - **Service Layer**: List new/modified/removed service methods
+         - **Data Layer**: List new/modified/removed repository methods or queries
+         - **External Layer**: List new/modified/removed external service integrations
+       - **#### Data Models** (optional, if this service's data model is affected)
+         - Mermaid erDiagram with color-coded entity changes:
+           - **CRITICAL**: Start with ELK layout config:
+             ```mermaid
+             ---
+             config:
+               layout: elk
+             ---
+             erDiagram
+               ...
+             ```
+           - **Color coding entities using style statements:**
+             - 🟢 New entities: `style NewEntity fill:#4c5a2b,stroke:#3d4722,stroke-width:2px`
+             - 🟠 Modified entities: `style ModifiedEntity fill:#d97706,stroke:#b45309,stroke-width:2px`
+             - 🔴 Removed entities: `style RemovedEntity fill:#701f1c,stroke:#5a1916,stroke-width:2px`
+           - Show all fields with PK/UK/FK markers
+           - Show relationships using Mermaid notation:
+             - `oneToMany` (||--o{): One entity has many related entities
+             - `manyToOne` (}o--||): Many entities belong to one entity
+             - `manyToMany` (}o--o{): Many-to-many relationship
+             - `oneToOne` (||--||): One-to-one relationship
+           - Include both existing (unchanged) and new/modified entities for context
+         - **Entity Changes**
+           - **New Entities**: For each new entity, list key fields with types/constraints
+           - **Modified Entities**: For each modified entity, specify exact changes
+           - **Removed Entities**: List entities being deprecated
+           - **Relationship Changes**: Document new/modified/removed relationships
+         - **Migration Strategy**
+           - Note breaking changes and required data transformations
+           - Specify migration approach (e.g., blue-green, rolling updates)
+           - Document indexes, validations, and business rules
+           - Reference existing entities from system.sm "### Data Models" sections
 
-   - **## Design Decisions**:
-     - **For each major decision, explain:**
-       - What options were considered
-       - Which option was chosen and why
-       - Trade-offs and implications
-     - **Examples of decisions to document:**
-       - Technology choices (why GraphQL vs REST, why Redis vs in-memory)
-       - Architecture patterns (why microservices vs monolith, why event-driven vs request-response)
-       - Data modeling choices (why NoSQL vs SQL, schema design)
-       - Security approaches (authentication method, authorization pattern)
-       - Scalability strategies (caching, load balancing, database sharding)
+   - **## Design Decisions**
+     - **### {Decision Topic}** (one subsection per major decision)
+       - **Options Considered**: List alternatives evaluated
+       - **Chosen Approach**: Which option was selected
+       - **Rationale**: Why this option was chosen
+       - **Trade-offs**: Pros, cons, and implications
+     - Common decision topics:
+       - Technology choices (GraphQL vs REST, Redis vs in-memory)
+       - Architecture patterns (microservices vs monolith, event-driven vs request-response)
+       - Data modeling (NoSQL vs SQL, schema design, entity relationships)
+       - Security (authentication method, authorization pattern)
+       - Scalability (caching, load balancing, database sharding)
 
-   - **## Integration Points**:
-     - **Explicitly identify:**
-       - Which existing components/services this feature will interact with
-       - What APIs or interfaces will be used
-       - What new APIs or interfaces this feature will expose
-       - Data dependencies (databases, caches, message queues)
-       - External service integrations (third-party APIs, SaaS tools)
-     - **For each integration point, specify:**
-       - Direction of dependency (who calls whom)
-       - Data format and protocol
-       - Error handling and fallback strategies
+   - **## Integration Points**
+     - Brief description: How this feature integrates with existing system
+     - **### Existing Components**
+       - List components/services this feature interacts with
+       - Specify APIs or interfaces used
+       - Document data dependencies (databases, caches, queues)
+     - **### New APIs**
+       - List new APIs or interfaces this feature exposes
+       - Specify data format, protocol, error handling
+     - **### External Services**
+       - List third-party integrations (APIs, SaaS tools)
+       - Document direction of dependency, fallback strategies
 
-   - **## Summary**:
+   - **## Implementation Plan**
+     - **### Phase 1**: Initial implementation steps
+     - **### Phase 2**: Subsequent steps (if multi-phase)
+     - **### Testing Strategy**: How to test the feature
+     - **### Rollout Plan**: Deployment approach and considerations
+
+   - **## Summary**
      - High-level recap of the feature design
      - Key technologies and patterns used
      - Main architectural changes
-     - Implementation considerations
+     - Critical implementation considerations
      - Potential challenges and mitigation strategies
 
-   Feel free to add, remove, or modify sections to fit your documentation needs.
-
-7. **Create** `.specmind/features/{slugified-name}.sm` with all sections and diagrams
-
-8. **Note**: The diagrams in this feature spec show PROPOSED changes to system.sm with color coding. During `/implement`, these changes will be applied to system.sm with colors removed.
+5. **Note**: The diagrams in this feature spec show PROPOSED changes to system.sm with color coding. During `/implement`, these changes will be applied to system.sm with colors removed.
 
 ## Expected Output
 
 A new (or updated) `.specmind/features/{feature-name}.sm` file with:
-- Markdown documentation (flexible structure)
-- **Two Mermaid diagrams:**
-  1. Component/Dependency graph (structural view)
-  2. Sequence diagram (behavioral/flow view)
-- Ready for implementation
+- Markdown documentation with prescribed section structure
+- **Mermaid diagrams with color-coded changes:**
+  - System Architecture diagram (flowchart TB)
+  - Cross-Service Flow diagrams (sequenceDiagram) - one per flow
+  - Service Architecture diagrams (flowchart TB) - one per affected service
+  - Entity Relationship diagram (erDiagram) - if feature affects data models
+- Complete requirements, design decisions, integration points, and implementation plan
+- Ready for implementation via `/implement`

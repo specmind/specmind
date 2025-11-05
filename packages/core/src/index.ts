@@ -34,6 +34,14 @@ export type {
   ExternalLayerAnalysis,
   ServiceMetadata,
   SplitAnalysisMetadata,
+  // Entity types
+  Entity,
+  EntityField,
+  Relationship,
+  EntityGroup,
+  EntityDetectionResult,
+  EntityDetector,
+  RelationshipType,
 } from './types/index.js'
 
 // Export schemas for runtime validation
@@ -71,6 +79,7 @@ export { getParser, parseCode, parseFile } from './analyzer/parser.js'
 export { extractFunctions } from './analyzer/extractors/functions.js'
 export { extractClasses } from './analyzer/extractors/classes.js'
 export { extractImports, extractExports } from './analyzer/extractors/imports.js'
+export { extractEntities, shouldExtractEntities } from './analyzer/extractors/entities.js'
 
 // Export generator functions
 export {
@@ -85,3 +94,4 @@ export { performSplitAnalysis } from './analyzer/split-analyzer.js'
 export { detectLayers, detectDatabaseType, detectExternalServices, detectMessageSystems } from './analyzer/layer-detector.js'
 export { detectServices, type Service } from './analyzer/service-detector.js'
 export { loadPatterns, loadPatternsWithOverrides, type PatternConfig } from './analyzer/pattern-loader.js'
+
