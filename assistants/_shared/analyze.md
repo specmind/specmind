@@ -19,11 +19,13 @@ Analyzes a codebase and creates system architecture documentation.
 
 3. **Read ALL chunk files** for ALL services and layers:
    - `.specmind/system/services/{service}/data-layer/chunk-*.json`
+   - `.specmind/system/services/{service}/data-layer/entities-chunk-*.json` (if entities exist)
    - `.specmind/system/services/{service}/api-layer/chunk-*.json`
    - `.specmind/system/services/{service}/service-layer/chunk-*.json`
    - `.specmind/system/services/{service}/external-layer/chunk-*.json`
 
    Chunks contain ALL classes, methods, signatures, and call information needed for diagrams.
+   Entity chunks contain entity definitions (name, fields, relationships) for ER diagrams.
 
 4. **Generate `.specmind/system.sm`** with these sections:
 
@@ -120,8 +122,8 @@ Analyzes a codebase and creates system architecture documentation.
      erDiagram
        ...
      ```
-   - ONE diagram per service (only if entities exist in data-layer/summary.json)
-   - Read entities from `.specmind/system/services/{service}/data-layer/summary.json`
+   - ONE diagram per service (only if entities exist - check data-layer/summary.json for entityChunkManifest)
+   - Read entities from ALL `.specmind/system/services/{service}/data-layer/entities-chunk-*.json` files
    - Show ALL entities with all fields
    - Include field type markers: PK (primary key), UK (unique key), FK (foreign key)
    - Show relationships using Mermaid notation:

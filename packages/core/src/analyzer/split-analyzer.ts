@@ -106,6 +106,54 @@ function chunkFileAnalyses(files: FileAnalysis[], dependencies: ModuleDependency
 }
 
 /**
+ * Chunk entities into smaller files to avoid token limits
+ */
+function chunkEntities(entities: Entity[]): {
+  chunks: Entity[][];
+  manifest: { chunkIndex: number; entityCount: number; entities: string[] }[];
+} {
+  const chunks: Entity[][] = [];
+  const manifest: { chunkIndex: number; entityCount: number; entities: string[] }[] = [];
+
+  let currentChunk: Entity[] = [];
+  let currentTokens = 0;
+
+  for (const entity of entities) {
+    // Count tokens for this entity
+    const entityJson = JSON.stringify(entity);
+    const entityTokens = countTokens(entityJson);
+
+    // If adding this entity would exceed limit, start new chunk
+    if (currentChunk.length > 0 && currentTokens + entityTokens > MAX_CHUNK_TOKENS) {
+      chunks.push([...currentChunk]);
+      manifest.push({
+        chunkIndex: chunks.length - 1,
+        entityCount: currentChunk.length,
+        entities: currentChunk.map(e => e.name),
+      });
+
+      currentChunk = [];
+      currentTokens = 0;
+    }
+
+    currentChunk.push(entity);
+    currentTokens += entityTokens;
+  }
+
+  // Add final chunk if not empty
+  if (currentChunk.length > 0) {
+    chunks.push([...currentChunk]);
+    manifest.push({
+      chunkIndex: chunks.length - 1,
+      entityCount: currentChunk.length,
+      entities: currentChunk.map(e => e.name),
+    });
+  }
+
+  return { chunks, manifest };
+}
+
+/**
  * Extract HTTP-based cross-service dependencies
  * Maps HTTP calls to target services based on URL patterns
  */
@@ -260,6 +308,23 @@ export async function performSplitAnalysis(
         writeFileSync(chunkPath, JSON.stringify(chunks[i]), 'utf-8'); // No spaces = minified
       }
 
+      // For data layer with entities, chunk them separately
+      let entityChunks: Entity[][] = [];
+      let entityManifest: { chunkIndex: number; entityCount: number; entities: string[] }[] = [];
+
+      if (layerName === 'data' && (layerData as DataLayerAnalysis).entities && (layerData as DataLayerAnalysis).entities!.length > 0) {
+        const entities = (layerData as DataLayerAnalysis).entities!;
+        const entityChunkResult = chunkEntities(entities);
+        entityChunks = entityChunkResult.chunks;
+        entityManifest = entityChunkResult.manifest;
+
+        // Write entity chunks
+        for (let i = 0; i < entityChunks.length; i++) {
+          const entityChunkPath = join(layerDir, `entities-chunk-${i}.json`);
+          writeFileSync(entityChunkPath, JSON.stringify(entityChunks[i]), 'utf-8'); // Minified
+        }
+      }
+
       // Write summary file (pretty-printed)
       const summary = {
         layer: layerData.layer,
@@ -272,8 +337,12 @@ export async function performSplitAnalysis(
         ...(layerName === 'data' && (layerData as DataLayerAnalysis).databases
           ? {
               databases: (layerData as DataLayerAnalysis).databases,
-              ...(((layerData as DataLayerAnalysis).entities && (layerData as DataLayerAnalysis).entities!.length > 0)
-                ? { entities: (layerData as DataLayerAnalysis).entities }
+              ...(entityChunks.length > 0
+                ? {
+                    totalEntities: (layerData as DataLayerAnalysis).entities!.length,
+                    totalEntityChunks: entityChunks.length,
+                    entityChunkManifest: entityManifest,
+                  }
                 : {})
             }
           : {}),
