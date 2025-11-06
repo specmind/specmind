@@ -142,7 +142,9 @@ This prompt template contains the core logic for the `/design <feature-name>` co
              - 🟢 New entities: `style NewEntity fill:#4c5a2b,stroke:#3d4722,stroke-width:2px`
              - 🟠 Modified entities: `style ModifiedEntity fill:#d97706,stroke:#b45309,stroke-width:2px`
              - 🔴 Removed entities: `style RemovedEntity fill:#701f1c,stroke:#5a1916,stroke-width:2px`
-           - Show all fields with PK/UK/FK markers
+           - Show all fields with type markers (PK, UK, or FK - **only ONE marker per field**)
+           - **IMPORTANT**: Mermaid only supports single markers - use PK for primary keys, FK for foreign keys, UK for unique keys
+           - For foreign keys that are also unique (1:1 relationships), use FK and let the relationship cardinality (||--||) indicate uniqueness
            - Show relationships using Mermaid notation:
              - `oneToMany` (||--o{): One entity has many related entities
              - `manyToOne` (}o--||): Many entities belong to one entity
