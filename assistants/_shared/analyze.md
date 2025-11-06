@@ -126,6 +126,8 @@ Analyzes a codebase and creates system architecture documentation.
    - Read entities from ALL `.specmind/system/services/{service}/data-layer/entities-chunk-*.json` files
    - Show ALL entities with all fields
    - Include field type markers: PK (primary key), UK (unique key), FK (foreign key)
+   - **IMPORTANT**: Only ONE marker per field - Mermaid doesn't support multiple markers (e.g., "FK UK" will error)
+   - For foreign keys that are also unique (1:1 relationships), use FK and let the relationship cardinality (||--||) indicate uniqueness
    - Show relationships using Mermaid notation:
      - `||--o{` for oneToMany (one has many)
      - `}o--||` for manyToOne (many belong to one)
