@@ -155,6 +155,14 @@ The AI uses the `.sm` file as context to implement code that aligns with your ar
 
 ---
 
+## Demo
+
+<a href="https://www.youtube.com/watch?v=4-9gQxw8DQU">
+  <img src="https://img.youtube.com/vi/4-9gQxw8DQU/maxresdefault.jpg" alt="SpecMind Demo" width="600">
+</a>
+
+---
+
 ## Supported AI Assistants
 
 SpecMind uses slash commands that are specific to each AI coding assistant. Here's our current support status:
