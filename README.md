@@ -66,7 +66,7 @@ All `.sm` files use Markdown + Mermaid diagrams and can be viewed with the SpecM
 
 > **Note:** SpecMind is currently in active development. Star the repo to follow progress!
 
-> **Requirements:** Currently supports **Claude Code** and **Windsurf**. Support for Cursor and GitHub Copilot coming soon.
+> **Requirements:** Currently supports **Claude Code**, **Windsurf**, and **Cursor**. Support for GitHub Copilot coming soon.
 
 ### Installation
 
@@ -79,6 +79,9 @@ npx specmind setup claude-code
 # For Windsurf
 npx specmind setup windsurf
 
+# For Cursor
+npx specmind setup cursor
+
 # Or interactive mode - choose your assistant(s)
 npx specmind setup
 
@@ -90,6 +93,7 @@ specmind setup claude-code  # or windsurf
 This copies the assistant files to your project:
 - Claude Code: `.claude/commands/` (slash commands)
 - Windsurf: `.windsurf/workflows/` (Cascade workflows)
+- Cursor: `.cursor/prompts/` (custom prompts)
 
 **Step 2: Install VS Code extension (optional)**
 
@@ -109,6 +113,12 @@ Search "SpecMind" in VS Code extensions marketplace for visual .sm file renderin
 /analyze
 ```
 
+**In Cursor** (custom prompts):
+
+```
+@analyze
+```
+
 The AI will analyze your codebase and create `.specmind/system.sm` with your architecture.
 
 **Design a feature:**
@@ -121,6 +131,11 @@ Claude Code:
 Windsurf:
 ```
 /design Real-time Notifications
+```
+
+Cursor:
+```
+@design Real-time Notifications
 ```
 
 You can provide either:
@@ -151,6 +166,11 @@ Windsurf:
 /implement Real-time Notifications
 ```
 
+Cursor:
+```
+@implement Real-time Notifications
+```
+
 The AI uses the `.sm` file as context to implement code that aligns with your architecture.
 
 ---
@@ -171,7 +191,7 @@ SpecMind uses slash commands that are specific to each AI coding assistant. Here
 |--------------|--------|----------------------|----------|
 | **Claude Code** | ✅ Supported | `.claude/commands/` invoking `npx specmind` | `/analyze`, `/design`, `/implement` |
 | **Windsurf** | ✅ Supported | `.windsurf/workflows/` Cascade workflows with shared prompts | `/analyze`, `/design`, `/implement` |
-| **Cursor** | 🚧 Coming Soon | `.cursorrules` + bash invocation | Planned |
+| **Cursor** | ✅ Supported | `.cursor/prompts/` custom prompts with shared templates | `@analyze`, `@design`, `@implement` |
 | **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
 
 Each AI assistant requires its own implementation method, but all use the same shared prompt templates for consistency.
@@ -430,8 +450,8 @@ specmind/
 ├── assistants/     # AI assistant integrations
 │   ├── _shared/    # Shared prompt templates (✅ Implemented)
 │   ├── claude-code/  # Claude Code integration (✅ Implemented)
-│   ├── cursor/       # Cursor integration (🚧 Planned)
-│   ├── windsurf/     # Windsurf integration (🚧 Planned)
+│   ├── cursor/       # Cursor integration (✅ Implemented)
+│   ├── windsurf/     # Windsurf integration (✅ Implemented)
 │   └── copilot/      # Copilot integration (🚧 Planned)
 ├── packages/
 │   ├── core/       # @specmind/core - Analysis engine (✅ Implemented)

@@ -21,9 +21,9 @@ const ASSISTANT_CONFIGS = {
     description: 'Claude Code slash commands'
   },
   cursor: {
-    source: '.cursorrules',
-    dest: '.cursorrules',
-    description: 'Cursor rules and commands'
+    source: '.cursor',
+    dest: '.cursor',
+    description: 'Cursor custom prompts'
   },
   windsurf: {
     source: '.windsurf',
