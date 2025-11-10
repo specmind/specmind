@@ -2,10 +2,11 @@
 
 This document defines the core architectural decisions, principles, and constraints for the SpecMind project. All code, features, and decisions must align with this constitution.
 
-**Last Updated:** 2025-11-05
-**Version:** 1.13.1
+**Last Updated:** 2025-11-09
+**Version:** 1.14.0
 
 ## Changelog
+- **v1.14.0** (2025-11-09): Added C# language support with full tree-sitter integration. Supports .cs file analysis for classes, methods, properties, and inheritance. Implemented ORM detection for Entity Framework Core, Dapper, and NHibernate with entity/model extraction. C# entities detected via `[Table]`, `[Entity]`, `[Key]` attributes, base class patterns (DbContext, BaseEntity), and navigation properties (ICollection<T>, List<T>). Supports C# 9+ records. Added 12 C# ORMs and database drivers (Npgsql, MySQL, SQL Server, SQLite, MongoDB, Redis) to pattern configuration. C# now fully supported alongside TypeScript, JavaScript, and Python.
 - **v1.13.1** (2025-11-05): Implemented entity chunking to prevent token limit errors. Large entity datasets now split into separate `entities-chunk-*.json` files (~18K tokens each, well under 25K Claude limit). Entity data moved from inline in `summary.json` to separate chunk files. Summary now contains `totalEntities`, `totalEntityChunks`, and `entityChunkManifest` metadata. Uses tiktoken cl100k_base encoding for accurate token counting. AI assistants read all entity chunks during `/analyze` to generate complete ER diagrams. Follows same chunking pattern as code files for consistency.
 - **v1.13.0** (2025-11-03): Added entity detection for database ORM models integrated with data layer analysis. Uses pattern-based detection (matching ORM imports from data-layer.json) to identify entity files, then tree-sitter for AST parsing. Supports TypeScript (TypeORM, MikroORM, Sequelize) and Python (Django ORM, SQLAlchemy, Pydantic). Entity metadata (name, table name, fields, relationships, framework) saved in data layer summary (`services/{service}/data-layer/summary.json`). AI reads entities from summary during `/analyze` and generates Mermaid ER diagrams with PK/UK/FK markers and relationships (1:N, N:1, N:M, 1:1). Optional "### Data Models" subsection in per-service sections when entities detected. Follows pattern-driven architecture and v1.12.0 principle: detection in code, diagram generation in AI prompts.
 - **v1.12.0** (2025-10-26): Removed automatic diagram generation from analysis. AI assistants now generate diagrams from analyzed JSON data during `/analyze` command execution. Changed chunking from byte-based (256KB) to token-based (~20K tokens, well under 25K Claude limit). This ensures all chunk files can be read by AI without hitting token limits. AI generates three types of diagrams: System Architecture (global view with brand colors for databases/external services), Per-Service Architecture (one diagram per service showing all classes/methods by layer), and Cross-Service Flows (sequence diagrams). Diagram generation moved from code to AI prompts for better flexibility and accuracy.
@@ -82,8 +83,8 @@ This document defines the core architectural decisions, principles, and constrai
 - Extract all files, classes, modules, functions
 - Identify relationships and dependencies between components
 - Build component graphs
-- Support for TypeScript/JavaScript (implemented) and Python (implemented)
-- Extensible to Go, Rust, Java, C#, and 50+ other languages
+- Support for TypeScript/JavaScript (implemented), Python (implemented), and C# (implemented)
+- Extensible to Go, Rust, Java, and 50+ other languages
 
 ---
 
@@ -579,7 +580,7 @@ packages/{package}/
 - **Database Type Detection:** Maps ORMs/drivers to specific databases (PostgreSQL, MySQL, Redis, MongoDB)
 - **API Endpoint Extraction:** Method, path, handler, framework detection for 32 frameworks
 - **Message Queue Detection:** RabbitMQ, Kafka, SQS, Celery, Bull, and 20+ more
-- **Language Support:** TypeScript, JavaScript, Python, with Go/Java/C# planned
+- **Language Support:** TypeScript, JavaScript, Python, C#, with Go/Java planned
 
 **Output Structure:**
 ```

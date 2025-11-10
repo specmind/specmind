@@ -10,10 +10,42 @@ export interface DataLayerPatterns {
   orms: {
     typescript: string[];
     python: string[];
+    csharp: string[];
   };
+  ormDetectionPatterns?: {
+    python?: Record<string, {
+      baseClassPatterns?: string[];
+      attributePatterns?: string[];
+      requiresOrmMode?: boolean;
+      confidenceScore: number;
+      signal: string;
+    }>;
+    typescript?: Record<string, {
+      decorators?: string[];
+      baseClassPatterns?: string[];
+      confidenceScore: number;
+      signal: string;
+    }>;
+    csharp?: Record<string, {
+      attributes?: string[];
+      baseClassPatterns?: string[];
+      interfaces?: string[];
+      virtualProperties?: boolean;
+      confidenceScore: number;
+      signal: string;
+    }>;
+  };
+  ormDisplayNames?: Record<string, string>;
+  ormFieldPatterns?: Record<string, {
+    typeMapping?: Record<string, string[]>;
+    propertyPatterns?: Record<string, string[]>;
+    relationshipPatterns?: Record<string, string[]>;
+    skipPatterns?: string[];
+  }>;
   drivers: Record<string, {
     typescript: string[];
     python: string[];
+    csharp?: string[];
   }>;
   queryBuilders: string[];
   filePatterns: string[];
@@ -187,11 +219,13 @@ export function getLayerPackages(config: PatternConfig, layer: 'data' | 'api' | 
   if (layer === 'data') {
     packages.push(...config.data.orms.typescript);
     packages.push(...config.data.orms.python);
+    packages.push(...config.data.orms.csharp);
     packages.push(...config.data.queryBuilders);
 
     for (const db of Object.values(config.data.drivers)) {
       packages.push(...db.typescript);
       packages.push(...db.python);
+      if (db.csharp) packages.push(...db.csharp);
     }
   } else if (layer === 'api') {
     packages.push(...config.api.frameworks.typescript);

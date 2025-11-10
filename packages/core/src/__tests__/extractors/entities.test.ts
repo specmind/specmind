@@ -111,7 +111,7 @@ export class User {
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
         expect(entities[0].tableName).toBe('users')
-        expect(entities[0].framework).toBe('TypeORM')
+        expect(entities[0].framework).toBe('typeorm')
         expect(entities[0].fields).toHaveLength(3)
         expect(entities[0].fields[0].isPrimaryKey).toBe(true)
         expect(entities[0].fields[2].isUnique).toBe(true)
@@ -185,7 +185,7 @@ export class User extends Model {
 
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
-        expect(entities[0].framework).toBe('Sequelize-TypeScript')
+        expect(entities[0].framework).toBe('sequelize-typescript')
       })
     })
 
@@ -205,7 +205,7 @@ export class User extends BaseModel {
 
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
-        expect(entities[0].detectionSignals).toContain('extends BaseModel')
+        expect(entities[0].detectionSignals.some((s: string) => s.includes('extends BaseModel'))).toBe(true)
       })
     })
 
@@ -283,7 +283,7 @@ class User(models.Model):
 
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
-        expect(entities[0].framework).toBe('Django')
+        expect(entities[0].framework).toBe('django.db')
         expect(entities[0].fields).toHaveLength(3)
         expect(entities[0].fields[1].isUnique).toBe(true)
       })
@@ -344,7 +344,7 @@ class User(Base):
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
         expect(entities[0].tableName).toBe('users')
-        expect(entities[0].framework).toBe('SQLAlchemy')
+        expect(entities[0].framework).toBe('sqlalchemy')
         expect(entities[0].fields[0].isPrimaryKey).toBe(true)
       })
 
@@ -387,7 +387,7 @@ class User(BaseModel):
 
         expect(entities).toHaveLength(1)
         expect(entities[0].name).toBe('User')
-        expect(entities[0].framework).toBe('Pydantic')
+        expect(entities[0].framework).toBe('pydantic')
       })
 
       it('should not detect Pydantic model without orm_mode', () => {

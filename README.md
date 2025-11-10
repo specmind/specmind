@@ -187,7 +187,7 @@ SpecMind uses tree-sitter for code analysis, enabling support for multiple progr
 | **TypeScript** | ✅ Supported | Full support for TS/TSX files |
 | **JavaScript** | ✅ Supported | Full support for JS/JSX files |
 | **Python** | ✅ Supported | Full support for .py/.pyi files |
-| **C#** | 🚧 Planned | Coming soon |
+| **C#** | ✅ Supported | Full support for .cs files |
 | **Go** | 🚧 Planned | Coming soon |
 | **Rust** | 🚧 Planned | Coming soon |
 | **Java** | 🚧 Planned | Coming soon |
@@ -480,7 +480,7 @@ See [CONSTITUTION.md](./CONSTITUTION.md) for detailed architectural decisions.
 - [ ] GitHub PR integration
 - [ ] Architecture diff visualization
 - [ ] Performance and security analysis
-- [ ] Additional language support (Go, Rust, Java, C#, PHP, Ruby)
+- [ ] Additional language support (Go, Rust, Java, PHP, Ruby)
 
 ### Phase 4: Community & Ecosystem
 - [ ] Plugin system

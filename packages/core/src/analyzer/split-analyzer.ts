@@ -534,7 +534,7 @@ async function splitByLayers(
           const task = (async () => {
             try {
               const sourceCode = readFileSync(analysis.filePath, 'utf-8');
-              const language = analysis.language as 'typescript' | 'javascript' | 'python';
+              const language = analysis.language as 'typescript' | 'javascript' | 'python' | 'csharp';
               const serviceName = 'default'; // Will be set properly by caller
               return await extractEntities(sourceCode, analysis.filePath, language, serviceName);
             } catch (error) {

@@ -2,6 +2,7 @@ import Parser, { Tree } from 'tree-sitter'
 import TypeScriptParser from 'tree-sitter-typescript'
 import JavaScriptParser from 'tree-sitter-javascript'
 import PythonParser from 'tree-sitter-python'
+import CSharpParser from 'tree-sitter-c-sharp'
 import type { SupportedLanguage } from '../types/index.js'
 
 /**
@@ -20,6 +21,8 @@ function getTreeSitterLanguage(language: SupportedLanguage): any {
       return JavaScriptParser
     case 'python':
       return PythonParser
+    case 'csharp':
+      return CSharpParser
     default:
       throw new Error(`Unsupported language: ${language}`)
   }

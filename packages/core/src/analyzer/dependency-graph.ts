@@ -45,7 +45,7 @@ export function buildDependencyGraph(files: FileAnalysis[]): ModuleDependency[] 
 function resolveImportPath(
   fromDir: string,
   importPath: string,
-  language: 'typescript' | 'javascript' | 'python',
+  language: 'typescript' | 'javascript' | 'python' | 'csharp',
   existingFiles: Set<string>
 ): string | null {
   const config = getLanguageConfig(language)
