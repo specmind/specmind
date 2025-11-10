@@ -150,7 +150,7 @@ export type HttpCall = z.infer<typeof HttpCallSchema>
  */
 export const FileAnalysisSchema = z.object({
   filePath: z.string(),
-  language: z.enum(['typescript', 'javascript', 'python']),
+  language: z.enum(['typescript', 'javascript', 'python', 'csharp']),
   functions: z.array(FunctionDefinitionSchema).default([]),
   classes: z.array(ClassDefinitionSchema).default([]),
   imports: z.array(ImportStatementSchema).default([]),
@@ -187,7 +187,7 @@ export type CodebaseAnalysis = z.infer<typeof CodebaseAnalysisSchema>
 /**
  * Supported languages
  */
-export type SupportedLanguage = 'typescript' | 'javascript' | 'python'
+export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'csharp'
 
 /**
  * Analysis options

@@ -166,6 +166,61 @@ export const PYTHON_CONFIG: LanguageConfig = {
 }
 
 /**
+ * C# language configuration
+ */
+export const CSHARP_CONFIG: LanguageConfig = {
+  name: 'csharp',
+  fileExtensions: ['.cs'],
+
+  moduleResolution: {
+    extensions: ['.cs'],
+    indexFiles: [], // C# doesn't use index files like Python's __init__.py
+  },
+
+  functionNodeTypes: [
+    'method_declaration',
+    'local_function_statement',
+    'constructor_declaration',
+    'operator_declaration',
+    'conversion_operator_declaration',
+  ],
+
+  classNodeTypes: [
+    'class_declaration',
+    'struct_declaration',
+    'interface_declaration',
+    'enum_declaration',
+    'record_declaration',
+  ],
+
+  importNodeTypes: ['using_directive'],
+
+  exportNodeTypes: [], // C# doesn't have explicit exports like ES6 modules
+
+  callNodeTypes: ['invocation_expression'],
+
+  functionQuery: `
+    (method_declaration) @function
+    (local_function_statement) @function
+    (constructor_declaration) @function
+  `,
+
+  classQuery: `
+    (class_declaration) @class
+    (struct_declaration) @class
+    (interface_declaration) @class
+    (enum_declaration) @class
+    (record_declaration) @class
+  `,
+
+  importQuery: `
+    (using_directive) @import
+  `,
+
+  exportQuery: '',
+}
+
+/**
  * Get language configuration by language name
  */
 export function getLanguageConfig(language: SupportedLanguage): LanguageConfig {
@@ -176,6 +231,8 @@ export function getLanguageConfig(language: SupportedLanguage): LanguageConfig {
       return JAVASCRIPT_CONFIG
     case 'python':
       return PYTHON_CONFIG
+    case 'csharp':
+      return CSHARP_CONFIG
     default:
       throw new Error(`Unsupported language: ${language}`)
   }
@@ -197,6 +254,10 @@ export function detectLanguage(filePath: string): SupportedLanguage | null {
 
   if (PYTHON_CONFIG.fileExtensions.includes(ext)) {
     return 'python'
+  }
+
+  if (CSHARP_CONFIG.fileExtensions.includes(ext)) {
+    return 'csharp'
   }
 
   return null

@@ -21,6 +21,11 @@ import {
   extractPythonClasses,
   extractPythonImports,
 } from './extractors/languages/python.js'
+import {
+  extractCSharpFunctions,
+  extractCSharpClasses,
+  extractCSharpImports,
+} from './extractors/languages/csharp.js'
 
 /**
  * Analyze a single file and extract all code elements
@@ -60,6 +65,12 @@ export async function analyzeFile(filePath: string): Promise<FileAnalysis | null
         classes = extractPythonClasses(tree, filePath)
         imports = extractPythonImports(tree, filePath)
         exports = [] // Python doesn't have explicit exports
+        break
+      case 'csharp':
+        functions = extractCSharpFunctions(tree, filePath)
+        classes = extractCSharpClasses(tree, filePath)
+        imports = extractCSharpImports(tree, filePath)
+        exports = [] // C# doesn't have explicit exports
         break
       default:
         throw new Error(`Unsupported language: ${language}`)
@@ -121,6 +132,12 @@ export function analyzeFileContent(
       classes = extractPythonClasses(tree, filePath)
       imports = extractPythonImports(tree, filePath)
       exports = [] // Python doesn't have explicit exports
+      break
+    case 'csharp':
+      functions = extractCSharpFunctions(tree, filePath)
+      classes = extractCSharpClasses(tree, filePath)
+      imports = extractCSharpImports(tree, filePath)
+      exports = [] // C# doesn't have explicit exports
       break
     default:
       throw new Error(`Unsupported language: ${language}`)

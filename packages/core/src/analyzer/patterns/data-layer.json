@@ -23,6 +23,7 @@
       "sqlalchemy.orm",
       "django.db",
       "django.db.models",
+      "pydantic",
       "tortoise",
       "tortoise.models",
       "peewee",
@@ -30,40 +31,273 @@
       "mongoengine",
       "odmantic",
       "piccolo"
+    ],
+    "csharp": [
+      "Microsoft.EntityFrameworkCore",
+      "Microsoft.EntityFrameworkCore.SqlServer",
+      "Microsoft.EntityFrameworkCore.Sqlite",
+      "Microsoft.EntityFrameworkCore.PostgreSQL",
+      "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "Pomelo.EntityFrameworkCore.MySql",
+      "EntityFramework",
+      "Dapper",
+      "NHibernate",
+      "ServiceStack.OrmLite",
+      "LinqToDB",
+      "PetaPoco"
     ]
+  },
+  "ormDetectionPatterns": {
+    "python": {
+      "django.db": {
+        "baseClassPatterns": ["models.Model", "Model"],
+        "attributePatterns": [],
+        "confidenceScore": 0.6,
+        "signal": "extends models.Model"
+      },
+      "django.db.models": {
+        "baseClassPatterns": ["models.Model", "Model"],
+        "attributePatterns": [],
+        "confidenceScore": 0.6,
+        "signal": "extends models.Model"
+      },
+      "sqlalchemy": {
+        "baseClassPatterns": ["Base", "DeclarativeBase"],
+        "attributePatterns": ["__tablename__"],
+        "confidenceScore": 0.6,
+        "signal": "extends Base"
+      },
+      "sqlalchemy.orm": {
+        "baseClassPatterns": ["Base", "DeclarativeBase"],
+        "attributePatterns": ["__tablename__"],
+        "confidenceScore": 0.6,
+        "signal": "extends Base"
+      },
+      "pydantic": {
+        "baseClassPatterns": ["BaseModel"],
+        "requiresOrmMode": true,
+        "confidenceScore": 0.5,
+        "signal": "extends BaseModel with orm_mode"
+      }
+    },
+    "typescript": {
+      "typeorm": {
+        "decorators": ["Entity"],
+        "confidenceScore": 0.5,
+        "signal": "@Entity decorator"
+      },
+      "sequelize-typescript": {
+        "decorators": ["Table"],
+        "baseClassPatterns": ["Model"],
+        "confidenceScore": 0.5,
+        "signal": "@Table decorator"
+      }
+    },
+    "csharp": {
+      "Microsoft.EntityFrameworkCore": {
+        "attributes": ["Table", "Entity"],
+        "baseClassPatterns": ["BaseEntity", "Entity"],
+        "interfaces": ["IEntityTypeConfiguration"],
+        "excludeBaseClasses": ["DbContext"],
+        "confidenceScore": 0.5,
+        "signal": "[Table] or [Entity] attribute"
+      },
+      "NHibernate": {
+        "virtualProperties": true,
+        "confidenceScore": 0.3,
+        "signal": "has virtual properties"
+      }
+    }
+  },
+  "ormDisplayNames": {
+    "Microsoft.EntityFrameworkCore": "Entity Framework Core",
+    "Microsoft.EntityFrameworkCore.SqlServer": "Entity Framework Core",
+    "Microsoft.EntityFrameworkCore.Sqlite": "Entity Framework Core",
+    "Microsoft.EntityFrameworkCore.PostgreSQL": "Entity Framework Core",
+    "Npgsql.EntityFrameworkCore.PostgreSQL": "Entity Framework Core",
+    "Pomelo.EntityFrameworkCore.MySql": "Entity Framework Core",
+    "EntityFramework": "Entity Framework",
+    "Dapper": "Dapper",
+    "NHibernate": "NHibernate",
+    "ServiceStack.OrmLite": "ServiceStack OrmLite",
+    "LinqToDB": "LINQ to DB",
+    "PetaPoco": "PetaPoco",
+    "sqlalchemy": "SQLAlchemy",
+    "sqlalchemy.orm": "SQLAlchemy",
+    "django.db": "Django ORM",
+    "django.db.models": "Django ORM",
+    "pydantic": "Pydantic",
+    "tortoise": "Tortoise ORM",
+    "tortoise.models": "Tortoise ORM",
+    "peewee": "Peewee",
+    "pony.orm": "Pony ORM",
+    "mongoengine": "MongoEngine",
+    "odmantic": "ODMantic",
+    "piccolo": "Piccolo",
+    "prisma": "Prisma",
+    "@prisma/client": "Prisma",
+    "typeorm": "TypeORM",
+    "mikro-orm": "MikroORM",
+    "@mikro-orm/core": "MikroORM",
+    "sequelize": "Sequelize",
+    "sequelize-typescript": "Sequelize TypeScript",
+    "mongoose": "Mongoose",
+    "typegoose": "Typegoose",
+    "@typegoose/typegoose": "Typegoose",
+    "knex": "Knex",
+    "objection": "Objection.js",
+    "drizzle-orm": "Drizzle ORM",
+    "kysely": "Kysely",
+    "bookshelf": "Bookshelf",
+    "waterline": "Waterline"
+  },
+  "ormFieldPatterns": {
+    "django.db": {
+      "typeMapping": {
+        "string": ["CharField", "TextField", "EmailField", "URLField", "SlugField"],
+        "int": ["IntegerField", "AutoField", "BigIntegerField", "SmallIntegerField", "PositiveIntegerField"],
+        "boolean": ["BooleanField"],
+        "timestamp": ["DateTimeField"],
+        "date": ["DateField"],
+        "decimal": ["DecimalField", "FloatField"],
+        "json": ["JSONField"],
+        "uuid": ["UUIDField"],
+        "binary": ["BinaryField"]
+      },
+      "propertyPatterns": {
+        "primaryKey": ["primary_key=True"],
+        "unique": ["unique=True"],
+        "foreignKey": ["ForeignKey"],
+        "nullable": ["null=True"]
+      },
+      "relationshipPatterns": {
+        "manyToOne": ["ForeignKey"],
+        "oneToOne": ["OneToOneField"],
+        "manyToMany": ["ManyToManyField"]
+      }
+    },
+    "django.db.models": {
+      "typeMapping": {
+        "string": ["CharField", "TextField", "EmailField", "URLField", "SlugField"],
+        "int": ["IntegerField", "AutoField", "BigIntegerField", "SmallIntegerField", "PositiveIntegerField"],
+        "boolean": ["BooleanField"],
+        "timestamp": ["DateTimeField"],
+        "date": ["DateField"],
+        "decimal": ["DecimalField", "FloatField"],
+        "json": ["JSONField"],
+        "uuid": ["UUIDField"],
+        "binary": ["BinaryField"]
+      },
+      "propertyPatterns": {
+        "primaryKey": ["primary_key=True"],
+        "unique": ["unique=True"],
+        "foreignKey": ["ForeignKey"],
+        "nullable": ["null=True"]
+      },
+      "relationshipPatterns": {
+        "manyToOne": ["ForeignKey"],
+        "oneToOne": ["OneToOneField"],
+        "manyToMany": ["ManyToManyField"]
+      }
+    },
+    "sqlalchemy": {
+      "typeMapping": {
+        "string": ["String", "Text", "VARCHAR"],
+        "int": ["Integer", "BigInteger", "SmallInteger"],
+        "boolean": ["Boolean"],
+        "timestamp": ["DateTime"],
+        "date": ["Date"],
+        "decimal": ["Decimal", "Float", "Numeric"],
+        "json": ["JSON"],
+        "uuid": ["UUID"],
+        "binary": ["LargeBinary", "Binary"]
+      },
+      "propertyPatterns": {
+        "primaryKey": ["primary_key=True"],
+        "unique": ["unique=True"],
+        "foreignKey": ["ForeignKey"],
+        "nullable": ["nullable=True"]
+      },
+      "relationshipPatterns": {
+        "oneToMany": ["relationship"],
+        "manyToOne": ["relationship"],
+        "manyToMany": ["relationship"],
+        "oneToOne": ["relationship"]
+      },
+      "skipPatterns": ["relationship"]
+    },
+    "sqlalchemy.orm": {
+      "typeMapping": {
+        "string": ["String", "Text", "VARCHAR"],
+        "int": ["Integer", "BigInteger", "SmallInteger"],
+        "boolean": ["Boolean"],
+        "timestamp": ["DateTime"],
+        "date": ["Date"],
+        "decimal": ["Decimal", "Float", "Numeric"],
+        "json": ["JSON"],
+        "uuid": ["UUID"],
+        "binary": ["LargeBinary", "Binary"]
+      },
+      "propertyPatterns": {
+        "primaryKey": ["primary_key=True"],
+        "unique": ["unique=True"],
+        "foreignKey": ["ForeignKey"],
+        "nullable": ["nullable=True"]
+      },
+      "relationshipPatterns": {
+        "oneToMany": ["relationship"],
+        "manyToOne": ["relationship"],
+        "manyToMany": ["relationship"],
+        "oneToOne": ["relationship"]
+      },
+      "skipPatterns": ["relationship"]
+    }
   },
   "drivers": {
     "postgresql": {
       "typescript": ["pg", "pg-promise", "postgres"],
-      "python": ["psycopg2", "psycopg", "asyncpg"]
+      "python": ["psycopg2", "psycopg", "asyncpg"],
+      "csharp": ["Npgsql"]
     },
     "mysql": {
       "typescript": ["mysql", "mysql2"],
-      "python": ["pymysql", "aiomysql", "mysqlclient"]
+      "python": ["pymysql", "aiomysql", "mysqlclient"],
+      "csharp": ["MySql.Data", "Pomelo.EntityFrameworkCore.MySql"]
     },
     "sqlite": {
       "typescript": ["better-sqlite3", "sqlite", "sqlite3"],
-      "python": ["sqlite3", "aiosqlite"]
+      "python": ["sqlite3", "aiosqlite"],
+      "csharp": ["System.Data.SQLite", "Microsoft.Data.Sqlite"]
     },
     "redis": {
       "typescript": ["redis", "ioredis", "@redis/client"],
-      "python": ["redis", "aioredis"]
+      "python": ["redis", "aioredis"],
+      "csharp": ["StackExchange.Redis"]
     },
     "mongodb": {
       "typescript": ["mongodb"],
-      "python": ["pymongo", "motor"]
+      "python": ["pymongo", "motor"],
+      "csharp": ["MongoDB.Driver"]
     },
     "cassandra": {
       "typescript": ["cassandra-driver"],
-      "python": ["cassandra"]
+      "python": ["cassandra"],
+      "csharp": ["CassandraCSharpDriver"]
     },
     "elasticsearch": {
       "typescript": ["@elastic/elasticsearch"],
-      "python": ["elasticsearch"]
+      "python": ["elasticsearch"],
+      "csharp": ["NEST", "Elasticsearch.Net"]
     },
     "neo4j": {
       "typescript": ["neo4j-driver"],
-      "python": ["py2neo", "neo4j"]
+      "python": ["py2neo", "neo4j"],
+      "csharp": ["Neo4j.Driver"]
+    },
+    "sqlserver": {
+      "typescript": ["mssql", "tedious"],
+      "python": ["pymssql", "pyodbc"],
+      "csharp": ["Microsoft.Data.SqlClient", "System.Data.SqlClient"]
     }
   },
   "queryBuilders": [
@@ -74,10 +308,10 @@
     "slonik"
   ],
   "filePatterns": [
-    "**/*model*.{ts,js,py}",
-    "**/*schema*.{ts,js,py}",
-    "**/*entity*.{ts,js,py}",
-    "**/*repository*.{ts,js,py}",
+    "**/*model*.{ts,js,py,cs}",
+    "**/*schema*.{ts,js,py,cs}",
+    "**/*entity*.{ts,js,py,cs}",
+    "**/*repository*.{ts,js,py,cs}",
     "**/models/**",
     "**/schemas/**",
     "**/entities/**",
@@ -85,7 +319,9 @@
     "**/migrations/**",
     "**/db/**",
     "**/database/**",
-    "**/persistence/**"
+    "**/persistence/**",
+    "**/Data/**",
+    "**/Domain/**"
   ],
   "codePatterns": [
     "@Entity",

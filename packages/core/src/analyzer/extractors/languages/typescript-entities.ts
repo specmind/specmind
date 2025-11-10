@@ -7,6 +7,7 @@ import type {
   Relationship,
   RelationshipType,
 } from '../../../types/entity.js'
+import { detectFrameworkFromSource, getOrmDetectionPatterns, getOrmDisplayName } from '../framework-detector.js'
 
 /**
  * Map TypeScript/ORM type to Mermaid ER diagram type
@@ -168,26 +169,51 @@ export class TypeScriptEntityDetector implements EntityDetector {
     const signals: string[] = []
     let confidence = 0
 
-    // Check for @Entity decorator (TypeORM, MikroORM)
-    // Check both the original node (export_statement) and the class node
-    const hasEntityDecorator = this.hasDecorator(node, sourceCode, 'Entity')
-    if (hasEntityDecorator) {
-      signals.push('@Entity decorator')
-      confidence += 0.5
+    // Get ORM detection patterns from config
+    const ormPatterns = getOrmDetectionPatterns('typescript')
+
+    // Check each ORM pattern from config
+    for (const [ormPackage, patternData] of Object.entries(ormPatterns)) {
+      const pattern = patternData as any
+
+      // Check decorator patterns
+      if (pattern.decorators && pattern.decorators.length > 0) {
+        const hasDecorator = pattern.decorators.some((dec: string) =>
+          this.hasDecorator(node, sourceCode, dec)
+        )
+
+        if (hasDecorator) {
+          const displayName = getOrmDisplayName(ormPackage)
+          signals.push(`${pattern.signal} (${displayName})`)
+          confidence += pattern.confidenceScore
+        }
+      }
+
+      // Check base class patterns
+      if (pattern.baseClassPatterns && pattern.baseClassPatterns.length > 0) {
+        const extendsClass = this.getExtendsClass(classNode, sourceCode)
+        if (extendsClass) {
+          const matchesBaseClass = pattern.baseClassPatterns.some((p: string) =>
+            extendsClass.includes(p) || extendsClass === p
+          )
+
+          if (matchesBaseClass) {
+            const displayName = getOrmDisplayName(ormPackage)
+            signals.push(`extends ${extendsClass} (${displayName})`)
+            confidence += pattern.confidenceScore
+          }
+        }
+      }
     }
 
-    // Check for @Table decorator (Sequelize-TypeScript)
-    const hasTableDecorator = this.hasDecorator(node, sourceCode, 'Table')
-    if (hasTableDecorator) {
-      signals.push('@Table decorator')
-      confidence += 0.5
-    }
-
-    // Check if extends BaseModel or Model
+    // Also check generic Model/Entity/BaseModel patterns (not ORM-specific)
     const extendsClass = this.getExtendsClass(classNode, sourceCode)
     if (extendsClass && /^(Base)?Model|Entity|Table$/i.test(extendsClass)) {
-      signals.push(`extends ${extendsClass}`)
-      confidence += 0.4
+      // Only add if we haven't already matched an ORM pattern
+      if (!signals.some(s => s.includes('extends'))) {
+        signals.push(`extends ${extendsClass}`)
+        confidence += 0.4
+      }
     }
 
     // Check file location
@@ -210,13 +236,8 @@ export class TypeScriptEntityDetector implements EntityDetector {
     // Extract table name
     const tableName = this.extractTableName(node, sourceCode, className)
 
-    // Determine framework
-    let framework: string | undefined
-    if (hasEntityDecorator) {
-      framework = 'TypeORM' // Could also be MikroORM
-    } else if (hasTableDecorator) {
-      framework = 'Sequelize-TypeScript'
-    }
+    // Determine framework from imports only
+    let framework = detectFrameworkFromSource(sourceCode, 'typescript')
 
     const entity: Entity = {
       name: className,

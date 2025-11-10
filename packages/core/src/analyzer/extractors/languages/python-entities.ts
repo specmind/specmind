@@ -6,6 +6,7 @@ import type {
   EntityField,
   Relationship,
 } from '../../../types/entity.js'
+import { detectFrameworkFromSource, getOrmFieldPatterns, detectFieldType, matchesPropertyPattern, shouldSkipField, detectRelationshipType, getOrmDisplayName, getOrmDetectionPatterns } from '../framework-detector.js'
 
 export class PythonEntityDetector implements EntityDetector {
   private parser: Parser
@@ -89,40 +90,54 @@ export class PythonEntityDetector implements EntityDetector {
     let confidence = 0
     let framework: string | undefined
 
+    // Detect framework from imports first
+    const detectedFramework = detectFrameworkFromSource(sourceCode, 'python')
+    if (detectedFramework) {
+      framework = detectedFramework
+    }
+
+    // Get ORM detection patterns from config
+    const ormPatterns = getOrmDetectionPatterns('python')
+
     // Check base classes
     const baseClasses = this.getBaseClasses(classNode, sourceCode)
 
-    // Django ORM: class extends models.Model
-    if (baseClasses.some((base) => base.includes('models.Model') || base === 'Model')) {
-      signals.push('extends models.Model (Django)')
-      confidence += 0.6
-      framework = 'Django'
-    }
+    // Check each ORM pattern from config
+    for (const [ormPackage, patternData] of Object.entries(ormPatterns)) {
+      const pattern = patternData as any
 
-    // SQLAlchemy: class extends Base or DeclarativeBase
-    if (baseClasses.some((base) => base === 'Base' || base === 'DeclarativeBase')) {
-      signals.push('extends Base (SQLAlchemy)')
-      confidence += 0.6
-      framework = 'SQLAlchemy'
-    }
+      // Check base class patterns
+      if (pattern.baseClassPatterns && pattern.baseClassPatterns.length > 0) {
+        const matchesBaseClass = baseClasses.some((base: string) =>
+          pattern.baseClassPatterns.some((p: string) => base === p || base.endsWith('.' + p))
+        )
 
-    // Pydantic BaseModel with orm_mode
-    if (baseClasses.some((base) => base.includes('BaseModel'))) {
-      const hasOrmMode = this.hasOrmMode(classNode, sourceCode)
-      if (hasOrmMode) {
-        signals.push('extends BaseModel with orm_mode (Pydantic)')
-        confidence += 0.5
-        framework = 'Pydantic'
+        if (matchesBaseClass) {
+          // Check additional requirements (e.g., Pydantic needs orm_mode)
+          if (pattern.requiresOrmMode && !this.hasOrmMode(classNode, sourceCode)) {
+            continue // Skip this pattern
+          }
+
+          const displayName = getOrmDisplayName(ormPackage)
+          signals.push(`${pattern.signal} (${displayName})`)
+          confidence += pattern.confidenceScore
+        }
       }
-      // Note: Pydantic without orm_mode is likely a DTO/schema, not an entity
-      // Don't add any confidence for BaseModel alone
-    }
 
-    // Check for __tablename__ attribute (SQLAlchemy)
-    if (this.hasTableName(classNode, sourceCode)) {
-      signals.push('has __tablename__ attribute')
-      confidence += 0.3
-      if (!framework) framework = 'SQLAlchemy'
+      // Check attribute patterns (e.g., __tablename__)
+      if (pattern.attributePatterns && pattern.attributePatterns.length > 0) {
+        const hasAttribute = pattern.attributePatterns.some((attr: string) => {
+          if (attr === '__tablename__') {
+            return this.hasTableName(classNode, sourceCode)
+          }
+          return false
+        })
+
+        if (hasAttribute) {
+          signals.push('has __tablename__ attribute')
+          confidence += 0.3
+        }
+      }
     }
 
     // Check file location
@@ -259,63 +274,21 @@ export class PythonEntityDetector implements EntityDetector {
 
     const rightText = sourceCode.substring(rightNode.startIndex, rightNode.endIndex)
 
-    // Detect field type based on framework
-    let type = 'string'
-    let isPrimaryKey = false
-    let isUnique = false
-    let isForeignKey = false
-    let isNullable = false
-    let originalType = ''
+    // Get ORM patterns from config
+    const ormPatterns = getOrmFieldPatterns(framework)
 
-    if (framework === 'Django') {
-      // Django: field = models.CharField(...)
-      originalType = rightText
-      if (rightText.includes('CharField') || rightText.includes('TextField') || rightText.includes('EmailField')) {
-        type = 'string'
-      } else if (rightText.includes('IntegerField') || rightText.includes('AutoField') || rightText.includes('BigIntegerField')) {
-        type = 'int'
-      } else if (rightText.includes('BooleanField')) {
-        type = 'boolean'
-      } else if (rightText.includes('DateTimeField')) {
-        type = 'timestamp'
-      } else if (rightText.includes('DateField')) {
-        type = 'date'
-      }
-
-      isPrimaryKey = rightText.includes('primary_key=True')
-      isUnique = rightText.includes('unique=True')
-      isForeignKey = rightText.includes('ForeignKey')
-      isNullable = rightText.includes('null=True')
-    } else if (framework === 'SQLAlchemy') {
-      // SQLAlchemy: field = Column(Integer, ...)
-      originalType = rightText
-      if (rightText.includes('Column')) {
-        if (rightText.includes('String') || rightText.includes('Text')) {
-          type = 'string'
-        } else if (rightText.includes('Integer')) {
-          type = 'int'
-        } else if (rightText.includes('Boolean')) {
-          type = 'boolean'
-        } else if (rightText.includes('DateTime')) {
-          type = 'timestamp'
-        } else if (rightText.includes('Date')) {
-          type = 'date'
-        }
-
-        isPrimaryKey = rightText.includes('primary_key=True')
-        isUnique = rightText.includes('unique=True')
-        isForeignKey = rightText.includes('ForeignKey')
-        isNullable = rightText.includes('nullable=True')
-      } else if (rightText.includes('relationship')) {
-        // This is a relationship, not a field
-        return null
-      }
-    } else if (framework === 'Pydantic') {
-      // Pydantic: field: str or field: Optional[str]
-      // Type annotations are typically in annotated assignments
-      // For now, skip or try to infer from right side
-      return null // Pydantic fields need type annotation parsing
+    // If no patterns or should skip (e.g., relationships), return null
+    if (!ormPatterns || shouldSkipField(rightText, ormPatterns)) {
+      return null
     }
+
+    // Use config-driven detection
+    const type = detectFieldType(rightText, ormPatterns)
+    const originalType = rightText
+    const isPrimaryKey = matchesPropertyPattern(rightText, ormPatterns, 'primaryKey')
+    const isUnique = matchesPropertyPattern(rightText, ormPatterns, 'unique')
+    const isForeignKey = matchesPropertyPattern(rightText, ormPatterns, 'foreignKey')
+    const isNullable = matchesPropertyPattern(rightText, ormPatterns, 'nullable')
 
     return {
       name: fieldName,
@@ -354,50 +327,29 @@ export class PythonEntityDetector implements EntityDetector {
 
     const rightText = sourceCode.substring(rightNode.startIndex, rightNode.endIndex)
 
-    if (framework === 'Django') {
-      // ForeignKey
-      if (rightText.includes('ForeignKey')) {
-        const match = rightText.match(/ForeignKey\s*\(\s*([A-Z][a-zA-Z0-9_]*)/)
-        if (match && match[1]) {
-          return {
-            type: 'manyToOne',
-            targetEntity: match[1],
-          }
-        }
-      }
+    // Get ORM patterns from config
+    const ormPatterns = getOrmFieldPatterns(framework)
+    if (!ormPatterns) return null
 
-      // ManyToManyField
-      if (rightText.includes('ManyToManyField')) {
-        const match = rightText.match(/ManyToManyField\s*\(\s*([A-Z][a-zA-Z0-9_]*)/)
-        if (match && match[1]) {
-          return {
-            type: 'manyToMany',
-            targetEntity: match[1],
-          }
-        }
-      }
+    // Detect relationship type from patterns
+    const relInfo = detectRelationshipType(rightText, ormPatterns)
+    if (!relInfo) return null
 
-      // OneToOneField
-      if (rightText.includes('OneToOneField')) {
-        const match = rightText.match(/OneToOneField\s*\(\s*([A-Z][a-zA-Z0-9_]*)/)
-        if (match && match[1]) {
-          return {
-            type: 'oneToOne',
-            targetEntity: match[1],
-          }
-        }
-      }
-    } else if (framework === 'SQLAlchemy') {
-      // relationship("TargetEntity", ...)
-      if (rightText.includes('relationship')) {
-        const match = rightText.match(/relationship\s*\(\s*["']([A-Z][a-zA-Z0-9_]*)["']/)
-        if (match && match[1]) {
-          // Determine type by checking back_populates or looking at the field type
-          // For now, assume oneToMany
-          return {
-            type: 'oneToMany',
-            targetEntity: match[1],
-          }
+    // Extract target entity name from the field text
+    // Try multiple patterns for different ORM syntaxes
+    const patterns = [
+      /ForeignKey\s*\(\s*([A-Z][a-zA-Z0-9_]*)/,           // Django: ForeignKey(User)
+      /ManyToManyField\s*\(\s*([A-Z][a-zA-Z0-9_]*)/,     // Django: ManyToManyField(User)
+      /OneToOneField\s*\(\s*([A-Z][a-zA-Z0-9_]*)/,       // Django: OneToOneField(User)
+      /relationship\s*\(\s*["']([A-Z][a-zA-Z0-9_]*)["']/ // SQLAlchemy: relationship("User")
+    ]
+
+    for (const pattern of patterns) {
+      const match = rightText.match(pattern)
+      if (match && match[1]) {
+        return {
+          type: relInfo.type as any,
+          targetEntity: match[1],
         }
       }
     }
