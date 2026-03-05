@@ -197,6 +197,24 @@ export class SpecMindPreviewPanel {
                 font-weight: 600;
                 color: var(--vscode-editor-foreground);
             }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin: 15px 0;
+                font-size: 0.95em;
+            }
+            th, td {
+                border: 1px solid var(--vscode-panel-border);
+                padding: 8px 12px;
+                text-align: left;
+            }
+            th {
+                background: var(--vscode-editor-selectionBackground);
+                font-weight: 600;
+            }
+            tr:nth-child(even) {
+                background: rgba(255, 255, 255, 0.03);
+            }
             .markdown-content {
                 max-width: 100%;
                 overflow-x: hidden;
@@ -594,10 +612,52 @@ export class SpecMindPreviewPanel {
     let codeBlockContent: string[] = []
     let currentSection = ''
 
+    let inTable = false
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
-      if (!line) continue
+      if (!line) {
+        if (inTable) {
+          output.push('</tbody></table>')
+          inTable = false
+        }
+        continue
+      }
       const trimmedLine = line.trim()
+
+      // Handle table rows (lines starting and ending with |)
+      if (!inCodeBlock && trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+        // Check if this is a separator row (|---|---|)
+        if (/^\|[\s\-:|]+\|$/.test(trimmedLine)) {
+          continue // Skip separator row
+        }
+
+        const cells = trimmedLine.slice(1, -1).split('|').map(c => c.trim())
+
+        if (!inTable) {
+          // First row = header
+          inTable = true
+          output.push('<table><thead><tr>')
+          for (const cell of cells) {
+            output.push(`<th>${this.processInlineFormatting(cell)}</th>`)
+          }
+          output.push('</tr></thead><tbody>')
+        } else {
+          // Data row
+          output.push('<tr>')
+          for (const cell of cells) {
+            output.push(`<td>${this.processInlineFormatting(cell)}</td>`)
+          }
+          output.push('</tr>')
+        }
+        continue
+      }
+
+      // Close table if we hit a non-table line
+      if (inTable) {
+        output.push('</tbody></table>')
+        inTable = false
+      }
 
       // Handle code blocks
       if (trimmedLine.startsWith('```')) {
@@ -667,6 +727,11 @@ export class SpecMindPreviewPanel {
       output.push(this.processMarkdownLine(line))
     }
 
+    // Close any open table
+    if (inTable) {
+      output.push('</tbody></table>')
+    }
+
     // Close any open sections
     if (currentSection === 'notes' || currentSection === 'summary') {
       output.push('</div>') // Close notes/summary div
@@ -706,6 +771,14 @@ export class SpecMindPreviewPanel {
     }
 
     return `<p>${processed}</p>`
+  }
+
+  private processInlineFormatting(text: string): string {
+    return this.escapeHtml(text)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
   }
 
   private processInlineMarkdown(text: string): string {
