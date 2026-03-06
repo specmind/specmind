@@ -30,10 +30,10 @@ const ASSISTANT_CONFIGS = {
     dest: '.windsurf',
     description: 'Windsurf Cascade workflows'
   },
-  copilot: {
+  codex: {
     source: 'instructions',
-    dest: '.github/copilot',
-    description: 'GitHub Copilot instructions'
+    dest: '.codex',
+    description: 'Codex instructions'
   }
 } as const
 

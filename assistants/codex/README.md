@@ -1,14 +1,14 @@
-# SpecMind for GitHub Copilot
+# SpecMind for Codex
 
 🚧 **Coming Soon**
 
-GitHub Copilot integration will use custom instructions and `#file` references to provide SpecMind functionality.
+Codex integration will use custom instructions and `#file` references to provide SpecMind functionality.
 
 ## Planned Installation
 
 ```bash
 # From your project root
-npx specmind setup copilot
+npx specmind setup codex
 ```
 
 ## Planned Commands

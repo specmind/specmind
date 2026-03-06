@@ -102,7 +102,7 @@ specmind/
 │   ├── claude-code/
 │   ├── cursor/
 │   ├── windsurf/
-│   └── copilot/
+│   └── codex/
 ├── packages/
 │   ├── core/       # @specmind/core - Pure analysis logic
 │   ├── format/     # @specmind/format - .sm file format
@@ -197,7 +197,7 @@ format → (no internal dependencies)
    - `claude-code`: Copies `assistants/claude-code/.claude/` → `.claude/`
    - `cursor`: Copies `assistants/cursor/.cursorrules` → `.cursorrules`
    - `windsurf`: Copies `assistants/windsurf/.windsurf/` → `.windsurf/`
-   - `copilot`: Copies `assistants/copilot/instructions/` → `.github/copilot/`
+   - `codex`: Copies `assistants/codex/instructions/` → `.codex/`
 
 4. **Start using slash commands** in your AI assistant
 
@@ -218,7 +218,7 @@ Primary interface for AI coding assistants. Each assistant requires its own slas
 - ✅ **Claude Code** - Supported (via `.claude/commands/`)
 - ✅ **Windsurf** - Supported (via `.windsurf/workflows/` Cascade workflows)
 - 🚧 **Cursor** - Coming Soon (via `.cursorrules` + custom commands)
-- 🚧 **GitHub Copilot** - Coming Soon (via `#file` references)
+- 🚧 **Codex** - Coming Soon (via `#file` references)
 
 **Core Commands:**
 

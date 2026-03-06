@@ -66,7 +66,7 @@ All `.sm` files use Markdown + Mermaid diagrams and can be viewed with the SpecM
 
 > **Note:** SpecMind is currently in active development. Star the repo to follow progress!
 
-> **Requirements:** Currently supports **Claude Code**, **Windsurf**, and **Cursor**. Support for GitHub Copilot coming soon.
+> **Requirements:** Currently supports **Claude Code**, **Windsurf**, and **Cursor**. Support for Codex coming soon.
 
 ### Installation
 
@@ -192,7 +192,7 @@ SpecMind uses slash commands that are specific to each AI coding assistant. Here
 | **Claude Code** | ✅ Supported | `.claude/commands/` invoking `npx specmind` | `/analyze`, `/design`, `/implement` |
 | **Windsurf** | ✅ Supported | `.windsurf/workflows/` Cascade workflows with shared prompts | `/analyze`, `/design`, `/implement` |
 | **Cursor** | ✅ Supported | `.cursor/prompts/` custom prompts with shared templates | `@analyze`, `@design`, `@implement` |
-| **GitHub Copilot** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
+| **Codex** | 🚧 Coming Soon | Custom prompts + bash invocation | Planned |
 
 Each AI assistant requires its own implementation method, but all use the same shared prompt templates for consistency.
 
@@ -452,7 +452,7 @@ specmind/
 │   ├── claude-code/  # Claude Code integration (✅ Implemented)
 │   ├── cursor/       # Cursor integration (✅ Implemented)
 │   ├── windsurf/     # Windsurf integration (✅ Implemented)
-│   └── copilot/      # Copilot integration (🚧 Planned)
+│   └── codex/         # Codex integration (🚧 Planned)
 ├── packages/
 │   ├── core/       # @specmind/core - Analysis engine (✅ Implemented)
 │   ├── format/     # @specmind/format - .sm file parser (✅ Implemented)
